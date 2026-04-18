@@ -1,0 +1,376 @@
+import { useState, useEffect, useMemo, useCallback } from "react";
+import api from "../services/api";
+import toast from "react-hot-toast";
+import {
+  HiOutlineChevronLeft,
+  HiOutlineChevronRight,
+  HiOutlineDuplicate,
+  HiOutlineTrash,
+} from "react-icons/hi";
+
+// Static color map — avoids dynamic Tailwind class issues
+const SHIFT_STYLES = {
+  Morning: {
+    text: "#F59E0B",
+    bg: "rgba(245,158,11,0.08)",
+    border: "rgba(245,158,11,0.2)",
+    badge: "shift-morning-badge",
+  },
+  Evening: {
+    text: "#8B5CF6",
+    bg: "rgba(139,92,246,0.08)",
+    border: "rgba(139,92,246,0.2)",
+    badge: "shift-evening-badge",
+  },
+  Night: {
+    text: "#3B82F6",
+    bg: "rgba(59,130,246,0.08)",
+    border: "rgba(59,130,246,0.2)",
+    badge: "shift-night-badge",
+  },
+};
+
+export default function RosterPage() {
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [roster, setRoster] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [shifts, setShifts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchMeta = useCallback(async () => {
+    try {
+      const [staffRes, catRes, shiftRes] = await Promise.all([
+        api.get("/staff?is_active=true"),
+        api.get("/staff/categories"),
+        api.get("/roster/shifts"),
+      ]);
+      setStaff(staffRes.data.staff);
+      setCategories(catRes.data.categories);
+      setShifts(shiftRes.data.shifts);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  const fetchRoster = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await api.get(`/roster?date=${date}`);
+      setRoster(res.data.roster);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [date]);
+
+  useEffect(() => {
+    const initialMetaLoad = setTimeout(() => {
+      fetchMeta();
+    }, 0);
+
+    return () => clearTimeout(initialMetaLoad);
+  }, [fetchMeta]);
+
+  useEffect(() => {
+    const initialRosterLoad = setTimeout(() => {
+      fetchRoster();
+    }, 0);
+
+    return () => clearTimeout(initialRosterLoad);
+  }, [fetchRoster]);
+
+  const changeDate = (delta) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + delta);
+    setDate(d.toISOString().split("T")[0]);
+  };
+
+  const getAssigned = (categoryId, shiftId) => {
+    return roster.filter(
+      (r) =>
+        r.category_name === categories.find((c) => c.id === categoryId)?.name &&
+        r.shift_id === shiftId,
+    );
+  };
+
+  const staffByCategory = useMemo(() => {
+    const map = {};
+    categories.forEach((c) => {
+      map[c.id] = staff.filter((s) => s.category_id === c.id);
+    });
+    return map;
+  }, [staff, categories]);
+
+  const isAssigned = (staffId) => roster.some((r) => r.staff_id === staffId);
+
+  const handleAssign = async (shiftId, staffId) => {
+    try {
+      await api.post("/roster", {
+        roster_date: date,
+        shift_id: shiftId,
+        staff_id: staffId,
+      });
+      toast.success("Staff assigned");
+      fetchRoster();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Error assigning staff");
+    }
+  };
+
+  const handleRemove = async (rosterId) => {
+    try {
+      await api.delete(`/roster/${rosterId}`);
+      toast.success("Assignment removed");
+      fetchRoster();
+    } catch {
+      toast.error("Error removing assignment");
+    }
+  };
+
+  const handleCopyPrevious = async () => {
+    const prevDate = new Date(date);
+    prevDate.setDate(prevDate.getDate() - 1);
+    const from = prevDate.toISOString().split("T")[0];
+    if (
+      !window.confirm(
+        `Copy roster from ${from} to ${date}? This will replace current assignments.`,
+      )
+    )
+      return;
+    try {
+      await api.post("/roster/copy", { from_date: from, to_date: date });
+      toast.success("Roster copied");
+      fetchRoster();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Error copying roster");
+    }
+  };
+
+  const formatDate = (d) => {
+    return new Date(d + "T00:00:00").toLocaleDateString("en-IN", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const isToday = date === new Date().toISOString().split("T")[0];
+  const isLightTheme =
+    document.documentElement.getAttribute("data-theme") === "light";
+
+  const stickyCellStyle = isLightTheme
+    ? {
+        background: "rgba(248,250,252,0.95)",
+        backdropFilter: "blur(8px)",
+        borderRight: "1px solid rgba(148,163,184,0.35)",
+      }
+    : {
+        background: "rgba(11,17,32,0.95)",
+        backdropFilter: "blur(8px)",
+      };
+
+  const addSelectStyle = isLightTheme
+    ? {
+        background: "rgba(255,255,255,0.95)",
+        borderColor: "rgba(148,163,184,0.55)",
+        color: "#334155",
+      }
+    : {
+        background: "rgba(11,17,32,0.3)",
+        borderColor: "rgba(42,63,100,0.4)",
+      };
+
+  return (
+    <div className="p-6 lg:p-8 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4 animate-fade-in-up">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-text-primary">
+            Roster Management
+          </h1>
+          <p className="text-text-muted text-sm mt-1">Assign staff to shifts</p>
+        </div>
+        <button
+          onClick={handleCopyPrevious}
+          className="btn-secondary flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium"
+        >
+          <HiOutlineDuplicate className="w-4 h-4" /> Copy Previous Day
+        </button>
+      </div>
+
+      {/* Date Picker */}
+      <div
+        className="flex items-center gap-3 animate-fade-in-up"
+        style={{ animationDelay: "100ms" }}
+      >
+        <button
+          onClick={() => changeDate(-1)}
+          className="p-2.5 rounded-xl bg-bg-surface border border-border text-text-secondary hover:text-text-primary hover:bg-bg-card hover:border-border-light transition-all duration-200"
+        >
+          <HiOutlineChevronLeft className="w-4 h-4" />
+        </button>
+        <div className="flex items-center gap-3">
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="bg-bg-surface border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
+          />
+          <span className="text-text-secondary text-sm hidden md:block">
+            {formatDate(date)}
+          </span>
+          {isToday && (
+            <span
+              className="text-xs px-2 py-0.5 rounded-full"
+              style={{ background: "rgba(20,184,166,0.12)", color: "#14B8A6" }}
+            >
+              Today
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => changeDate(1)}
+          className="p-2.5 rounded-xl bg-bg-surface border border-border text-text-secondary hover:text-text-primary hover:bg-bg-card hover:border-border-light transition-all duration-200"
+        >
+          <HiOutlineChevronRight className="w-4 h-4" />
+        </button>
+        {!isToday && (
+          <button
+            onClick={() => setDate(new Date().toISOString().split("T")[0])}
+            className="text-primary-light text-sm hover:underline ml-1 font-medium"
+          >
+            Jump to Today
+          </button>
+        )}
+      </div>
+
+      {/* Roster Grid */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div
+              className="w-8 h-8 border-3 rounded-full animate-spin mx-auto mb-3"
+              style={{
+                borderColor: "rgba(20,184,166,0.2)",
+                borderTopColor: "#14B8A6",
+              }}
+            ></div>
+            <p className="text-text-muted text-sm">Loading roster...</p>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="glass rounded-xl overflow-hidden animate-fade-in-up"
+          style={{ animationDelay: "200ms" }}
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th
+                    className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider w-48 sticky left-0 z-10"
+                    style={stickyCellStyle}
+                  >
+                    Category
+                  </th>
+                  {shifts.map((s) => {
+                    const colors = SHIFT_STYLES[s.name] || SHIFT_STYLES.Morning;
+                    return (
+                      <th key={s.id} className="text-center p-4 min-w-[220px]">
+                        <span
+                          className="font-display font-bold text-sm"
+                          style={{ color: colors.text }}
+                        >
+                          {s.name}
+                        </span>
+                        <p className="text-text-muted text-xs mt-0.5">
+                          {s.start_time?.slice(0, 5)} –{" "}
+                          {s.end_time?.slice(0, 5)}
+                        </p>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {categories.map((cat) => (
+                  <tr key={cat.id} className="border-b border-border/30">
+                    <td
+                      className="p-4 sticky left-0 z-10"
+                      style={stickyCellStyle}
+                    >
+                      <span className="text-text-primary text-sm font-semibold">
+                        {cat.name}
+                      </span>
+                    </td>
+                    {shifts.map((shift) => {
+                      const assigned = getAssigned(cat.id, shift.id);
+                      const available = (staffByCategory[cat.id] || []).filter(
+                        (s) => !isAssigned(s.id),
+                      );
+                      const colors =
+                        SHIFT_STYLES[shift.name] || SHIFT_STYLES.Morning;
+                      return (
+                        <td key={shift.id} className="p-3 align-top">
+                          <div className="space-y-2 min-h-[60px]">
+                            {assigned.map((r) => (
+                              <div
+                                key={r.id}
+                                className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 group transition-all duration-200"
+                                style={{
+                                  background: colors.bg,
+                                  border: `1px solid ${colors.border}`,
+                                }}
+                              >
+                                <span className="text-text-primary text-sm">
+                                  {r.staff_name}
+                                </span>
+                                <button
+                                  onClick={() => handleRemove(r.id)}
+                                  className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all duration-200"
+                                  style={{ color: "#EF4444" }}
+                                >
+                                  <HiOutlineTrash className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                            {available.length > 0 && (
+                              <select
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    handleAssign(
+                                      shift.id,
+                                      parseInt(e.target.value),
+                                    );
+                                    e.target.value = "";
+                                  }
+                                }}
+                                className="w-full border border-dashed rounded-lg px-2 py-1.5 text-text-muted text-xs cursor-pointer transition-all duration-200 hover:border-primary-light/40"
+                                style={addSelectStyle}
+                                defaultValue=""
+                              >
+                                <option value="">+ Add {cat.name}</option>
+                                {available.map((s) => (
+                                  <option key={s.id} value={s.id}>
+                                    {s.full_name}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
