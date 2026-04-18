@@ -357,6 +357,14 @@ select {
   background-color: #E8EEF8 !important;
 }
 
+:root[data-theme='light'] .hover\:bg-bg-card:hover,
+:root[data-theme='light'] .hover\:bg-bg-card\/30:hover,
+:root[data-theme='light'] .hover\:bg-bg-card\/40:hover,
+:root[data-theme='light'] .hover\:bg-bg-card\/50:hover,
+:root[data-theme='light'] .hover\:bg-bg-card\/60:hover {
+  background-color: #E8EEF8 !important;
+}
+
 :root[data-theme='light'] .text-text-primary {
   color: #0F172A !important;
 }

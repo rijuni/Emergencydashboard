@@ -313,11 +313,7 @@ export default function SettingsPage() {
             href="/display"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 p-3.5 rounded-xl transition-all duration-300 group hover:border-primary-light/20"
-            style={{
-              background: "rgba(11,17,32,0.4)",
-              border: "1px solid rgba(30,45,74,0.3)",
-            }}
+            className="flex items-center gap-3 p-3.5 rounded-xl transition-all duration-300 group bg-bg-card/50 border border-border hover:border-primary-light/20"
           >
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center"

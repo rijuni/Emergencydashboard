@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import kimsLogo from "../assets/kims-logo.png";
 
 export default function DisplayPage() {
   const [data, setData] = useState(null);
@@ -179,13 +180,18 @@ export default function DisplayPage() {
           {/* Left: Hospital Info */}
           <div className="flex items-center gap-4">
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center text-xl relative overflow-hidden"
+              className="w-14 h-14 rounded-xl flex items-center justify-center relative overflow-hidden p-1.5"
               style={{
-                background: "linear-gradient(135deg, #0F766E, #14B8A6)",
-                boxShadow: "0 4px 20px rgba(20,184,166,0.2)",
+                background: "rgba(255,255,255,0.96)",
+                border: "1px solid rgba(148,163,184,0.3)",
+                boxShadow: "0 4px 16px rgba(15,23,42,0.12)",
               }}
             >
-              🏥
+              <img
+                src={kimsLogo}
+                alt="KIMS logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <h1
