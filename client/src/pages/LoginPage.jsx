@@ -40,8 +40,7 @@ export default function LoginPage() {
     <div
       className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
       style={{
-        background:
-          "linear-gradient(135deg, #060D1A 0%, #0B1120 40%, #0E1726 100%)",
+        background: "var(--login-page-bg)",
       }}
     >
       {/* Animated background orbs */}
@@ -49,23 +48,20 @@ export default function LoginPage() {
         <div
           className="absolute top-[15%] left-[20%] w-[400px] h-[400px] rounded-full animate-float-slow"
           style={{
-            background:
-              "radial-gradient(circle, rgba(20,184,166,0.08), transparent 70%)",
+            background: "var(--login-orb-teal)",
           }}
         ></div>
         <div
           className="absolute bottom-[20%] right-[15%] w-[350px] h-[350px] rounded-full animate-float"
           style={{
-            background:
-              "radial-gradient(circle, rgba(59,130,246,0.06), transparent 70%)",
+            background: "var(--login-orb-blue)",
             animationDelay: "2s",
           }}
         ></div>
         <div
           className="absolute top-[60%] left-[60%] w-[250px] h-[250px] rounded-full animate-float-slow"
           style={{
-            background:
-              "radial-gradient(circle, rgba(139,92,246,0.05), transparent 70%)",
+            background: "var(--login-orb-violet)",
             animationDelay: "4s",
           }}
         ></div>
@@ -75,8 +71,7 @@ export default function LoginPage() {
       <div
         className="absolute inset-0 opacity-[0.02] pointer-events-none"
         style={{
-          backgroundImage:
-            "radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px)",
+          backgroundImage: "var(--login-grid)",
           backgroundSize: "40px 40px",
         }}
       ></div>
@@ -117,8 +112,7 @@ export default function LoginPage() {
         <div
           className="glass rounded-2xl p-8 animate-border-glow"
           style={{
-            boxShadow:
-              "0 25px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03)",
+            boxShadow: "var(--login-card-shadow)",
           }}
         >
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -134,7 +128,7 @@ export default function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter username"
-                  className="w-full bg-bg-dark/80 border border-border rounded-xl pl-11 pr-4 py-3.5 text-text-primary placeholder-text-muted/50 text-sm transition-all"
+                  className="w-full bg-bg-card/60 border border-border rounded-xl pl-11 pr-4 py-3.5 text-text-primary placeholder-text-muted/50 text-sm transition-all"
                   autoFocus
                 />
               </div>
@@ -152,7 +146,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password"
-                  className="w-full bg-bg-dark/80 border border-border rounded-xl pl-11 pr-12 py-3.5 text-text-primary placeholder-text-muted/50 text-sm transition-all"
+                  className="w-full bg-bg-card/60 border border-border rounded-xl pl-11 pr-12 py-3.5 text-text-primary placeholder-text-muted/50 text-sm transition-all"
                 />
                 <button
                   type="button"
@@ -184,24 +178,11 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          <div className="mt-6 pt-5 border-t border-border/50">
-            <p className="text-center text-text-muted text-xs">
-              Default credentials:{" "}
-              <span className="text-text-secondary font-mono bg-bg-card/60 px-1.5 py-0.5 rounded">
-                admin
-              </span>{" "}
-              /{" "}
-              <span className="text-text-secondary font-mono bg-bg-card/60 px-1.5 py-0.5 rounded">
-                admin123
-              </span>
-            </p>
-          </div>
         </div>
 
         {/* Footer */}
         <p className="text-center text-text-muted/40 text-xs mt-6">
-          Secure Healthcare Management System
+          &copy; {new Date().getFullYear()} KIMS HOSPITAL. All rights reserved
         </p>
       </div>
     </div>

@@ -322,10 +322,22 @@ select {
    ========================================= */
 :root {
   color-scheme: dark;
+  --login-page-bg: linear-gradient(135deg, #060D1A 0%, #0B1120 40%, #0E1726 100%);
+  --login-orb-teal: radial-gradient(circle, rgba(20,184,166,0.08), transparent 70%);
+  --login-orb-blue: radial-gradient(circle, rgba(59,130,246,0.06), transparent 70%);
+  --login-orb-violet: radial-gradient(circle, rgba(139,92,246,0.05), transparent 70%);
+  --login-grid: radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px);
+  --login-card-shadow: 0 25px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
+  --login-page-bg: linear-gradient(140deg, #F3F7FF 0%, #EEF2F8 45%, #E9F2FF 100%);
+  --login-orb-teal: radial-gradient(circle, rgba(20,184,166,0.16), transparent 70%);
+  --login-orb-blue: radial-gradient(circle, rgba(59,130,246,0.12), transparent 70%);
+  --login-orb-violet: radial-gradient(circle, rgba(99,102,241,0.1), transparent 70%);
+  --login-grid: radial-gradient(rgba(15,23,42,0.22) 1px, transparent 1px);
+  --login-card-shadow: 0 20px 48px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.65);
 }
 
 :root[data-theme='light'] body {
