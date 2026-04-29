@@ -30,8 +30,17 @@ const buildStaffListQuery = ({ categoryId, excludeCategoryId, isActive, search }
   }
 
   if (search) {
-    query += ' AND (s.full_name LIKE ? OR s.designation LIKE ? OR s.registration_number LIKE ?)';
-    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    query += ' AND (s.full_name LIKE ? OR s.designation LIKE ? OR s.registration_number LIKE ? OR s.branch LIKE ? OR s.department LIKE ? OR s.unit LIKE ? OR s.qualification LIKE ? OR s.specialization LIKE ?)';
+    params.push(
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`
+    );
   }
 
   query += ' ORDER BY sc.display_order, s.full_name';
@@ -139,15 +148,44 @@ exports.getById = async (req, res) => {
 // Create staff
 exports.create = async (req, res) => {
   try {
-    const { full_name, category_id, designation, registration_number, phone, email } = req.body;
+    const {
+      full_name,
+      category_id,
+      branch,
+      department,
+      unit,
+      designation,
+      qualification,
+      specialization,
+      registration_number,
+      phone,
+      email
+    } = req.body;
 
     if (!full_name || !category_id) {
       return res.status(400).json({ message: 'Full name and category are required.' });
     }
 
+    const doctorCategoryId = await getDoctorCategoryId();
+    if (doctorCategoryId && Number(category_id) === doctorCategoryId && !designation) {
+      return res.status(400).json({ message: 'Designation is required for doctors.' });
+    }
+
     const [result] = await pool.query(
-      'INSERT INTO staff (full_name, category_id, designation, registration_number, phone, email) VALUES (?, ?, ?, ?, ?, ?)',
-      [full_name, category_id, designation || null, registration_number || null, phone || null, email || null]
+      'INSERT INTO staff (full_name, category_id, branch, department, unit, designation, qualification, specialization, registration_number, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        full_name,
+        category_id,
+        branch || null,
+        department || null,
+        unit || null,
+        designation || null,
+        qualification || null,
+        specialization || null,
+        registration_number || null,
+        phone || null,
+        email || null
+      ]
     );
 
     // Audit log
@@ -158,7 +196,20 @@ exports.create = async (req, res) => {
 
     res.status(201).json({
       message: 'Staff created successfully',
-      staff: { id: result.insertId, full_name, category_id, designation, registration_number, phone, email }
+      staff: {
+        id: result.insertId,
+        full_name,
+        category_id,
+        branch,
+        department,
+        unit,
+        designation,
+        qualification,
+        specialization,
+        registration_number,
+        phone,
+        email
+      }
     });
   } catch (error) {
     console.error('Create staff error:', error);
@@ -180,6 +231,7 @@ exports.bulkCreate = async (req, res) => {
     }
 
     const values = [];
+    const doctorCategoryId = await getDoctorCategoryId();
     for (let index = 0; index < staffList.length; index += 1) {
       const item = staffList[index] || {};
       const fullName = String(item.full_name || '').trim();
@@ -191,10 +243,21 @@ exports.bulkCreate = async (req, res) => {
         });
       }
 
+      if (doctorCategoryId && categoryId === doctorCategoryId && !item.designation) {
+        return res.status(400).json({
+          message: `Designation is required for doctors (item ${index + 1}).`
+        });
+      }
+
       values.push([
         fullName,
         categoryId,
+        item.branch ? String(item.branch).trim() : null,
+        item.department ? String(item.department).trim() : null,
+        item.unit ? String(item.unit).trim() : null,
         item.designation ? String(item.designation).trim() : null,
+        item.qualification ? String(item.qualification).trim() : null,
+        item.specialization ? String(item.specialization).trim() : null,
         item.registration_number ? String(item.registration_number).trim() : null,
         item.phone ? String(item.phone).trim() : null,
         item.email ? String(item.email).trim() : null
@@ -202,7 +265,7 @@ exports.bulkCreate = async (req, res) => {
     }
 
     await pool.query(
-      'INSERT INTO staff (full_name, category_id, designation, registration_number, phone, email) VALUES ?',
+      'INSERT INTO staff (full_name, category_id, branch, department, unit, designation, qualification, specialization, registration_number, phone, email) VALUES ?',
       [values]
     );
 
@@ -225,7 +288,20 @@ exports.bulkCreate = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { full_name, category_id, designation, registration_number, phone, email, is_active } = req.body;
+    const {
+      full_name,
+      category_id,
+      branch,
+      department,
+      unit,
+      designation,
+      qualification,
+      specialization,
+      registration_number,
+      phone,
+      email,
+      is_active
+    } = req.body;
 
     const [existing] = await pool.query('SELECT * FROM staff WHERE id = ?', [id]);
     if (existing.length === 0) {
@@ -233,12 +309,17 @@ exports.update = async (req, res) => {
     }
 
     await pool.query(
-      `UPDATE staff SET full_name = ?, category_id = ?, designation = ?, registration_number = ?, 
-       phone = ?, email = ?, is_active = ? WHERE id = ?`,
+      `UPDATE staff SET full_name = ?, category_id = ?, branch = ?, department = ?, unit = ?, designation = ?,
+       qualification = ?, specialization = ?, registration_number = ?, phone = ?, email = ?, is_active = ? WHERE id = ?`,
       [
         full_name || existing[0].full_name,
         category_id || existing[0].category_id,
+        branch !== undefined ? branch : existing[0].branch,
+        department !== undefined ? department : existing[0].department,
+        unit !== undefined ? unit : existing[0].unit,
         designation !== undefined ? designation : existing[0].designation,
+        qualification !== undefined ? qualification : existing[0].qualification,
+        specialization !== undefined ? specialization : existing[0].specialization,
         registration_number !== undefined ? registration_number : existing[0].registration_number,
         phone !== undefined ? phone : existing[0].phone,
         email !== undefined ? email : existing[0].email,

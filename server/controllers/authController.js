@@ -168,12 +168,48 @@ exports.toggleUserStatus = async (req, res) => {
       return res.status(404).json({ message: 'User not found.' });
     }
 
+    if (users[0].role === 'super_admin') {
+      return res.status(400).json({ message: 'Super Admin accounts cannot be deactivated.' });
+    }
+
     const newStatus = !users[0].is_active;
     await pool.query('UPDATE users SET is_active = ? WHERE id = ?', [newStatus, id]);
 
     res.json({ message: `User ${newStatus ? 'activated' : 'deactivated'} successfully.` });
   } catch (error) {
     console.error('Toggle user status error:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// Reset user password (admin only)
+exports.resetUserPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword) {
+      return res.status(400).json({ message: 'New password is required.' });
+    }
+
+    const [users] = await pool.query('SELECT id, username FROM users WHERE id = ?', [id]);
+    if (users.length === 0) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [password_hash, id]);
+
+    await pool.query(
+      'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
+      [req.user.id, 'UPDATE', 'user', id, `Reset password for user: ${users[0].username}`]
+    );
+
+    res.json({ message: 'Password reset successfully.' });
+  } catch (error) {
+    console.error('Reset user password error:', error);
     res.status(500).json({ message: 'Server error.' });
   }
 };

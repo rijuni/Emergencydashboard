@@ -11,6 +11,7 @@ import {
   HiOutlineLogout,
   HiOutlineMoon,
   HiOutlineSun,
+  HiOutlineClock,
 } from "react-icons/hi";
 import kimsLogo from "../../assets/kims-logo.png";
 
@@ -21,6 +22,8 @@ const navItemsByRole = {
     { to: "/doctor-master", icon: HiOutlineUsers, label: "Doctor Master" },
     { to: "/roster", icon: HiOutlineCalendar, label: "Roster Duty" },
     { to: "/certificates", icon: HiOutlineDocumentText, label: "Certificates" },
+    { to: "/users", icon: HiOutlineUsers, label: "User Master" },
+    { to: "/shifts", icon: HiOutlineClock, label: "Shift Management" },
     { to: "/settings", icon: HiOutlineCog, label: "Settings" },
   ],
   casualty_incharge: [

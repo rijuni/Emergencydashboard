@@ -19,6 +19,7 @@ export default function StaffMasterPage({
   enableBulkAdd = false,
 }) {
   const isDoctorMode = mode === "doctor";
+  const tableColumnCount = isDoctorMode ? 9 : 7;
 
   const [staff, setStaff] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -35,7 +36,12 @@ export default function StaffMasterPage({
   const [form, setForm] = useState({
     full_name: "",
     category_id: "",
+    branch: "",
+    department: "",
+    unit: "",
     designation: "",
+    qualification: "",
+    specialization: "",
     registration_number: "",
     phone: "",
     email: "",
@@ -111,7 +117,12 @@ export default function StaffMasterPage({
       setForm({
         full_name: staffMember.full_name,
         category_id: staffMember.category_id,
+        branch: staffMember.branch || "",
+        department: staffMember.department || "",
+        unit: staffMember.unit || "",
         designation: staffMember.designation || "",
+        qualification: staffMember.qualification || "",
+        specialization: staffMember.specialization || "",
         registration_number: staffMember.registration_number || "",
         phone: staffMember.phone || "",
         email: staffMember.email || "",
@@ -121,7 +132,12 @@ export default function StaffMasterPage({
       setForm({
         full_name: "",
         category_id: selectableCategories[0]?.id || "",
+        branch: "",
+        department: "",
+        unit: "",
         designation: "",
+        qualification: "",
+        specialization: "",
         registration_number: "",
         phone: "",
         email: "",
@@ -135,6 +151,11 @@ export default function StaffMasterPage({
 
     if (!form.full_name) {
       toast.error("Name is required");
+      return;
+    }
+
+    if (isDoctorMode && !form.designation) {
+      toast.error("Designation is required for doctors");
       return;
     }
 
@@ -200,10 +221,16 @@ export default function StaffMasterPage({
       return;
     }
 
+    const trimmedDesignation = bulkDesignation.trim();
+    if (!trimmedDesignation) {
+      toast.error("Designation is required for doctors");
+      return;
+    }
+
     const staffList = parsedNames.map((full_name) => ({
       full_name,
       category_id: doctorCategory.id,
-      designation: bulkDesignation.trim() || null,
+      designation: trimmedDesignation,
     }));
 
     setBulkSaving(true);
@@ -260,7 +287,11 @@ export default function StaffMasterPage({
             type="text"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by name, designation or registration no..."
+            placeholder={
+              isDoctorMode
+                ? "Search by name, department, specialization or license no..."
+                : "Search by name, designation or employee number..."
+            }
             className="w-full bg-bg-surface border border-border rounded-xl pl-10 pr-4 py-2.5 text-text-primary text-sm placeholder-text-muted/50"
           />
         </div>
@@ -295,11 +326,21 @@ export default function StaffMasterPage({
                 <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider">
                   Category
                 </th>
+                {isDoctorMode && (
+                  <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider hidden md:table-cell">
+                    Department
+                  </th>
+                )}
                 <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider hidden md:table-cell">
                   Designation
                 </th>
+                {isDoctorMode && (
+                  <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">
+                    Specialisation
+                  </th>
+                )}
                 <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">
-                  Reg. Number
+                  {isDoctorMode ? "License No" : "Employee No."}
                 </th>
                 <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">
                   Phone
@@ -315,7 +356,7 @@ export default function StaffMasterPage({
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-16">
+                  <td colSpan={tableColumnCount} className="text-center py-16">
                     <div className="flex items-center justify-center gap-3">
                       <div
                         className="w-5 h-5 border-2 rounded-full animate-spin"
@@ -333,7 +374,7 @@ export default function StaffMasterPage({
               ) : staff.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={tableColumnCount}
                     className="text-center py-16 text-text-muted text-sm"
                   >
                     {emptyStateMessage}
@@ -374,9 +415,19 @@ export default function StaffMasterPage({
                         {item.category_name}
                       </span>
                     </td>
+                    {isDoctorMode && (
+                      <td className="p-4 text-text-secondary text-sm hidden md:table-cell">
+                        {item.department || "—"}
+                      </td>
+                    )}
                     <td className="p-4 text-text-secondary text-sm hidden md:table-cell">
                       {item.designation || "—"}
                     </td>
+                    {isDoctorMode && (
+                      <td className="p-4 text-text-secondary text-sm hidden lg:table-cell">
+                        {item.specialization || "—"}
+                      </td>
+                    )}
                     <td className="p-4 text-text-muted text-sm font-mono hidden lg:table-cell">
                       {item.registration_number || "—"}
                     </td>
@@ -485,6 +536,54 @@ export default function StaffMasterPage({
                   )}
                 </div>
 
+                {isDoctorMode && (
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                      Branch
+                    </label>
+                    <input
+                      type="text"
+                      value={form.branch}
+                      onChange={(event) =>
+                        setForm({ ...form, branch: event.target.value })
+                      }
+                      className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
+                    />
+                  </div>
+                )}
+
+                {isDoctorMode && (
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                      Department
+                    </label>
+                    <input
+                      type="text"
+                      value={form.department}
+                      onChange={(event) =>
+                        setForm({ ...form, department: event.target.value })
+                      }
+                      className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
+                    />
+                  </div>
+                )}
+
+                {isDoctorMode && (
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                      Unit
+                    </label>
+                    <input
+                      type="text"
+                      value={form.unit}
+                      onChange={(event) =>
+                        setForm({ ...form, unit: event.target.value })
+                      }
+                      className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
+                    />
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm text-text-secondary mb-1.5 font-medium">
                     Designation
@@ -497,12 +596,45 @@ export default function StaffMasterPage({
                     }
                     placeholder="e.g. Senior Resident"
                     className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm placeholder-text-muted/50"
+                    required={isDoctorMode}
                   />
                 </div>
 
+                {isDoctorMode && (
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                      Qualification
+                    </label>
+                    <input
+                      type="text"
+                      value={form.qualification}
+                      onChange={(event) =>
+                        setForm({ ...form, qualification: event.target.value })
+                      }
+                      className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
+                    />
+                  </div>
+                )}
+
+                {isDoctorMode && (
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                      Specialisation
+                    </label>
+                    <input
+                      type="text"
+                      value={form.specialization}
+                      onChange={(event) =>
+                        setForm({ ...form, specialization: event.target.value })
+                      }
+                      className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
+                    />
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm text-text-secondary mb-1.5 font-medium">
-                    Registration No.
+                    {isDoctorMode ? "License No" : "Employee Number"}
                   </label>
                   <input
                     type="text"

@@ -6,6 +6,9 @@ const roleCheck = require('../middleware/roleCheck');
 
 router.get('/', auth, rosterController.getByDate);
 router.get('/shifts', auth, rosterController.getShifts);
+router.post('/shifts', auth, roleCheck('super_admin'), rosterController.createShift);
+router.put('/shifts/:id', auth, roleCheck('super_admin'), rosterController.updateShift);
+router.put('/shifts/:id/toggle', auth, roleCheck('super_admin'), rosterController.toggleShift);
 router.post('/', auth, roleCheck('casualty_incharge', 'super_admin'), rosterController.create);
 router.post('/copy', auth, roleCheck('casualty_incharge', 'super_admin'), rosterController.copyRoster);
 router.post('/bulk', auth, roleCheck('casualty_incharge', 'super_admin'), rosterController.bulkAssign);

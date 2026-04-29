@@ -30,6 +30,42 @@ const SHIFT_STYLES = {
   },
 };
 
+const SHIFT_FALLBACKS = [
+  {
+    text: "#0EA5E9",
+    bg: "rgba(14,165,233,0.08)",
+    border: "rgba(14,165,233,0.2)",
+    badge: "shift-sky-badge",
+  },
+  {
+    text: "#22C55E",
+    bg: "rgba(34,197,94,0.08)",
+    border: "rgba(34,197,94,0.2)",
+    badge: "shift-green-badge",
+  },
+  {
+    text: "#F97316",
+    bg: "rgba(249,115,22,0.08)",
+    border: "rgba(249,115,22,0.2)",
+    badge: "shift-orange-badge",
+  },
+  {
+    text: "#E11D48",
+    bg: "rgba(225,29,72,0.08)",
+    border: "rgba(225,29,72,0.2)",
+    badge: "shift-rose-badge",
+  },
+  {
+    text: "#8B5CF6",
+    bg: "rgba(139,92,246,0.08)",
+    border: "rgba(139,92,246,0.2)",
+    badge: "shift-violet-badge",
+  },
+];
+
+const getShiftStyles = (shift, index) =>
+  SHIFT_STYLES[shift.name] || SHIFT_FALLBACKS[index % SHIFT_FALLBACKS.length];
+
 export default function RosterPage() {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [roster, setRoster] = useState([]);
@@ -105,13 +141,19 @@ export default function RosterPage() {
 
   const isAssigned = (staffId) => roster.some((r) => r.staff_id === staffId);
 
-  const handleAssign = async (shiftId, staffId) => {
+  const handleAssign = async (shiftId, staffId, options = {}) => {
     try {
-      await api.post("/roster", {
+      const payload = {
         roster_date: date,
         shift_id: shiftId,
         staff_id: staffId,
-      });
+      };
+
+      if (options.allow_duplicate) {
+        payload.allow_duplicate = true;
+      }
+
+      await api.post("/roster", payload);
       toast.success("Staff assigned");
       fetchRoster();
     } catch (err) {
@@ -276,8 +318,8 @@ export default function RosterPage() {
                   >
                     Category
                   </th>
-                  {shifts.map((s) => {
-                    const colors = SHIFT_STYLES[s.name] || SHIFT_STYLES.Morning;
+                  {shifts.map((s, sIndex) => {
+                    const colors = getShiftStyles(s, sIndex);
                     return (
                       <th key={s.id} className="text-center p-4 min-w-[220px]">
                         <span
@@ -306,13 +348,12 @@ export default function RosterPage() {
                         {cat.name}
                       </span>
                     </td>
-                    {shifts.map((shift) => {
+                    {shifts.map((shift, shiftIndex) => {
                       const assigned = getAssigned(cat.id, shift.id);
                       const available = (staffByCategory[cat.id] || []).filter(
                         (s) => !isAssigned(s.id),
                       );
-                      const colors =
-                        SHIFT_STYLES[shift.name] || SHIFT_STYLES.Morning;
+                      const colors = getShiftStyles(shift, shiftIndex);
                       return (
                         <td key={shift.id} className="p-3 align-top">
                           <div className="space-y-2 min-h-[60px]">
@@ -328,13 +369,30 @@ export default function RosterPage() {
                                 <span className="text-text-primary text-sm">
                                   {r.staff_name}
                                 </span>
-                                <button
-                                  onClick={() => handleRemove(r.id)}
-                                  className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all duration-200"
-                                  style={{ color: "#EF4444" }}
-                                >
-                                  <HiOutlineTrash className="w-3.5 h-3.5" />
-                                </button>
+                                <div className="flex items-center gap-1.5">
+                                  {r.category_name === "Doctor" && (
+                                    <button
+                                      onClick={() =>
+                                        handleAssign(shift.id, r.staff_id, {
+                                          allow_duplicate: true,
+                                        })
+                                      }
+                                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all duration-200"
+                                      style={{ color: "#0EA5E9" }}
+                                      title="Same doctor"
+                                    >
+                                      <HiOutlineDuplicate className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => handleRemove(r.id)}
+                                    className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all duration-200"
+                                    style={{ color: "#EF4444" }}
+                                    title="Remove"
+                                  >
+                                    <HiOutlineTrash className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                               </div>
                             ))}
                             {available.length > 0 && (

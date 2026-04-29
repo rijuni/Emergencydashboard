@@ -10,6 +10,9 @@ import RosterPage from "./pages/RosterPage";
 import CertificatesPage from "./pages/CertificatesPage";
 import SettingsPage from "./pages/SettingsPage";
 import DisplayPage from "./pages/DisplayPage";
+import UserManagementPage from "./pages/UserManagementPage";
+import ShiftManagementPage from "./pages/ShiftManagementPage";
+import DoctorsDisplayPage from "./pages/DoctorsDisplayPage";
 import Layout from "./components/common/Layout";
 
 const ProtectedRoute = ({ children }) => {
@@ -42,6 +45,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/display" element={<DisplayPage />} />
+      <Route path="/display/doctors" element={<DoctorsDisplayPage />} />
       <Route
         path="/"
         element={
@@ -84,6 +88,22 @@ function AppRoutes() {
           element={
             <RoleRoute allowedRoles={["super_admin"]}>
               <CertificatesPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="users"
+          element={
+            <RoleRoute allowedRoles={["super_admin"]}>
+              <UserManagementPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="shifts"
+          element={
+            <RoleRoute allowedRoles={["super_admin"]}>
+              <ShiftManagementPage />
             </RoleRoute>
           }
         />

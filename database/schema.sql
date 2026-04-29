@@ -30,7 +30,12 @@ CREATE TABLE IF NOT EXISTS staff (
     id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
     category_id INT NOT NULL,
+    branch VARCHAR(100),
+    department VARCHAR(100),
+    unit VARCHAR(100),
     designation VARCHAR(100),
+    qualification VARCHAR(150),
+    specialization VARCHAR(150),
     registration_number VARCHAR(50),
     phone VARCHAR(15),
     email VARCHAR(100),
@@ -56,6 +61,7 @@ CREATE TABLE IF NOT EXISTS roster (
     roster_date DATE NOT NULL,
     shift_id INT NOT NULL,
     staff_id INT NOT NULL,
+    slot_index INT NOT NULL DEFAULT 1,
     assigned_by INT,
     notes VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -63,7 +69,7 @@ CREATE TABLE IF NOT EXISTS roster (
     FOREIGN KEY (shift_id) REFERENCES shifts(id),
     FOREIGN KEY (staff_id) REFERENCES staff(id),
     FOREIGN KEY (assigned_by) REFERENCES users(id),
-    UNIQUE KEY unique_roster (roster_date, shift_id, staff_id)
+    UNIQUE KEY unique_roster (roster_date, shift_id, staff_id, slot_index)
 );
 
 -- Staff certificates/licenses

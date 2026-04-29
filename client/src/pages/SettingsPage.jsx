@@ -17,49 +17,25 @@ export default function SettingsPage() {
     night_mode_start: "22:00",
     night_mode_end: "06:00",
   });
-  const [users, setUsers] = useState([]);
-  const [usersLoading, setUsersLoading] = useState(true);
-  const [creatingUser, setCreatingUser] = useState(false);
-  const [newUser, setNewUser] = useState({
-    username: "",
-    password: "",
-    full_name: "",
-    role: "casualty_incharge",
-  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-
-  const fetchUsers = async () => {
-    try {
-      const res = await api.get("/auth/users");
-      setUsers(res.data.users || []);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load users");
-    }
-  };
 
   useEffect(() => {
     let isActive = true;
 
     const loadInitialData = async () => {
       try {
-        const [settingsRes, usersRes] = await Promise.all([
-          api.get("/display/settings"),
-          api.get("/auth/users"),
-        ]);
+        const settingsRes = await api.get("/display/settings");
 
         if (!isActive) return;
         setSettings((prev) => ({ ...prev, ...settingsRes.data.settings }));
-        setUsers(usersRes.data.users || []);
       } catch (err) {
         console.error(err);
         toast.error("Failed to load settings data");
       } finally {
         if (isActive) {
           setLoading(false);
-          setUsersLoading(false);
         }
       }
     };
@@ -82,44 +58,6 @@ export default function SettingsPage() {
       toast.error("Failed to save settings");
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-
-    if (!newUser.username || !newUser.password || !newUser.full_name) {
-      toast.error("Username, full name and password are required");
-      return;
-    }
-
-    setCreatingUser(true);
-    try {
-      await api.post("/auth/register", newUser);
-      toast.success("User created successfully");
-      setNewUser({
-        username: "",
-        password: "",
-        full_name: "",
-        role: "casualty_incharge",
-      });
-      fetchUsers();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to create user");
-    } finally {
-      setCreatingUser(false);
-    }
-  };
-
-  const handleToggleUser = async (id) => {
-    try {
-      await api.put(`/auth/users/${id}/toggle`);
-      toast.success("User status updated");
-      fetchUsers();
-    } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Failed to update user status",
-      );
     }
   };
 
@@ -336,165 +274,33 @@ export default function SettingsPage() {
               →
             </span>
           </a>
-        </div>
-      </div>
-
-      {/* User Master */}
-      <div
-        className="glass-card rounded-xl p-6 animate-fade-in-up"
-        style={{ animationDelay: "400ms" }}
-      >
-        <h2 className="text-base font-display font-semibold text-text-primary mb-5">
-          User Master
-        </h2>
-
-        <form
-          onSubmit={handleCreateUser}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"
-        >
-          <div>
-            <label className="block text-sm text-text-secondary mb-1.5 font-medium">
-              Full Name
-            </label>
-            <input
-              type="text"
-              value={newUser.full_name}
-              onChange={(e) =>
-                setNewUser({ ...newUser, full_name: e.target.value })
-              }
-              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
-              placeholder="Casualty Department Head"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1.5 font-medium">
-              Username
-            </label>
-            <input
-              type="text"
-              value={newUser.username}
-              onChange={(e) =>
-                setNewUser({ ...newUser, username: e.target.value })
-              }
-              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
-              placeholder="head.casualty"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1.5 font-medium">
-              Temporary Password
-            </label>
-            <input
-              type="password"
-              value={newUser.password}
-              onChange={(e) =>
-                setNewUser({ ...newUser, password: e.target.value })
-              }
-              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
-              placeholder="Create temporary password"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1.5 font-medium">
-              Role
-            </label>
-            <select
-              value={newUser.role}
-              onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
+          <a
+            href="/display/doctors"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 p-3.5 rounded-xl transition-all duration-300 group bg-bg-card/50 border border-border hover:border-primary-light/20"
+          >
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: "rgba(14,165,233,0.12)" }}
             >
-              <option value="casualty_incharge">Casualty Head</option>
-              <option value="super_admin">Super Admin</option>
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <button
-              type="submit"
-              className="btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50"
-              disabled={creatingUser}
-            >
-              {creatingUser ? "Creating..." : "Create User"}
-            </button>
-          </div>
-        </form>
-
-        <div className="overflow-x-auto">
-          <table className="w-full table-premium">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left p-3 text-text-muted text-xs font-semibold uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="text-left p-3 text-text-muted text-xs font-semibold uppercase tracking-wider">
-                  Username
-                </th>
-                <th className="text-left p-3 text-text-muted text-xs font-semibold uppercase tracking-wider">
-                  Role
-                </th>
-                <th className="text-left p-3 text-text-muted text-xs font-semibold uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="text-right p-3 text-text-muted text-xs font-semibold uppercase tracking-wider">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {usersLoading ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="p-6 text-center text-text-muted text-sm"
-                  >
-                    Loading users...
-                  </td>
-                </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="p-6 text-center text-text-muted text-sm"
-                  >
-                    No users found
-                  </td>
-                </tr>
-              ) : (
-                users.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="border-b border-border/30 hover:bg-bg-card/40 transition-all duration-200"
-                  >
-                    <td className="p-3 text-text-primary text-sm">
-                      {user.full_name}
-                    </td>
-                    <td className="p-3 text-text-secondary text-sm">
-                      {user.username}
-                    </td>
-                    <td className="p-3 text-text-secondary text-sm">
-                      {user.role === "super_admin"
-                        ? "Super Admin"
-                        : "Casualty Head"}
-                    </td>
-                    <td className="p-3">
-                      <span
-                        className={`text-xs px-2.5 py-1 rounded-full ${user.is_active ? "status-active" : "status-inactive"}`}
-                      >
-                        {user.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="p-3 text-right">
-                      <button
-                        onClick={() => handleToggleUser(user.id)}
-                        className="btn-secondary px-3 py-1.5 rounded-lg text-xs"
-                      >
-                        {user.is_active ? "Deactivate" : "Activate"}
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+              <HiOutlineDesktopComputer
+                className="w-5 h-5"
+                style={{ color: "#0EA5E9" }}
+              />
+            </div>
+            <div className="flex-1">
+              <p className="text-text-primary text-sm font-medium group-hover:text-primary-light transition-colors">
+                Open Doctor Availability Display
+              </p>
+              <p className="text-text-muted text-xs mt-0.5">
+                Show only doctors on duty in a new tab
+              </p>
+            </div>
+            <span className="text-text-muted text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+              →
+            </span>
+          </a>
         </div>
       </div>
     </div>

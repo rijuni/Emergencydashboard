@@ -1,13 +1,41 @@
 const pool = require('../config/db');
 
+let hasSlotIndexCache;
+let hasSlotIndexCheckedAt = 0;
+
+const getHasSlotIndex = async () => {
+  const now = Date.now();
+  if (hasSlotIndexCache !== undefined && now - hasSlotIndexCheckedAt < 60000) {
+    return hasSlotIndexCache;
+  }
+
+  const [columns] = await pool.query("SHOW COLUMNS FROM roster LIKE 'slot_index'");
+  hasSlotIndexCache = columns.length > 0;
+  hasSlotIndexCheckedAt = now;
+  return hasSlotIndexCache;
+};
+
 // Get today's display data (PUBLIC - no auth required)
 exports.getToday = async (req, res) => {
   try {
     const date = req.query.date || new Date().toISOString().split('T')[0];
 
-    // Get roster data
-    const [roster] = await pool.query(`
-      SELECT r.id, r.roster_date, r.notes,
+    const hasSlotIndex = await getHasSlotIndex();
+    const rosterQuery = hasSlotIndex
+      ? `
+      SELECT r.id, r.roster_date, r.notes, r.slot_index,
+             s.id as staff_id, s.full_name as staff_name, s.designation, s.registration_number,
+             sc.id as category_id, sc.name as category_name, sc.display_order as category_order,
+             sh.id as shift_id, sh.name as shift_name, sh.start_time, sh.end_time, sh.display_order as shift_order
+      FROM roster r
+      JOIN staff s ON r.staff_id = s.id
+      JOIN staff_categories sc ON s.category_id = sc.id
+      JOIN shifts sh ON r.shift_id = sh.id
+      WHERE r.roster_date = ? AND s.is_active = TRUE
+      ORDER BY sc.display_order, sh.display_order, r.slot_index, s.full_name
+    `
+      : `
+      SELECT r.id, r.roster_date, r.notes, 1 as slot_index,
              s.id as staff_id, s.full_name as staff_name, s.designation, s.registration_number,
              sc.id as category_id, sc.name as category_name, sc.display_order as category_order,
              sh.id as shift_id, sh.name as shift_name, sh.start_time, sh.end_time, sh.display_order as shift_order
@@ -17,7 +45,9 @@ exports.getToday = async (req, res) => {
       JOIN shifts sh ON r.shift_id = sh.id
       WHERE r.roster_date = ? AND s.is_active = TRUE
       ORDER BY sc.display_order, sh.display_order, s.full_name
-    `, [date]);
+    `;
+
+    const [roster] = await pool.query(rosterQuery, [date]);
 
     // Get all categories and shifts for the grid structure
     const [categories] = await pool.query(

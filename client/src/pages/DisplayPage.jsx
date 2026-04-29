@@ -124,6 +124,47 @@ export default function DisplayPage() {
     },
   };
 
+  const shiftFallbacks = [
+    {
+      bg: "rgba(14, 165, 233, 0.08)",
+      bgActive: "rgba(14, 165, 233, 0.16)",
+      border: "rgba(14, 165, 233, 0.35)",
+      text: "#0EA5E9",
+      glow: "0 0 26px rgba(14, 165, 233, 0.12)",
+    },
+    {
+      bg: "rgba(34, 197, 94, 0.08)",
+      bgActive: "rgba(34, 197, 94, 0.16)",
+      border: "rgba(34, 197, 94, 0.35)",
+      text: "#22C55E",
+      glow: "0 0 26px rgba(34, 197, 94, 0.12)",
+    },
+    {
+      bg: "rgba(249, 115, 22, 0.08)",
+      bgActive: "rgba(249, 115, 22, 0.16)",
+      border: "rgba(249, 115, 22, 0.35)",
+      text: "#F97316",
+      glow: "0 0 26px rgba(249, 115, 22, 0.12)",
+    },
+    {
+      bg: "rgba(225, 29, 72, 0.08)",
+      bgActive: "rgba(225, 29, 72, 0.16)",
+      border: "rgba(225, 29, 72, 0.35)",
+      text: "#E11D48",
+      glow: "0 0 26px rgba(225, 29, 72, 0.12)",
+    },
+    {
+      bg: "rgba(139, 92, 246, 0.08)",
+      bgActive: "rgba(139, 92, 246, 0.16)",
+      border: "rgba(139, 92, 246, 0.35)",
+      text: "#8B5CF6",
+      glow: "0 0 26px rgba(139, 92, 246, 0.12)",
+    },
+  ];
+
+  const getShiftColors = (shift, index) =>
+    shiftColors[shift.name] || shiftFallbacks[index % shiftFallbacks.length];
+
   const categoryColors = [
     "#14B8A6",
     "#3B82F6",
@@ -280,9 +321,8 @@ export default function DisplayPage() {
                     Category / Shift
                   </span>
                 </th>
-                {data?.shifts?.map((shift) => {
-                  const colors =
-                    shiftColors[shift.name] || shiftColors["Morning"];
+                {data?.shifts?.map((shift, shiftIndex) => {
+                  const colors = getShiftColors(shift, shiftIndex);
                   const isCurrent = shift.id === currentShiftId;
                   return (
                     <th
@@ -353,11 +393,10 @@ export default function DisplayPage() {
                         {cat.name}
                       </span>
                     </td>
-                    {data?.shifts?.map((shift) => {
+                    {data?.shifts?.map((shift, shiftIndex) => {
                       const staffList = getStaffForCell(cat.name, shift.id);
                       const isCurrent = shift.id === currentShiftId;
-                      const colors =
-                        shiftColors[shift.name] || shiftColors["Morning"];
+                      const colors = getShiftColors(shift, shiftIndex);
 
                       return (
                         <td
