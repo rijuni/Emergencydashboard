@@ -66,6 +66,17 @@ const SHIFT_FALLBACKS = [
 const getShiftStyles = (shift, index) =>
   SHIFT_STYLES[shift.name] || SHIFT_FALLBACKS[index % SHIFT_FALLBACKS.length];
 
+const ROSTER_CATEGORY_ALLOWLIST = [
+  "Doctor",
+  "Nursing Officer",
+  "Pharmacist",
+  "Technician",
+  "Night Supervisor",
+];
+const NIGHT_SUPERVISOR_NAME = "Night Supervisor";
+const NIGHT_SHIFT_NAME = "Night";
+const normalizeName = (value) => (value || "").trim().toLowerCase();
+
 export default function RosterPage() {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [roster, setRoster] = useState([]);
@@ -123,23 +134,35 @@ export default function RosterPage() {
     setDate(d.toISOString().split("T")[0]);
   };
 
+  const rosterCategories = useMemo(
+    () =>
+      categories.filter((category) =>
+        ROSTER_CATEGORY_ALLOWLIST.some(
+          (name) => normalizeName(name) === normalizeName(category.name),
+        ),
+      ),
+    [categories],
+  );
+
   const getAssigned = (categoryId, shiftId) => {
     return roster.filter(
       (r) =>
-        r.category_name === categories.find((c) => c.id === categoryId)?.name &&
+        r.category_name ===
+          rosterCategories.find((c) => c.id === categoryId)?.name &&
         r.shift_id === shiftId,
     );
   };
 
   const staffByCategory = useMemo(() => {
     const map = {};
-    categories.forEach((c) => {
+    rosterCategories.forEach((c) => {
       map[c.id] = staff.filter((s) => s.category_id === c.id);
     });
     return map;
-  }, [staff, categories]);
+  }, [staff, rosterCategories]);
 
-  const isAssigned = (staffId) => roster.some((r) => r.staff_id === staffId);
+  const isAssigned = (staffId, shiftId) =>
+    roster.some((r) => r.staff_id === staffId && r.shift_id === shiftId);
 
   const handleAssign = async (shiftId, staffId, options = {}) => {
     try {
@@ -338,7 +361,7 @@ export default function RosterPage() {
                 </tr>
               </thead>
               <tbody>
-                {categories.map((cat) => (
+                {rosterCategories.map((cat) => (
                   <tr key={cat.id} className="border-b border-border/30">
                     <td
                       className="p-4 sticky left-0 z-10"
@@ -349,14 +372,30 @@ export default function RosterPage() {
                       </span>
                     </td>
                     {shifts.map((shift, shiftIndex) => {
-                      const assigned = getAssigned(cat.id, shift.id);
-                      const available = (staffByCategory[cat.id] || []).filter(
-                        (s) => !isAssigned(s.id),
-                      );
+                      const isNightSupervisor =
+                        normalizeName(cat.name) ===
+                        normalizeName(NIGHT_SUPERVISOR_NAME);
+                      const isNightShift =
+                        normalizeName(shift.name) ===
+                        normalizeName(NIGHT_SHIFT_NAME);
+                      const isShiftAllowed = !isNightSupervisor || isNightShift;
+                      const assigned = isShiftAllowed
+                        ? getAssigned(cat.id, shift.id)
+                        : [];
+                      const available = isShiftAllowed
+                        ? (staffByCategory[cat.id] || []).filter(
+                            (s) => !isAssigned(s.id, shift.id),
+                          )
+                        : [];
                       const colors = getShiftStyles(shift, shiftIndex);
                       return (
                         <td key={shift.id} className="p-3 align-top">
                           <div className="space-y-2 min-h-[60px]">
+                            {!isShiftAllowed && (
+                              <div className="text-text-muted text-xs text-center py-4">
+                                Night only
+                              </div>
+                            )}
                             {assigned.map((r) => (
                               <div
                                 key={r.id}
@@ -370,20 +409,6 @@ export default function RosterPage() {
                                   {r.staff_name}
                                 </span>
                                 <div className="flex items-center gap-1.5">
-                                  {r.category_name === "Doctor" && (
-                                    <button
-                                      onClick={() =>
-                                        handleAssign(shift.id, r.staff_id, {
-                                          allow_duplicate: true,
-                                        })
-                                      }
-                                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all duration-200"
-                                      style={{ color: "#0EA5E9" }}
-                                      title="Same doctor"
-                                    >
-                                      <HiOutlineDuplicate className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
                                   <button
                                     onClick={() => handleRemove(r.id)}
                                     className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all duration-200"

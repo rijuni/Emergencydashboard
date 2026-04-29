@@ -10,10 +10,37 @@ const app = express();
 
 // Security middleware
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true
-}));
+
+const allowedOrigins = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
+
+const devOriginPattern = new RegExp(
+  "^http://(localhost|127\\.0\\.0\\.1)(:\\d+)?$|" +
+    "^http://(192\\.168|10|172\\.(1[6-9]|2\\d|3[0-1]))\\.\\d{1,3}\\.\\d{1,3}(:\\d+)?$|" +
+    "^http://[a-zA-Z0-9-]+(:\\d+)?$",
+  "i",
+);
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  if (process.env.NODE_ENV !== "production") {
+    return devOriginPattern.test(origin);
+  }
+  return false;
+};
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  }),
+);
 
 // Rate limiting for auth endpoints
 const authLimiter = rateLimit({

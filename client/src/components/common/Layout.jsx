@@ -19,7 +19,7 @@ const navItemsByRole = {
   super_admin: [
     { to: "/", icon: HiOutlineViewGrid, label: "Dashboard", end: true },
     { to: "/employee-master", icon: HiOutlineUsers, label: "Employee Master" },
-    { to: "/doctor-master", icon: HiOutlineUsers, label: "Doctor Master" },
+    { to: "/doctor-master", icon: HiOutlineUsers, label: "Doctor Directory" },
     { to: "/roster", icon: HiOutlineCalendar, label: "Roster Duty" },
     { to: "/certificates", icon: HiOutlineDocumentText, label: "Certificates" },
     { to: "/users", icon: HiOutlineUsers, label: "User Master" },

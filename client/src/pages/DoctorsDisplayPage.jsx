@@ -88,9 +88,50 @@ export default function DoctorsDisplayPage() {
   const currentShiftId = getCurrentShift();
   const currentShift = data?.shifts?.find((s) => s.id === currentShiftId);
 
-  const onDutyDoctors = (data?.roster || []).filter(
-    (r) => r.category_name === "Doctor" && r.shift_id === currentShiftId,
-  );
+  const liveCategories = [
+    { key: "Doctor", label: "On-Duty Doctors" },
+    { key: "Nursing Officer", label: "On-Duty Nursing Officers" },
+    { key: "Pharmacist", label: "On-Duty Pharmacists" },
+  ];
+
+  const categoryStyles = {
+    Doctor: {
+      accent: "#F97316",
+      text: "#9A3412",
+      badgeBg: "rgba(249,115,22,0.15)",
+      badgeText: "#C2410C",
+      border: "rgba(249,115,22,0.35)",
+      cardBg:
+        "linear-gradient(135deg, rgba(249,115,22,0.12), rgba(255,255,255,0.8))",
+    },
+    "Nursing Officer": {
+      accent: "#3B82F6",
+      text: "#1D4ED8",
+      badgeBg: "rgba(59,130,246,0.14)",
+      badgeText: "#1D4ED8",
+      border: "rgba(59,130,246,0.35)",
+      cardBg:
+        "linear-gradient(135deg, rgba(59,130,246,0.12), rgba(255,255,255,0.8))",
+    },
+    Pharmacist: {
+      accent: "#10B981",
+      text: "#047857",
+      badgeBg: "rgba(16,185,129,0.14)",
+      badgeText: "#047857",
+      border: "rgba(16,185,129,0.35)",
+      cardBg:
+        "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(255,255,255,0.8))",
+    },
+  };
+
+  const onDutyByCategory = liveCategories.reduce((acc, category) => {
+    acc[category.key] = (data?.roster || []).filter(
+      (entry) =>
+        entry.category_name === category.key &&
+        entry.shift_id === currentShiftId,
+    );
+    return acc;
+  }, {});
 
   if (loading) {
     return (
@@ -124,7 +165,7 @@ export default function DoctorsDisplayPage() {
       className="display-fullscreen flex flex-col"
       style={{
         background:
-          "linear-gradient(180deg, #F8FAFC 0%, #EEF4FF 45%, #F8FAFC 100%)",
+          "radial-gradient(circle at 10% 10%, rgba(59,130,246,0.12), transparent 40%), radial-gradient(circle at 90% 0%, rgba(249,115,22,0.12), transparent 45%), linear-gradient(180deg, #F8FAFC 0%, #EEF4FF 45%, #F8FAFC 100%)",
       }}
     >
       <header
@@ -158,7 +199,7 @@ export default function DoctorsDisplayPage() {
                 className="text-sm font-semibold tracking-widest uppercase"
                 style={{ color: "#0F766E" }}
               >
-                Doctor Availability
+                Live Availability
               </p>
             </div>
           </div>
@@ -180,31 +221,66 @@ export default function DoctorsDisplayPage() {
             </div>
           </div>
 
-          <div
-            className="px-5 py-2 rounded-xl text-center"
-            style={{
-              background: "rgba(14,165,233,0.08)",
-              border: "2px solid rgba(14,165,233,0.25)",
-            }}
-          >
+          <div className="flex items-center gap-3">
             <div
-              className="text-xs font-bold uppercase tracking-[0.2em]"
-              style={{ color: "#0EA5E9" }}
+              className="px-5 py-2 rounded-xl text-center"
+              style={{
+                background: "rgba(239,68,68,0.1)",
+                border: "2px solid rgba(239,68,68,0.3)",
+                boxShadow: "0 10px 22px rgba(239,68,68,0.15)",
+                minWidth: "180px",
+                minHeight: "96px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}
             >
-              Current Shift
-            </div>
-            <div
-              className="font-display font-black text-2xl mt-0.5"
-              style={{ color: "#0F172A" }}
-            >
-              {currentShift ? currentShift.name : "—"}
-            </div>
-            {currentShift && (
-              <div className="text-xs" style={{ color: "#64748B" }}>
-                {currentShift.start_time?.slice(0, 5)} –{" "}
-                {currentShift.end_time?.slice(0, 5)}
+              <div
+                className="text-sm font-bold uppercase tracking-[0.3em]"
+                style={{ color: "#B91C1C" }}
+              >
+                Code Blue
               </div>
-            )}
+              <div
+                className="font-display font-black text-4xl mt-1"
+                style={{ color: "#EF4444" }}
+              >
+                {data?.settings?.code_blue || "—"}
+              </div>
+            </div>
+            <div
+              className="px-5 py-2 rounded-xl text-center"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(14,165,233,0.16), rgba(59,130,246,0.08))",
+                border: "2px solid rgba(14,165,233,0.3)",
+                boxShadow: "0 12px 24px rgba(14,165,233,0.12)",
+                minWidth: "180px",
+                minHeight: "96px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}
+            >
+              <div
+                className="text-xs font-bold uppercase tracking-[0.2em]"
+                style={{ color: "#0EA5E9" }}
+              >
+                Current Shift
+              </div>
+              <div
+                className="font-display font-black text-2xl mt-0.5"
+                style={{ color: "#0F172A" }}
+              >
+                {currentShift ? currentShift.name : "—"}
+              </div>
+              {currentShift && (
+                <div className="text-xs" style={{ color: "#64748B" }}>
+                  {currentShift.start_time?.slice(0, 5)} –{" "}
+                  {currentShift.end_time?.slice(0, 5)}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -222,14 +298,14 @@ export default function DoctorsDisplayPage() {
               className="font-display font-bold text-lg tracking-wide"
               style={{ color: "#0F172A" }}
             >
-              On-Duty Doctors
+              Live Duty Roster
             </h2>
             <div
               className="text-xs font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full"
               style={{
-                background: "rgba(20,184,166,0.12)",
+                background: "rgba(20,184,166,0.16)",
                 color: "#0F766E",
-                border: "1px solid rgba(15,118,110,0.2)",
+                border: "1px solid rgba(15,118,110,0.25)",
               }}
             >
               Live Now
@@ -237,46 +313,73 @@ export default function DoctorsDisplayPage() {
           </div>
 
           {currentShiftId ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {onDutyDoctors.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="rounded-xl px-4 py-3"
-                  style={{
-                    border: "1px solid rgba(148, 163, 184, 0.35)",
-                    background:
-                      "linear-gradient(135deg, rgba(14,165,233,0.08), rgba(20,184,166,0.05))",
-                  }}
-                >
-                  <div
-                    className="text-sm font-semibold"
-                    style={{ color: "#0F172A" }}
-                  >
-                    {doc.staff_name}
+            <div className="space-y-6">
+              {liveCategories.map((category) => {
+                const staffList = onDutyByCategory[category.key] || [];
+                const style =
+                  categoryStyles[category.key] || categoryStyles.Doctor;
+                return (
+                  <div key={category.key}>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3
+                        className="text-sm font-semibold uppercase tracking-[0.2em]"
+                        style={{ color: style.text }}
+                      >
+                        {category.label}
+                      </h3>
+                    </div>
+                    {staffList.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {staffList.map((entry) => (
+                          <div
+                            key={entry.id}
+                            className="rounded-xl px-4 py-3"
+                            style={{
+                              border: `1px solid ${style.border}`,
+                              borderLeft: `4px solid ${style.accent}`,
+                              background: style.cardBg,
+                              boxShadow: "0 10px 24px rgba(15,23,42,0.08)",
+                            }}
+                          >
+                            <div
+                              className="text-base md:text-lg font-semibold"
+                              style={{ color: "#0F172A" }}
+                            >
+                              {entry.staff_name}
+                            </div>
+                            {entry.designation && (
+                              <div
+                                className="text-xs mt-1"
+                                style={{ color: "#64748B" }}
+                              >
+                                {entry.designation}
+                              </div>
+                            )}
+                            {entry.registration_number && (
+                              <div
+                                className="text-xs font-mono mt-1"
+                                style={{ color: "#0EA5E9" }}
+                              >
+                                {category.key === "Doctor"
+                                  ? `License #${entry.registration_number}`
+                                  : `ID #${entry.registration_number}`}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div
+                        className="text-center py-6 text-sm"
+                        style={{ color: "#94A3B8" }}
+                      >
+                        No staff assigned for this category in the current
+                        shift.
+                      </div>
+                    )}
                   </div>
-                  {doc.designation && (
-                    <div className="text-xs mt-1" style={{ color: "#64748B" }}>
-                      {doc.designation}
-                    </div>
-                  )}
-                  {doc.registration_number && (
-                    <div
-                      className="text-xs font-mono mt-1"
-                      style={{ color: "#0EA5E9" }}
-                    >
-                      Reg #{doc.registration_number}
-                    </div>
-                  )}
-                </div>
-              ))}
-              {onDutyDoctors.length === 0 && (
-                <div
-                  className="col-span-full text-center py-12 text-sm"
-                  style={{ color: "#94A3B8" }}
-                >
-                  No doctors assigned for the current shift.
-                </div>
-              )}
+                );
+              })}
             </div>
           ) : (
             <div

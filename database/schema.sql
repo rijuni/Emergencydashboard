@@ -138,4 +138,6 @@ INSERT INTO display_settings (setting_key, setting_value) VALUES
 ('display_title', 'CASUALTY DEPARTMENT'),
 ('auto_refresh_seconds', '30'),
 ('night_mode_start', '22:00'),
-('night_mode_end', '06:00');
+('night_mode_end', '06:00'),
+('ambulance_contact_number', ''),
+('ambulance_contact_details', '');

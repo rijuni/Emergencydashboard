@@ -16,6 +16,8 @@ export default function SettingsPage() {
     auto_refresh_seconds: "30",
     night_mode_start: "22:00",
     night_mode_end: "06:00",
+    ambulance_contact_number: "",
+    ambulance_contact_details: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -185,6 +187,42 @@ export default function SettingsPage() {
                 className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
                 min="10"
                 max="300"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                Ambulance Contact Number
+              </label>
+              <input
+                type="text"
+                value={settings.ambulance_contact_number}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    ambulance_contact_number: e.target.value,
+                  })
+                }
+                className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
+                placeholder="108 or 555-0142"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                Ambulance Details
+              </label>
+              <input
+                type="text"
+                value={settings.ambulance_contact_details}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    ambulance_contact_details: e.target.value,
+                  })
+                }
+                className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
+                placeholder="Vehicle KA-01-AB-1234"
               />
             </div>
           </div>
