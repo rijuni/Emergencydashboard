@@ -237,14 +237,14 @@ export default function DisplayPage() {
     >
       {/* ===== HEADER ===== */}
       <header
-        className="shrink-0 px-10 py-5"
+        className="shrink-0 px-8 py-4"
         style={{ borderBottom: "2px solid rgba(148, 163, 184, 0.35)" }}
       >
         <div className="flex items-center justify-between">
           {/* Left: Hospital Info */}
           <div className="flex items-center gap-4">
             <div
-              className="w-20 h-20 rounded-xl flex items-center justify-center relative overflow-hidden p-2"
+              className="w-16 h-16 rounded-xl flex items-center justify-center relative overflow-hidden p-1.5"
               style={{
                 background: "rgba(255,255,255,0.96)",
                 border: "1px solid rgba(148,163,184,0.3)",
@@ -259,13 +259,13 @@ export default function DisplayPage() {
             </div>
             <div>
               <h1
-                className="font-display font-bold text-3xl tracking-wide"
+                className="font-display font-bold text-2xl tracking-wide"
                 style={{ color: "#0F172A" }}
               >
                 {data?.settings?.hospital_name || "HOSPITAL"}
               </h1>
               <p
-                className="text-lg font-semibold tracking-widest uppercase"
+                className="text-base font-semibold tracking-widest uppercase"
                 style={{ color: "#0F766E" }}
               >
                 {data?.settings?.display_title || "CASUALTY DEPARTMENT"}
@@ -276,7 +276,7 @@ export default function DisplayPage() {
           {/* Center: Date & Time */}
           <div className="text-center">
             <div
-              className="font-display font-bold text-2xl tracking-wide"
+              className="font-display font-bold text-xl tracking-wide"
               style={{ color: "#0F172A" }}
             >
               {data?.date
@@ -284,7 +284,7 @@ export default function DisplayPage() {
                 : "—"}
             </div>
             <div
-              className="font-mono text-xl font-medium tabular-nums"
+              className="font-mono text-lg font-medium tabular-nums"
               style={{ color: "#0F766E" }}
             >
               {formatTime(currentTime)}
@@ -292,29 +292,29 @@ export default function DisplayPage() {
           </div>
 
           {/* Right: Code Blue + Ambulance */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div
-              className="text-center px-6 py-4 rounded-xl animate-code-blue relative overflow-hidden"
+              className="text-center px-5 py-3 rounded-xl animate-code-blue relative overflow-hidden"
               style={{
                 background: "rgba(239, 68, 68, 0.08)",
                 border: "2px solid rgba(239, 68, 68, 0.3)",
               }}
             >
               <span
-                className="text-xs font-bold uppercase tracking-[0.2em] block"
+                className="text-[11px] font-bold uppercase tracking-[0.2em] block"
                 style={{ color: "#B91C1C" }}
               >
                 Code Blue
               </span>
               <div
-                className="font-display font-black text-5xl mt-1 leading-none"
+                className="font-display font-black text-4xl mt-1 leading-none"
                 style={{ color: "#EF4444" }}
               >
                 {data?.settings?.code_blue || "—"}
               </div>
             </div>
             <div
-              className="px-6 py-4 rounded-xl min-w-[240px]"
+              className="px-5 py-3 rounded-xl min-w-[210px] text-center"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(15,118,110,0.12), rgba(16,185,129,0.08))",
@@ -323,18 +323,18 @@ export default function DisplayPage() {
               }}
             >
               <div
-                className="text-xs font-bold uppercase tracking-[0.2em]"
+                className="text-[13px] font-bold uppercase tracking-[0.2em]"
                 style={{ color: "#0F766E" }}
               >
                 Ambulance
               </div>
               <div
-                className="font-display font-black text-3xl mt-1 leading-none"
+                className="font-display font-black text-2xl mt-1 leading-none"
                 style={{ color: "#0F172A" }}
               >
                 {ambulanceNumber || "—"}
               </div>
-              <div className="text-sm" style={{ color: "#64748B" }}>
+              <div className="text-xs" style={{ color: "#64748B" }}>
                 {ambulanceDetails || "Emergency transport"}
               </div>
             </div>
@@ -343,7 +343,7 @@ export default function DisplayPage() {
       </header>
 
       {/* ===== MAIN ROSTER TABLE ===== */}
-      <div className="flex-1 px-10 py-6 overflow-hidden">
+      <div className="flex-1 px-8 py-4 overflow-hidden">
         <div
           className="h-full rounded-xl overflow-hidden"
           style={{
@@ -355,7 +355,7 @@ export default function DisplayPage() {
             <thead>
               <tr>
                 <th
-                  className="w-[240px] p-5 text-left"
+                  className="w-[200px] p-4 text-left"
                   style={{
                     background: "rgba(248, 250, 252, 0.95)",
                     borderBottom: "2px solid rgba(148,163,184,0.45)",
@@ -363,7 +363,7 @@ export default function DisplayPage() {
                   }}
                 >
                   <span
-                    className="font-display font-bold text-sm uppercase tracking-[0.15em]"
+                    className="font-display font-bold text-xs uppercase tracking-[0.15em]"
                     style={{ color: "#334155" }}
                   >
                     Category / Shift
@@ -375,7 +375,7 @@ export default function DisplayPage() {
                   return (
                     <th
                       key={shift.id}
-                      className="p-5 text-center relative"
+                      className="p-4 text-center relative"
                       style={{
                         background: isCurrent
                           ? colors.bgActive
@@ -387,13 +387,13 @@ export default function DisplayPage() {
                       }}
                     >
                       <div
-                        className="font-display font-bold text-2xl tracking-wide"
+                        className="font-display font-bold text-xl tracking-wide"
                         style={{ color: colors.text }}
                       >
                         {shift.name.toUpperCase()}
                       </div>
                       <div
-                        className="text-sm mt-1 font-mono"
+                        className="text-xs mt-1 font-mono"
                         style={{ color: "#64748B" }}
                       >
                         {shift.start_time?.slice(0, 5)} –{" "}
@@ -428,14 +428,14 @@ export default function DisplayPage() {
                     style={{ borderBottom: "1px solid rgba(148,163,184,0.2)" }}
                   >
                     <td
-                      className="p-5 align-top"
+                      className="p-4 align-top"
                       style={{
                         background: "rgba(248, 250, 252, 0.9)",
                         borderRight: `3px solid ${catColor}`,
                       }}
                     >
                       <span
-                        className="font-display font-bold text-lg uppercase tracking-wide"
+                        className="font-display font-bold text-base uppercase tracking-wide"
                         style={{ color: catColor }}
                       >
                         {cat.name}
@@ -458,7 +458,7 @@ export default function DisplayPage() {
                       return (
                         <td
                           key={shift.id}
-                          className="p-4 align-top"
+                          className="p-3 align-top"
                           style={{
                             background: isCurrent ? colors.bg : "transparent",
                             borderRight: "1px solid rgba(148,163,184,0.2)",
@@ -468,7 +468,7 @@ export default function DisplayPage() {
                           <div className="space-y-1.5">
                             {!isShiftAllowed && (
                               <div
-                                className="text-center py-4 text-sm"
+                                className="text-center py-3 text-xs"
                                 style={{ color: "#94A3B8" }}
                               >
                                 Night only
@@ -477,7 +477,7 @@ export default function DisplayPage() {
                             {staffList.map((s) => (
                               <div
                                 key={s.id}
-                                className="px-4 py-3 rounded-lg text-lg font-medium"
+                                className="px-3 py-2.5 rounded-lg text-base font-medium"
                                 style={{
                                   background: isCurrent
                                     ? "rgba(255, 255, 255, 0.95)"
@@ -492,7 +492,7 @@ export default function DisplayPage() {
                                 {s.staff_name}
                                 {s.designation && (
                                   <span
-                                    className="block text-sm mt-1"
+                                    className="block text-xs mt-1"
                                     style={{ color: "#64748B" }}
                                   >
                                     {s.designation}
@@ -502,7 +502,7 @@ export default function DisplayPage() {
                             ))}
                             {staffList.length === 0 && isShiftAllowed && (
                               <div
-                                className="text-center py-4 text-sm"
+                                className="text-center py-3 text-xs"
                                 style={{ color: "#94A3B8" }}
                               >
                                 —
@@ -522,12 +522,12 @@ export default function DisplayPage() {
 
       {/* ===== CERTIFICATE TICKER ===== */}
       <footer
-        className="shrink-0 px-10 py-4"
+        className="shrink-0 px-8 py-3"
         style={{ borderTop: "1px solid rgba(148,163,184,0.35)" }}
       >
         <div className="flex items-center gap-4">
           <span
-            className="shrink-0 text-sm font-bold uppercase tracking-[0.15em] px-4 py-2 rounded-lg"
+            className="shrink-0 text-xs font-bold uppercase tracking-[0.15em] px-3 py-1.5 rounded-lg"
             style={{
               background: "rgba(15, 118, 110, 0.12)",
               color: "#0F766E",
@@ -554,7 +554,7 @@ export default function DisplayPage() {
             ></div>
 
             <div
-              className="flex gap-14 animate-ticker whitespace-nowrap"
+              className="flex gap-10 animate-ticker whitespace-nowrap"
               ref={tickerRef}
             >
               {data?.certificates?.length > 0 ? (
@@ -563,11 +563,11 @@ export default function DisplayPage() {
                     (cert, i) => (
                       <span
                         key={i}
-                        className="text-base inline-flex items-center gap-3"
+                        className="text-sm inline-flex items-center gap-2.5"
                         style={{ color: "#64748B" }}
                       >
                         <span
-                          className="w-2 h-2 rounded-full shrink-0"
+                          className="w-1.5 h-1.5 rounded-full shrink-0"
                           style={{ background: "#0F766E" }}
                         ></span>
                         <span
@@ -580,7 +580,7 @@ export default function DisplayPage() {
                         <span>{cert.certificate_type}</span>
                         {cert.certificate_number && (
                           <span
-                            className="font-mono text-sm"
+                            className="font-mono text-xs"
                             style={{ color: "#64748B" }}
                           >
                             #{cert.certificate_number}
@@ -596,7 +596,7 @@ export default function DisplayPage() {
                   )}
                 </>
               ) : (
-                <span className="text-base" style={{ color: "#94A3B8" }}>
+                <span className="text-sm" style={{ color: "#94A3B8" }}>
                   No certificate data available
                 </span>
               )}
