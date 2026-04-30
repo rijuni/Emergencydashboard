@@ -23,8 +23,8 @@ exports.getToday = async (req, res) => {
     const hasSlotIndex = await getHasSlotIndex();
     const rosterQuery = hasSlotIndex
       ? `
-      SELECT r.id, r.roster_date, r.notes, r.slot_index,
-             s.id as staff_id, s.full_name as staff_name, s.designation, s.registration_number,
+            SELECT r.id, r.roster_date, r.notes, r.slot_index,
+              s.id as staff_id, s.full_name as staff_name, s.designation, s.specialization, s.registration_number,
              sc.id as category_id, sc.name as category_name, sc.display_order as category_order,
              sh.id as shift_id, sh.name as shift_name, sh.start_time, sh.end_time, sh.display_order as shift_order
       FROM roster r
@@ -35,8 +35,8 @@ exports.getToday = async (req, res) => {
       ORDER BY sc.display_order, sh.display_order, r.slot_index, s.full_name
     `
       : `
-      SELECT r.id, r.roster_date, r.notes, 1 as slot_index,
-             s.id as staff_id, s.full_name as staff_name, s.designation, s.registration_number,
+            SELECT r.id, r.roster_date, r.notes, 1 as slot_index,
+              s.id as staff_id, s.full_name as staff_name, s.designation, s.specialization, s.registration_number,
              sc.id as category_id, sc.name as category_name, sc.display_order as category_order,
              sh.id as shift_id, sh.name as shift_name, sh.start_time, sh.end_time, sh.display_order as shift_order
       FROM roster r

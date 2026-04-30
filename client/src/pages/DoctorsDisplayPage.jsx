@@ -355,6 +355,14 @@ export default function DoctorsDisplayPage() {
                                 {entry.designation}
                               </div>
                             )}
+                            {entry.specialization && (
+                              <div
+                                className="text-xs mt-0.5"
+                                style={{ color: "#9CA3AF" }}
+                              >
+                                {entry.specialization}
+                              </div>
+                            )}
                             {entry.registration_number && (
                               <div
                                 className="text-xs font-mono mt-1"

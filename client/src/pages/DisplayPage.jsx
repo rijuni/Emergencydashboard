@@ -498,6 +498,14 @@ export default function DisplayPage() {
                                     {s.designation}
                                   </span>
                                 )}
+                                {s.specialization && (
+                                  <span
+                                    className="block text-xs mt-0.5"
+                                    style={{ color: "#9CA3AF" }}
+                                  >
+                                    {s.specialization}
+                                  </span>
+                                )}
                               </div>
                             ))}
                             {staffList.length === 0 && isShiftAllowed && (
