@@ -89,9 +89,9 @@ export default function DoctorsDisplayPage() {
   const currentShift = data?.shifts?.find((s) => s.id === currentShiftId);
 
   const liveCategories = [
-    { key: "Doctor", label: "On-Duty Doctors" },
-    { key: "Nursing Officer", label: "On-Duty Nursing Officers" },
-    { key: "Pharmacist", label: "On-Duty Pharmacists" },
+    { key: "Doctor", label: "Doctors" },
+    { key: "Nursing Officer", label: "Nursing Staffs" },
+    { key: "Pharmacist", label: "Pharmacists" },
   ];
 
   const categoryStyles = {
@@ -169,13 +169,13 @@ export default function DoctorsDisplayPage() {
       }}
     >
       <header
-        className="shrink-0 px-6 py-3"
+        className="shrink-0 px-4 py-2"
         style={{ borderBottom: "2px solid rgba(148, 163, 184, 0.35)" }}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center relative overflow-hidden p-1.5"
+              className="w-12 h-12 rounded-xl flex items-center justify-center relative overflow-hidden p-1.5"
               style={{
                 background: "rgba(255,255,255,0.96)",
                 border: "1px solid rgba(148,163,184,0.3)",
@@ -190,13 +190,13 @@ export default function DoctorsDisplayPage() {
             </div>
             <div>
               <h1
-                className="font-display font-bold text-xl tracking-wide"
+                className="font-display font-bold text-lg tracking-wide"
                 style={{ color: "#0F172A" }}
               >
                 {data?.settings?.hospital_name || "HOSPITAL"}
               </h1>
               <p
-                className="text-sm font-semibold tracking-widest uppercase"
+                className="text-xs font-semibold tracking-widest uppercase"
                 style={{ color: "#0F766E" }}
               >
                 Live Availability
@@ -206,7 +206,7 @@ export default function DoctorsDisplayPage() {
 
           <div className="text-center">
             <div
-              className="font-display font-bold text-lg tracking-wide"
+              className="font-display font-bold text-base tracking-wide"
               style={{ color: "#0F172A" }}
             >
               {data?.date
@@ -214,7 +214,7 @@ export default function DoctorsDisplayPage() {
                 : "—"}
             </div>
             <div
-              className="font-mono text-base font-medium tabular-nums"
+              className="font-mono text-sm font-medium tabular-nums"
               style={{ color: "#0F766E" }}
             >
               {formatTime(currentTime)}
@@ -223,59 +223,59 @@ export default function DoctorsDisplayPage() {
 
           <div className="flex items-center gap-3">
             <div
-              className="px-5 py-2 rounded-xl text-center"
+              className="px-4 py-1.5 rounded-xl text-center"
               style={{
                 background: "rgba(239,68,68,0.1)",
                 border: "2px solid rgba(239,68,68,0.3)",
                 boxShadow: "0 10px 22px rgba(239,68,68,0.15)",
-                minWidth: "180px",
-                minHeight: "96px",
+                minWidth: "140px",
+                minHeight: "72px",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
               }}
             >
               <div
-                className="text-sm font-bold uppercase tracking-[0.3em]"
+                className="text-xs font-bold uppercase tracking-[0.3em]"
                 style={{ color: "#B91C1C" }}
               >
                 Code Blue
               </div>
               <div
-                className="font-display font-black text-4xl mt-1"
+                className="font-display font-black text-3xl mt-0.5"
                 style={{ color: "#EF4444" }}
               >
                 {data?.settings?.code_blue || "—"}
               </div>
             </div>
             <div
-              className="px-5 py-2 rounded-xl text-center"
+              className="px-4 py-1.5 rounded-xl text-center"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(14,165,233,0.16), rgba(59,130,246,0.08))",
                 border: "2px solid rgba(14,165,233,0.3)",
                 boxShadow: "0 12px 24px rgba(14,165,233,0.12)",
-                minWidth: "180px",
-                minHeight: "96px",
+                minWidth: "140px",
+                minHeight: "72px",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
               }}
             >
               <div
-                className="text-xs font-bold uppercase tracking-[0.2em]"
+                className="text-[10px] font-bold uppercase tracking-[0.2em]"
                 style={{ color: "#0EA5E9" }}
               >
                 Current Shift
               </div>
               <div
-                className="font-display font-black text-2xl mt-0.5"
+                className="font-display font-black text-xl mt-0.5"
                 style={{ color: "#0F172A" }}
               >
                 {currentShift ? currentShift.name : "—"}
               </div>
               {currentShift && (
-                <div className="text-xs" style={{ color: "#64748B" }}>
+                <div className="text-[10px]" style={{ color: "#64748B" }}>
                   {currentShift.start_time?.slice(0, 5)} –{" "}
                   {currentShift.end_time?.slice(0, 5)}
                 </div>
@@ -285,23 +285,23 @@ export default function DoctorsDisplayPage() {
         </div>
       </header>
 
-      <main className="flex-1 px-6 py-4">
+      <main className="flex-1 px-4 py-2">
         <div
-          className="h-full rounded-2xl p-6"
+          className="h-full rounded-2xl p-4"
           style={{
             border: "1px solid rgba(148, 163, 184, 0.45)",
             background: "rgba(255,255,255,0.86)",
           }}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <h2
-              className="font-display font-bold text-lg tracking-wide"
+              className="font-display font-bold text-base tracking-wide"
               style={{ color: "#0F172A" }}
             >
               Live Duty Roster
             </h2>
             <div
-              className="text-xs font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full"
+              className="text-[10px] font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full"
               style={{
                 background: "rgba(20,184,166,0.16)",
                 color: "#0F766E",
@@ -313,14 +313,14 @@ export default function DoctorsDisplayPage() {
           </div>
 
           {currentShiftId ? (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {liveCategories.map((category) => {
                 const staffList = onDutyByCategory[category.key] || [];
                 const style =
                   categoryStyles[category.key] || categoryStyles.Doctor;
                 return (
-                  <div key={category.key}>
-                    <div className="flex items-center justify-between mb-3">
+                  <div key={category.key} className="flex flex-col">
+                    <div className="flex items-center justify-between mb-2">
                       <h3
                         className="text-sm font-semibold uppercase tracking-[0.2em]"
                         style={{ color: style.text }}
@@ -329,48 +329,32 @@ export default function DoctorsDisplayPage() {
                       </h3>
                     </div>
                     {staffList.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      <div className="flex flex-col gap-2">
                         {staffList.map((entry) => (
                           <div
                             key={entry.id}
-                            className="rounded-xl px-4 py-3"
+                            className="rounded-lg px-3 py-2"
                             style={{
                               border: `1px solid ${style.border}`,
                               borderLeft: `4px solid ${style.accent}`,
                               background: style.cardBg,
-                              boxShadow: "0 10px 24px rgba(15,23,42,0.08)",
+                              boxShadow: "0 4px 12px rgba(15,23,42,0.06)",
                             }}
                           >
                             <div
-                              className="text-base md:text-lg font-semibold"
+                              className="text-base md:text-lg font-bold"
                               style={{ color: "#0F172A" }}
                             >
                               {entry.staff_name}
                             </div>
-                            {entry.designation && (
-                              <div
-                                className="text-xs mt-1"
-                                style={{ color: "#64748B" }}
-                              >
-                                {entry.designation}
-                              </div>
-                            )}
-                            {entry.specialization && (
+                            {(entry.designation || entry.specialization) && (
                               <div
                                 className="text-xs mt-0.5"
-                                style={{ color: "#9CA3AF" }}
+                                style={{ color: "#64748B" }}
                               >
-                                {entry.specialization}
-                              </div>
-                            )}
-                            {entry.registration_number && (
-                              <div
-                                className="text-xs font-mono mt-1"
-                                style={{ color: "#0EA5E9" }}
-                              >
-                                {category.key === "Doctor"
-                                  ? `License #${entry.registration_number}`
-                                  : `ID #${entry.registration_number}`}
+                                {[entry.designation, entry.specialization]
+                                  .filter(Boolean)
+                                  .join(" • ")}
                               </div>
                             )}
                           </div>
@@ -378,7 +362,7 @@ export default function DoctorsDisplayPage() {
                       </div>
                     ) : (
                       <div
-                        className="text-center py-6 text-sm"
+                        className="text-center py-4 text-xs"
                         style={{ color: "#94A3B8" }}
                       >
                         No staff assigned for this category in the current
@@ -391,7 +375,7 @@ export default function DoctorsDisplayPage() {
             </div>
           ) : (
             <div
-              className="text-center py-12 text-sm"
+              className="text-center py-8 text-sm"
               style={{ color: "#94A3B8" }}
             >
               No active shift matches the current time.

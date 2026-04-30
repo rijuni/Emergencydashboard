@@ -27,7 +27,8 @@ const isAllowedOrigin = (origin) => {
   if (!origin) return true;
   if (allowedOrigins.includes(origin)) return true;
   if (process.env.NODE_ENV !== "production") {
-    return devOriginPattern.test(origin);
+    // In non-production, trust all origins for easier local network testing
+    return true; 
   }
   return false;
 };
@@ -35,8 +36,12 @@ const isAllowedOrigin = (origin) => {
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (isAllowedOrigin(origin)) return callback(null, true);
-      return callback(new Error("Not allowed by CORS"));
+      // Allow all origins in development, or if in allowedOrigins
+      if (!origin || isAllowedOrigin(origin)) {
+        return callback(null, true);
+      }
+      // Instead of throwing an error which causes 500, we pass false to reject CORS cleanly
+      return callback(null, false);
     },
     credentials: true,
   }),
