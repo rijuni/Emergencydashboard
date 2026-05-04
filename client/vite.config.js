@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       host: true,
-      port: 5173,
+      port: 5174,
       strictPort: true,
       ...(hmrHost ? { hmr: { host: hmrHost } } : {}),
       proxy: {

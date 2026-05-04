@@ -147,7 +147,7 @@ export default function SettingsPage() {
             </label>
             <input
               type="text"
-              value={settings.display_title}
+              value={settings.display_title || ""}
               onChange={(e) =>
                 setSettings({ ...settings, display_title: e.target.value })
               }

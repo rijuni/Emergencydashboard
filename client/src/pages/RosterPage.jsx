@@ -84,21 +84,42 @@ export default function RosterPage() {
   const [categories, setCategories] = useState([]);
   const [shifts, setShifts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [displayLayout, setDisplayLayout] = useState("casualty");
+  const [savingLayout, setSavingLayout] = useState(false);
 
   const fetchMeta = useCallback(async () => {
     try {
-      const [staffRes, catRes, shiftRes] = await Promise.all([
+      const [staffRes, catRes, shiftRes, settingsRes] = await Promise.all([
         api.get("/staff?is_active=true"),
         api.get("/staff/categories"),
         api.get("/roster/shifts"),
+        api.get("/display/settings"),
       ]);
       setStaff(staffRes.data.staff);
       setCategories(catRes.data.categories);
       setShifts(shiftRes.data.shifts);
+      if (settingsRes.data.settings?.display_layout) {
+        setDisplayLayout(settingsRes.data.settings.display_layout);
+      }
     } catch (err) {
       console.error(err);
     }
   }, []);
+
+  const handleLayoutChange = async (newLayout) => {
+    setDisplayLayout(newLayout);
+    setSavingLayout(true);
+    try {
+      await api.put("/display/settings", {
+        settings: { display_layout: newLayout },
+      });
+      toast.success("Display layout updated");
+    } catch (err) {
+      toast.error("Failed to update layout");
+    } finally {
+      setSavingLayout(false);
+    }
+  };
 
   const fetchRoster = useCallback(async () => {
     try {
@@ -258,12 +279,28 @@ export default function RosterPage() {
           </h1>
           <p className="text-text-muted text-sm mt-1">Assign staff to shifts</p>
         </div>
-        <button
-          onClick={handleCopyPrevious}
-          className="btn-secondary flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium"
-        >
-          <HiOutlineDuplicate className="w-4 h-4" /> Copy Previous Day
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-bg-surface border border-border px-3 py-2 rounded-xl">
+            <span className="text-xs text-text-secondary font-medium whitespace-nowrap">
+              TV Layout:
+            </span>
+            <select
+              value={displayLayout}
+              onChange={(e) => handleLayoutChange(e.target.value)}
+              disabled={savingLayout}
+              className="bg-transparent text-sm text-text-primary focus:outline-none font-medium disabled:opacity-50"
+            >
+              <option value="casualty">Classic (All Staff)</option>
+              <option value="doctors">Focus</option>
+            </select>
+          </div>
+          <button
+            onClick={handleCopyPrevious}
+            className="btn-secondary flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium"
+          >
+            <HiOutlineDuplicate className="w-4 h-4" /> Copy Previous Day
+          </button>
+        </div>
       </div>
 
       {/* Date Picker */}

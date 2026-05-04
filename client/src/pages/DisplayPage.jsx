@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import kimsLogo from "../assets/kims-logo.png";
+import DoctorsDisplayPage from "./DoctorsDisplayPage";
 
 export default function DisplayPage() {
   const [data, setData] = useState(null);
@@ -224,6 +225,11 @@ export default function DisplayPage() {
         </div>
       </div>
     );
+  }
+
+  if (data?.settings?.display_layout === "doctors") {
+    // Render the Doctors Focus (compact columns) layout instead
+    return <DoctorsDisplayPage />;
   }
 
   return (

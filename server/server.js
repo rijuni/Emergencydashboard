@@ -18,7 +18,7 @@ const allowedOrigins = (process.env.CLIENT_URL || "")
 
 const devOriginPattern = new RegExp(
   "^http://(localhost|127\\.0\\.0\\.1)(:\\d+)?$|" +
-    "^http://(192\\.168|10|172\\.(1[6-9]|2\\d|3[0-1]))\\.\\d{1,3}\\.\\d{1,3}(:\\d+)?$|" +
+    "^http://10\\.10\\.2\\.95(:\\d+)?$|" +
     "^http://[a-zA-Z0-9-]+(:\\d+)?$",
   "i",
 );
