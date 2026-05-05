@@ -494,12 +494,12 @@ export default function StaffMasterPage({
           </table>
         </div>
 
-        <div className="px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="text-xs text-text-muted sm:mr-auto">
+        <div className="px-4 py-3 flex items-center justify-between gap-3 flex-nowrap">
+          <div className="text-xs text-text-muted whitespace-nowrap mr-auto">
             Showing {pageRange} of {totalRecords} records
           </div>
 
-          <div className="flex items-center gap-2 sm:ml-auto">
+          <div className="flex items-center gap-2 ml-auto shrink-0">
             <button
               onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
               disabled={loading || currentPage <= 1 || totalPages === 0}
