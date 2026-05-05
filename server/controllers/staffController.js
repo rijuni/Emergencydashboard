@@ -5,6 +5,15 @@ const normalizeBoolQuery = (value) => {
   return value === 'true';
 };
 
+const parsePositiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 100;
+
 const buildStaffListQuery = ({ categoryId, excludeCategoryId, isActive, search }) => {
   let query = `
     SELECT s.*, sc.name as category_name
@@ -47,6 +56,47 @@ const buildStaffListQuery = ({ categoryId, excludeCategoryId, isActive, search }
   return { query, params };
 };
 
+const buildStaffCountQuery = ({ categoryId, excludeCategoryId, isActive, search }) => {
+  let query = `
+    SELECT COUNT(*) as total
+    FROM staff s
+    JOIN staff_categories sc ON s.category_id = sc.id
+    WHERE 1=1
+  `;
+  const params = [];
+
+  if (categoryId) {
+    query += ' AND s.category_id = ?';
+    params.push(categoryId);
+  }
+
+  if (excludeCategoryId) {
+    query += ' AND s.category_id <> ?';
+    params.push(excludeCategoryId);
+  }
+
+  if (isActive !== undefined) {
+    query += ' AND s.is_active = ?';
+    params.push(isActive);
+  }
+
+  if (search) {
+    query += ' AND (s.full_name LIKE ? OR s.designation LIKE ? OR s.registration_number LIKE ? OR s.branch LIKE ? OR s.department LIKE ? OR s.unit LIKE ? OR s.qualification LIKE ? OR s.specialization LIKE ?)';
+    params.push(
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`,
+      `%${search}%`
+    );
+  }
+
+  return { query, params };
+};
+
 const getDoctorCategoryId = async () => {
   const [rows] = await pool.query(
     'SELECT id FROM staff_categories WHERE LOWER(name) = ? LIMIT 1',
@@ -77,10 +127,22 @@ exports.getAll = async (req, res) => {
 exports.getDoctors = async (req, res) => {
   try {
     const { is_active, search } = req.query;
+    const page = parsePositiveInt(req.query.page, DEFAULT_PAGE);
+    const requestedLimit = parsePositiveInt(req.query.limit, DEFAULT_LIMIT);
+    const limit = Math.min(requestedLimit, MAX_LIMIT);
+    const offset = (page - 1) * limit;
     const doctorCategoryId = await getDoctorCategoryId();
 
     if (!doctorCategoryId) {
-      return res.json({ staff: [] });
+      return res.json({
+        staff: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0
+        }
+      });
     }
 
     const { query, params } = buildStaffListQuery({
@@ -89,8 +151,29 @@ exports.getDoctors = async (req, res) => {
       search
     });
 
-    const [staff] = await pool.query(query, params);
-    res.json({ staff });
+    const { query: countQuery, params: countParams } = buildStaffCountQuery({
+      categoryId: doctorCategoryId,
+      isActive: normalizeBoolQuery(is_active),
+      search
+    });
+
+    const [staff, countRows] = await Promise.all([
+      pool.query(`${query} LIMIT ? OFFSET ?`, [...params, limit, offset]),
+      pool.query(countQuery, countParams)
+    ]);
+
+    const total = Number(countRows[0]?.[0]?.total || 0);
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
+
+    res.json({
+      staff: staff[0],
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages
+      }
+    });
   } catch (error) {
     console.error('Get doctors error:', error);
     res.status(500).json({ message: 'Server error.' });
@@ -101,6 +184,10 @@ exports.getDoctors = async (req, res) => {
 exports.getEmployees = async (req, res) => {
   try {
     const { is_active, search } = req.query;
+    const page = parsePositiveInt(req.query.page, DEFAULT_PAGE);
+    const requestedLimit = parsePositiveInt(req.query.limit, DEFAULT_LIMIT);
+    const limit = Math.min(requestedLimit, MAX_LIMIT);
+    const offset = (page - 1) * limit;
     const doctorCategoryId = await getDoctorCategoryId();
 
     const { query, params } = buildStaffListQuery({
@@ -109,8 +196,29 @@ exports.getEmployees = async (req, res) => {
       search
     });
 
-    const [staff] = await pool.query(query, params);
-    res.json({ staff });
+    const { query: countQuery, params: countParams } = buildStaffCountQuery({
+      excludeCategoryId: doctorCategoryId,
+      isActive: normalizeBoolQuery(is_active),
+      search
+    });
+
+    const [staff, countRows] = await Promise.all([
+      pool.query(`${query} LIMIT ? OFFSET ?`, [...params, limit, offset]),
+      pool.query(countQuery, countParams)
+    ]);
+
+    const total = Number(countRows[0]?.[0]?.total || 0);
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
+
+    res.json({
+      staff: staff[0],
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages
+      }
+    });
   } catch (error) {
     console.error('Get employees error:', error);
     res.status(500).json({ message: 'Server error.' });

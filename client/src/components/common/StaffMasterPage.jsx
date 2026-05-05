@@ -26,6 +26,9 @@ export default function StaffMasterPage({
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [reloadKey, setReloadKey] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
@@ -91,9 +94,13 @@ export default function StaffMasterPage({
         if (search) params.append("search", search);
         if (!isDoctorMode && filterCategory)
           params.append("category_id", filterCategory);
+        params.append("page", String(currentPage));
+        params.append("limit", "10");
         const res = await api.get(`${listEndpoint}?${params.toString()}`);
         if (!isActive) return;
-        setStaff(res.data.staff);
+        setStaff(res.data.staff || []);
+        setTotalRecords(Number(res.data.pagination?.total || 0));
+        setTotalPages(Number(res.data.pagination?.totalPages || 0));
       } catch (error) {
         console.error(error);
         toast.error("Failed to load master data");
@@ -109,7 +116,22 @@ export default function StaffMasterPage({
     return () => {
       isActive = false;
     };
-  }, [filterCategory, isDoctorMode, listEndpoint, reloadKey, search]);
+  }, [
+    currentPage,
+    filterCategory,
+    isDoctorMode,
+    listEndpoint,
+    reloadKey,
+    search,
+  ]);
+
+  const pageRange = useMemo(() => {
+    if (totalRecords === 0) return "0-0";
+    const pageSize = 10;
+    const start = (currentPage - 1) * pageSize + 1;
+    const end = Math.min(currentPage * pageSize, totalRecords);
+    return `${start}-${end}`;
+  }, [currentPage, totalRecords]);
 
   const openModal = (staffMember = null) => {
     if (staffMember) {
@@ -286,7 +308,10 @@ export default function StaffMasterPage({
           <input
             type="text"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setCurrentPage(1);
+              setSearch(event.target.value);
+            }}
             placeholder={
               isDoctorMode
                 ? "Search by name, department, specialization or license no..."
@@ -299,7 +324,10 @@ export default function StaffMasterPage({
         {!isDoctorMode && (
           <select
             value={filterCategory}
-            onChange={(event) => setFilterCategory(event.target.value)}
+            onChange={(event) => {
+              setCurrentPage(1);
+              setFilterCategory(event.target.value);
+            }}
             className="bg-bg-surface border border-border rounded-xl px-3 py-2.5 text-text-primary text-sm min-w-[180px]"
           >
             <option value="">All Employee Categories</option>
@@ -464,6 +492,40 @@ export default function StaffMasterPage({
               )}
             </tbody>
           </table>
+        </div>
+
+        <div className="px-4 py-3 border-t border-border/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="text-xs text-text-muted">
+            Showing {pageRange} of {totalRecords} records
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={loading || currentPage <= 1 || totalPages === 0}
+              className="px-3 py-1.5 rounded-lg text-xs border border-border text-text-secondary hover:text-text-primary hover:bg-bg-card disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+
+            <span className="text-xs text-text-secondary min-w-[72px] text-center">
+              Page {totalPages === 0 ? 0 : currentPage} / {totalPages}
+            </span>
+
+            <button
+              onClick={() =>
+                setCurrentPage((page) => Math.min(totalPages || 1, page + 1))
+              }
+              disabled={
+                loading ||
+                totalPages === 0 ||
+                currentPage >= totalPages
+              }
+              className="px-3 py-1.5 rounded-lg text-xs border border-border text-text-secondary hover:text-text-primary hover:bg-bg-card disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 
