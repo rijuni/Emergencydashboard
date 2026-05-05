@@ -1,10 +1,23 @@
 import { useEffect, useState } from "react";
 import kimsLogo from "../assets/kims-logo.png";
+import { HiOutlineMoon, HiOutlineSun } from "react-icons/hi";
 
 export default function DoctorsDisplayPage() {
   const [data, setData] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(true);
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+
+  const isDark = theme === "dark";
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === "dark" ? "light" : "dark");
+  };
 
   const fetchData = async () => {
     try {
@@ -97,30 +110,33 @@ export default function DoctorsDisplayPage() {
   const categoryStyles = {
     Doctor: {
       accent: "#F97316",
-      text: "#9A3412",
+      text: isDark ? "#FB923C" : "#9A3412",
       badgeBg: "rgba(249,115,22,0.15)",
       badgeText: "#C2410C",
-      border: "rgba(249,115,22,0.35)",
-      cardBg:
-        "linear-gradient(135deg, rgba(249,115,22,0.12), rgba(255,255,255,0.8))",
+      border: isDark ? "rgba(249,115,22,0.25)" : "rgba(249,115,22,0.35)",
+      cardBg: isDark
+        ? "linear-gradient(135deg, rgba(249,115,22,0.15), rgba(30,41,59,0.7))"
+        : "linear-gradient(135deg, rgba(249,115,22,0.12), rgba(255,255,255,0.8))",
     },
     "Nursing Officer": {
       accent: "#3B82F6",
-      text: "#1D4ED8",
+      text: isDark ? "#60A5FA" : "#1D4ED8",
       badgeBg: "rgba(59,130,246,0.14)",
       badgeText: "#1D4ED8",
-      border: "rgba(59,130,246,0.35)",
-      cardBg:
-        "linear-gradient(135deg, rgba(59,130,246,0.12), rgba(255,255,255,0.8))",
+      border: isDark ? "rgba(59,130,246,0.25)" : "rgba(59,130,246,0.35)",
+      cardBg: isDark
+        ? "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(30,41,59,0.7))"
+        : "linear-gradient(135deg, rgba(59,130,246,0.12), rgba(255,255,255,0.8))",
     },
     Pharmacist: {
       accent: "#10B981",
-      text: "#047857",
+      text: isDark ? "#34D399" : "#047857",
       badgeBg: "rgba(16,185,129,0.14)",
       badgeText: "#047857",
-      border: "rgba(16,185,129,0.35)",
-      cardBg:
-        "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(255,255,255,0.8))",
+      border: isDark ? "rgba(16,185,129,0.25)" : "rgba(16,185,129,0.35)",
+      cardBg: isDark
+        ? "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(30,41,59,0.7))"
+        : "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(255,255,255,0.8))",
     },
   };
 
@@ -138,20 +154,20 @@ export default function DoctorsDisplayPage() {
       <div
         className="display-fullscreen flex items-center justify-center"
         style={{
-          background: "linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%)",
+          background: isDark ? "#060D1A" : "linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%)",
         }}
       >
         <div className="text-center animate-fade-in">
           <div
             className="w-16 h-16 border-4 rounded-full animate-spin mx-auto mb-4"
             style={{
-              borderColor: "rgba(15,118,110,0.2)",
-              borderTopColor: "#0F766E",
+              borderColor: isDark ? "rgba(20,184,166,0.1)" : "rgba(15,118,110,0.2)",
+              borderTopColor: "#14B8A6",
             }}
           ></div>
           <p
             className="text-sm font-display tracking-wider"
-            style={{ color: "#64748B" }}
+            style={{ color: isDark ? "#94A3B8" : "#64748B" }}
           >
             LOADING DOCTOR DISPLAY
           </p>
@@ -162,15 +178,18 @@ export default function DoctorsDisplayPage() {
 
   return (
     <div
-      className="display-fullscreen flex flex-col"
+      className="display-fullscreen flex flex-col relative"
       style={{
-        background:
-          "radial-gradient(circle at 10% 10%, rgba(59,130,246,0.12), transparent 40%), radial-gradient(circle at 90% 0%, rgba(249,115,22,0.12), transparent 45%), linear-gradient(180deg, #F8FAFC 0%, #EEF4FF 45%, #F8FAFC 100%)",
+        background: isDark
+          ? "radial-gradient(circle at 10% 10%, rgba(59,130,246,0.08), transparent 40%), radial-gradient(circle at 90% 0%, rgba(249,115,22,0.08), transparent 45%), #060D1A"
+          : "radial-gradient(circle at 10% 10%, rgba(59,130,246,0.12), transparent 40%), radial-gradient(circle at 90% 0%, rgba(249,115,22,0.12), transparent 45%), linear-gradient(180deg, #F8FAFC 0%, #EEF4FF 45%, #F8FAFC 100%)",
+        color: isDark ? "#F1F5F9" : "#0F172A",
+        transition: "all 0.4s ease",
       }}
     >
       <header
         className="shrink-0 px-4 py-2"
-        style={{ borderBottom: "2px solid rgba(148, 163, 184, 0.35)" }}
+        style={{ borderBottom: isDark ? "2px solid rgba(148, 163, 184, 0.15)" : "2px solid rgba(148, 163, 184, 0.35)" }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -178,8 +197,8 @@ export default function DoctorsDisplayPage() {
               className="w-12 h-12 rounded-xl flex items-center justify-center relative overflow-hidden p-1.5"
               style={{
                 background: "rgba(255,255,255,0.96)",
-                border: "1px solid rgba(148,163,184,0.3)",
-                boxShadow: "0 4px 16px rgba(15,23,42,0.12)",
+                border: isDark ? "1px solid rgba(148,163,184,0.1)" : "1px solid rgba(148,163,184,0.3)",
+                boxShadow: isDark ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 16px rgba(15,23,42,0.12)",
               }}
             >
               <img
@@ -191,13 +210,13 @@ export default function DoctorsDisplayPage() {
             <div>
               <h1
                 className="font-display font-bold text-lg tracking-wide"
-                style={{ color: "#0F172A" }}
+                style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
               >
                 {data?.settings?.hospital_name || "HOSPITAL"}
               </h1>
               <p
                 className="text-xs font-semibold tracking-widest uppercase"
-                style={{ color: "#0F766E" }}
+                style={{ color: "#14B8A6" }}
               >
                 Live Availability
               </p>
@@ -207,7 +226,7 @@ export default function DoctorsDisplayPage() {
           <div className="text-center">
             <div
               className="font-display font-bold text-base tracking-wide"
-              style={{ color: "#0F172A" }}
+              style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
             >
               {data?.date
                 ? formatDay(data.date) + ", " + formatDate(data.date)
@@ -215,19 +234,37 @@ export default function DoctorsDisplayPage() {
             </div>
             <div
               className="font-mono text-sm font-medium tabular-nums"
-              style={{ color: "#0F766E" }}
+              style={{ color: "#14B8A6" }}
             >
               {formatTime(currentTime)}
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 mr-1"
+              style={{
+                background: isDark ? "rgba(30, 41, 59, 0.6)" : "rgba(248, 250, 252, 0.8)",
+                border: isDark ? "1px solid rgba(148, 163, 184, 0.2)" : "1px solid rgba(148, 163, 184, 0.3)",
+                color: isDark ? "#F59E0B" : "#F59E0B",
+              }}
+              title={`Switch to ${isDark ? "Light" : "Dark"} Mode`}
+            >
+              {isDark ? (
+                <HiOutlineSun className="w-5 h-5" />
+              ) : (
+                <HiOutlineMoon className="w-5 h-5" />
+              )}
+            </button>
+
             <div
               className="px-4 py-1.5 rounded-xl text-center"
               style={{
-                background: "rgba(239,68,68,0.1)",
-                border: "2px solid rgba(239,68,68,0.3)",
-                boxShadow: "0 10px 22px rgba(239,68,68,0.15)",
+                background: isDark ? "rgba(239,68,68,0.15)" : "rgba(239,68,68,0.1)",
+                border: isDark ? "2px solid rgba(239,68,68,0.4)" : "2px solid rgba(239,68,68,0.3)",
+                boxShadow: isDark ? "0 10px 30px rgba(0,0,0,0.3)" : "0 10px 22px rgba(239,68,68,0.15)",
                 minWidth: "140px",
                 minHeight: "72px",
                 display: "flex",
@@ -237,7 +274,7 @@ export default function DoctorsDisplayPage() {
             >
               <div
                 className="text-xs font-bold uppercase tracking-[0.3em]"
-                style={{ color: "#B91C1C" }}
+                style={{ color: isDark ? "#FCA5A5" : "#B91C1C" }}
               >
                 Code Blue
               </div>
@@ -251,10 +288,11 @@ export default function DoctorsDisplayPage() {
             <div
               className="px-4 py-1.5 rounded-xl text-center"
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(14,165,233,0.16), rgba(59,130,246,0.08))",
-                border: "2px solid rgba(14,165,233,0.3)",
-                boxShadow: "0 12px 24px rgba(14,165,233,0.12)",
+                background: isDark
+                  ? "linear-gradient(135deg, rgba(14,165,233,0.2), rgba(59,130,246,0.1))"
+                  : "linear-gradient(135deg, rgba(14,165,233,0.16), rgba(59,130,246,0.08))",
+                border: isDark ? "2px solid rgba(14,165,233,0.4)" : "2px solid rgba(14,165,233,0.3)",
+                boxShadow: isDark ? "0 12px 30px rgba(0,0,0,0.3)" : "0 12px 24px rgba(14,165,233,0.12)",
                 minWidth: "140px",
                 minHeight: "72px",
                 display: "flex",
@@ -270,12 +308,12 @@ export default function DoctorsDisplayPage() {
               </div>
               <div
                 className="font-display font-black text-xl mt-0.5"
-                style={{ color: "#0F172A" }}
+                style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
               >
                 {currentShift ? currentShift.name : "—"}
               </div>
               {currentShift && (
-                <div className="text-[10px]" style={{ color: "#64748B" }}>
+                <div className="text-[10px]" style={{ color: isDark ? "#94A3B8" : "#64748B" }}>
                   {currentShift.start_time?.slice(0, 5)} –{" "}
                   {currentShift.end_time?.slice(0, 5)}
                 </div>
@@ -289,23 +327,24 @@ export default function DoctorsDisplayPage() {
         <div
           className="h-full rounded-2xl p-4"
           style={{
-            border: "1px solid rgba(148, 163, 184, 0.45)",
-            background: "rgba(255,255,255,0.86)",
+            border: isDark ? "1px solid rgba(148, 163, 184, 0.2)" : "1px solid rgba(148, 163, 184, 0.45)",
+            background: isDark ? "rgba(15, 23, 42, 0.6)" : "rgba(255,255,255,0.86)",
+            backdropFilter: isDark ? "blur(12px)" : "none",
           }}
         >
           <div className="flex items-center justify-between mb-3">
             <h2
               className="font-display font-bold text-base tracking-wide"
-              style={{ color: "#0F172A" }}
+              style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
             >
               Live Duty Roster
             </h2>
             <div
               className="text-[10px] font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full"
               style={{
-                background: "rgba(20,184,166,0.16)",
-                color: "#0F766E",
-                border: "1px solid rgba(15,118,110,0.25)",
+                background: isDark ? "rgba(20,184,166,0.2)" : "rgba(20,184,166,0.16)",
+                color: "#14B8A6",
+                border: isDark ? "1px solid rgba(20,184,166,0.3)" : "1px solid rgba(15,118,110,0.25)",
               }}
             >
               Live Now
@@ -338,19 +377,19 @@ export default function DoctorsDisplayPage() {
                               border: `1px solid ${style.border}`,
                               borderLeft: `4px solid ${style.accent}`,
                               background: style.cardBg,
-                              boxShadow: "0 4px 12px rgba(15,23,42,0.06)",
+                              boxShadow: isDark ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 12px rgba(15,23,42,0.06)",
                             }}
                           >
                             <div
                               className="text-base md:text-lg font-bold"
-                              style={{ color: "#0F172A" }}
+                              style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
                             >
                               {entry.staff_name}
                             </div>
                             {(entry.designation || entry.specialization) && (
                               <div
                                 className="text-xs mt-0.5"
-                                style={{ color: "#64748B" }}
+                                style={{ color: isDark ? "#94A3B8" : "#64748B" }}
                               >
                                 {[entry.designation, entry.specialization]
                                   .filter(Boolean)

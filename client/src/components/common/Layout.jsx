@@ -138,22 +138,9 @@ export default function Layout() {
 
         {/* User section */}
         <div className="p-3 border-t border-border">
-          <button
-            onClick={toggleTheme}
-            className="w-full mb-2 flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-text-secondary hover:bg-bg-card/60 hover:text-text-primary transition-all duration-300"
-            title="Toggle Theme"
-          >
-            {theme === "dark" ? (
-              <HiOutlineSun className="w-4 h-4" />
-            ) : (
-              <HiOutlineMoon className="w-4 h-4" />
-            )}
-            <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-          </button>
-
           <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-bg-card/40 transition-all duration-300">
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-semibold relative"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-semibold relative shrink-0"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(20,184,166,0.2), rgba(20,184,166,0.05))",
@@ -170,13 +157,26 @@ export default function Layout() {
                 {roleLabelByKey[user?.role] || user?.role?.replace("_", " ")}
               </p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-all duration-300"
-              title="Logout"
-            >
-              <HiOutlineLogout className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg text-text-muted hover:text-primary-light hover:bg-primary/10 transition-all duration-300"
+                title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+              >
+                {theme === "dark" ? (
+                  <HiOutlineSun className="w-4 h-4" />
+                ) : (
+                  <HiOutlineMoon className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-all duration-300"
+                title="Logout"
+              >
+                <HiOutlineLogout className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

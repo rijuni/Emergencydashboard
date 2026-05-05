@@ -1,12 +1,25 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import kimsLogo from "../assets/kims-logo.png";
 import DoctorsDisplayPage from "./DoctorsDisplayPage";
+import { HiOutlineMoon, HiOutlineSun } from "react-icons/hi";
 
 export default function DisplayPage() {
   const [data, setData] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(true);
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
   const tickerRef = useRef(null);
+
+  const isDark = theme === "dark";
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === "dark" ? "light" : "dark");
+  };
 
   // Fetch display data
   const fetchData = async () => {
@@ -100,64 +113,64 @@ export default function DisplayPage() {
     });
   };
 
-  // Static color configs — no dynamic Tailwind
+  // Static color configs
   const shiftColors = {
     Morning: {
-      bg: "rgba(245, 158, 11, 0.08)",
-      bgActive: "rgba(245, 158, 11, 0.16)",
-      border: "rgba(245, 158, 11, 0.35)",
+      bg: isDark ? "rgba(245, 158, 11, 0.12)" : "rgba(245, 158, 11, 0.08)",
+      bgActive: isDark ? "rgba(245, 158, 11, 0.2)" : "rgba(245, 158, 11, 0.16)",
+      border: isDark ? "rgba(245, 158, 11, 0.4)" : "rgba(245, 158, 11, 0.35)",
       text: "#F59E0B",
-      glow: "0 0 26px rgba(245, 158, 11, 0.12)",
+      glow: isDark ? "0 0 32px rgba(245, 158, 11, 0.2)" : "0 0 26px rgba(245, 158, 11, 0.12)",
     },
     Evening: {
-      bg: "rgba(139, 92, 246, 0.08)",
-      bgActive: "rgba(139, 92, 246, 0.16)",
-      border: "rgba(139, 92, 246, 0.35)",
+      bg: isDark ? "rgba(139, 92, 246, 0.12)" : "rgba(139, 92, 246, 0.08)",
+      bgActive: isDark ? "rgba(139, 92, 246, 0.2)" : "rgba(139, 92, 246, 0.16)",
+      border: isDark ? "rgba(139, 92, 246, 0.4)" : "rgba(139, 92, 246, 0.35)",
       text: "#8B5CF6",
-      glow: "0 0 26px rgba(139, 92, 246, 0.12)",
+      glow: isDark ? "0 0 32px rgba(139, 92, 246, 0.2)" : "0 0 26px rgba(139, 92, 246, 0.12)",
     },
     Night: {
-      bg: "rgba(59, 130, 246, 0.08)",
-      bgActive: "rgba(59, 130, 246, 0.16)",
-      border: "rgba(59, 130, 246, 0.35)",
+      bg: isDark ? "rgba(59, 130, 246, 0.12)" : "rgba(59, 130, 246, 0.08)",
+      bgActive: isDark ? "rgba(59, 130, 246, 0.2)" : "rgba(59, 130, 246, 0.16)",
+      border: isDark ? "rgba(59, 130, 246, 0.4)" : "rgba(59, 130, 246, 0.35)",
       text: "#3B82F6",
-      glow: "0 0 26px rgba(59, 130, 246, 0.12)",
+      glow: isDark ? "0 0 32px rgba(59, 130, 246, 0.2)" : "0 0 26px rgba(59, 130, 246, 0.12)",
     },
   };
 
   const shiftFallbacks = [
     {
-      bg: "rgba(14, 165, 233, 0.08)",
-      bgActive: "rgba(14, 165, 233, 0.16)",
-      border: "rgba(14, 165, 233, 0.35)",
+      bg: isDark ? "rgba(14, 165, 233, 0.12)" : "rgba(14, 165, 233, 0.08)",
+      bgActive: isDark ? "rgba(14, 165, 233, 0.2)" : "rgba(14, 165, 233, 0.16)",
+      border: isDark ? "rgba(14, 165, 233, 0.4)" : "rgba(14, 165, 233, 0.35)",
       text: "#0EA5E9",
       glow: "0 0 26px rgba(14, 165, 233, 0.12)",
     },
     {
-      bg: "rgba(34, 197, 94, 0.08)",
-      bgActive: "rgba(34, 197, 94, 0.16)",
-      border: "rgba(34, 197, 94, 0.35)",
+      bg: isDark ? "rgba(34, 197, 94, 0.12)" : "rgba(34, 197, 94, 0.08)",
+      bgActive: isDark ? "rgba(34, 197, 94, 0.2)" : "rgba(34, 197, 94, 0.16)",
+      border: isDark ? "rgba(34, 197, 94, 0.4)" : "rgba(34, 197, 94, 0.35)",
       text: "#22C55E",
       glow: "0 0 26px rgba(34, 197, 94, 0.12)",
     },
     {
-      bg: "rgba(249, 115, 22, 0.08)",
-      bgActive: "rgba(249, 115, 22, 0.16)",
-      border: "rgba(249, 115, 22, 0.35)",
+      bg: isDark ? "rgba(249, 115, 22, 0.12)" : "rgba(249, 115, 22, 0.08)",
+      bgActive: isDark ? "rgba(249, 115, 22, 0.2)" : "rgba(249, 115, 22, 0.16)",
+      border: isDark ? "rgba(249, 115, 22, 0.4)" : "rgba(249, 115, 22, 0.35)",
       text: "#F97316",
       glow: "0 0 26px rgba(249, 115, 22, 0.12)",
     },
     {
-      bg: "rgba(225, 29, 72, 0.08)",
-      bgActive: "rgba(225, 29, 72, 0.16)",
-      border: "rgba(225, 29, 72, 0.35)",
+      bg: isDark ? "rgba(225, 29, 72, 0.12)" : "rgba(225, 29, 72, 0.08)",
+      bgActive: isDark ? "rgba(225, 29, 72, 0.2)" : "rgba(225, 29, 72, 0.16)",
+      border: isDark ? "rgba(225, 29, 72, 0.4)" : "rgba(225, 29, 72, 0.35)",
       text: "#E11D48",
       glow: "0 0 26px rgba(225, 29, 72, 0.12)",
     },
     {
-      bg: "rgba(139, 92, 246, 0.08)",
-      bgActive: "rgba(139, 92, 246, 0.16)",
-      border: "rgba(139, 92, 246, 0.35)",
+      bg: isDark ? "rgba(139, 92, 246, 0.12)" : "rgba(139, 92, 246, 0.08)",
+      bgActive: isDark ? "rgba(139, 92, 246, 0.2)" : "rgba(139, 92, 246, 0.16)",
+      border: isDark ? "rgba(139, 92, 246, 0.4)" : "rgba(139, 92, 246, 0.35)",
       text: "#8B5CF6",
       glow: "0 0 26px rgba(139, 92, 246, 0.12)",
     },
@@ -205,20 +218,20 @@ export default function DisplayPage() {
       <div
         className="display-fullscreen flex items-center justify-center"
         style={{
-          background: "linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%)",
+          background: isDark ? "#060D1A" : "linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%)",
         }}
       >
         <div className="text-center animate-fade-in">
           <div
             className="w-16 h-16 border-4 rounded-full animate-spin mx-auto mb-4"
             style={{
-              borderColor: "rgba(15,118,110,0.2)",
-              borderTopColor: "#0F766E",
+              borderColor: isDark ? "rgba(20,184,166,0.1)" : "rgba(15,118,110,0.2)",
+              borderTopColor: "#14B8A6",
             }}
           ></div>
           <p
             className="text-sm font-display tracking-wider"
-            style={{ color: "#64748B" }}
+            style={{ color: isDark ? "#94A3B8" : "#64748B" }}
           >
             LOADING DISPLAY
           </p>
@@ -228,23 +241,25 @@ export default function DisplayPage() {
   }
 
   if (data?.settings?.display_layout === "doctors") {
-    // Render the Doctors Focus (compact columns) layout instead
     return <DoctorsDisplayPage />;
   }
 
   return (
     <div
-      className="display-fullscreen flex flex-col"
+      className="display-fullscreen flex flex-col relative"
       style={{
-        background:
-          "linear-gradient(180deg, #F8FAFC 0%, #EEF4FF 45%, #F8FAFC 100%)",
-        transition: "background 0.4s ease",
+        background: isDark 
+          ? "radial-gradient(circle at 50% 0%, rgba(15,118,110,0.08), transparent 70%), #060D1A"
+          : "linear-gradient(180deg, #F8FAFC 0%, #EEF4FF 45%, #F8FAFC 100%)",
+        color: isDark ? "#F1F5F9" : "#0F172A",
+        transition: "all 0.4s ease",
       }}
     >
+
       {/* ===== HEADER ===== */}
       <header
         className="shrink-0 px-8 py-4"
-        style={{ borderBottom: "2px solid rgba(148, 163, 184, 0.35)" }}
+        style={{ borderBottom: isDark ? "2px solid rgba(148, 163, 184, 0.15)" : "2px solid rgba(148, 163, 184, 0.35)" }}
       >
         <div className="flex items-center justify-between">
           {/* Left: Hospital Info */}
@@ -252,9 +267,9 @@ export default function DisplayPage() {
             <div
               className="w-16 h-16 rounded-xl flex items-center justify-center relative overflow-hidden p-1.5"
               style={{
-                background: "rgba(255,255,255,0.96)",
-                border: "1px solid rgba(148,163,184,0.3)",
-                boxShadow: "0 4px 16px rgba(15,23,42,0.12)",
+                background: isDark ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.96)",
+                border: isDark ? "1px solid rgba(148,163,184,0.1)" : "1px solid rgba(148,163,184,0.3)",
+                boxShadow: isDark ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 16px rgba(15,23,42,0.12)",
               }}
             >
               <img
@@ -266,13 +281,13 @@ export default function DisplayPage() {
             <div>
               <h1
                 className="font-display font-bold text-2xl tracking-wide"
-                style={{ color: "#0F172A" }}
+                style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
               >
                 {data?.settings?.hospital_name || "HOSPITAL"}
               </h1>
               <p
                 className="text-base font-semibold tracking-widest uppercase"
-                style={{ color: "#0F766E" }}
+                style={{ color: "#14B8A6" }}
               >
                 {data?.settings?.display_title || "CASUALTY DEPARTMENT"}
               </p>
@@ -283,7 +298,7 @@ export default function DisplayPage() {
           <div className="text-center">
             <div
               className="font-display font-bold text-xl tracking-wide"
-              style={{ color: "#0F172A" }}
+              style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
             >
               {data?.date
                 ? formatDay(data.date) + ", " + formatDate(data.date)
@@ -291,24 +306,42 @@ export default function DisplayPage() {
             </div>
             <div
               className="font-mono text-lg font-medium tabular-nums"
-              style={{ color: "#0F766E" }}
+              style={{ color: "#14B8A6" }}
             >
               {formatTime(currentTime)}
             </div>
           </div>
 
-          {/* Right: Code Blue + Ambulance */}
-          <div className="flex items-center gap-3">
+          {/* Right: Code Blue + Ambulance + Toggle */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={toggleTheme}
+              className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95"
+              style={{
+                background: isDark ? "rgba(30, 41, 59, 0.6)" : "rgba(248, 250, 252, 0.8)",
+                border: isDark ? "1px solid rgba(148, 163, 184, 0.2)" : "1px solid rgba(148, 163, 184, 0.3)",
+                color: isDark ? "#F59E0B" : "#F59E0B",
+                boxShadow: isDark ? "0 4px 12px rgba(0,0,0,0.2)" : "0 4px 12px rgba(0,0,0,0.05)",
+              }}
+              title={`Switch to ${isDark ? "Light" : "Dark"} Mode`}
+            >
+              {isDark ? (
+                <HiOutlineSun className="w-6 h-6" />
+              ) : (
+                <HiOutlineMoon className="w-6 h-6" />
+              )}
+            </button>
+
             <div
               className="text-center px-5 py-3 rounded-xl animate-code-blue relative overflow-hidden"
               style={{
-                background: "rgba(239, 68, 68, 0.08)",
-                border: "2px solid rgba(239, 68, 68, 0.3)",
+                background: isDark ? "rgba(239, 68, 68, 0.12)" : "rgba(239, 68, 68, 0.08)",
+                border: isDark ? "2px solid rgba(239, 68, 68, 0.4)" : "2px solid rgba(239, 68, 68, 0.3)",
               }}
             >
               <span
                 className="text-[11px] font-bold uppercase tracking-[0.2em] block"
-                style={{ color: "#B91C1C" }}
+                style={{ color: isDark ? "#FCA5A5" : "#B91C1C" }}
               >
                 Code Blue
               </span>
@@ -322,25 +355,26 @@ export default function DisplayPage() {
             <div
               className="px-5 py-3 rounded-xl min-w-[210px] text-center"
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(15,118,110,0.12), rgba(16,185,129,0.08))",
-                border: "2px solid rgba(20,184,166,0.3)",
-                boxShadow: "0 10px 22px rgba(15,118,110,0.12)",
+                background: isDark 
+                  ? "linear-gradient(135deg, rgba(20,184,166,0.15), rgba(20,184,166,0.05))"
+                  : "linear-gradient(135deg, rgba(15,118,110,0.12), rgba(16,185,129,0.08))",
+                border: isDark ? "2px solid rgba(20,184,166,0.4)" : "2px solid rgba(20,184,166,0.3)",
+                boxShadow: isDark ? "0 10px 30px rgba(0,0,0,0.3)" : "0 10px 22px rgba(15,118,110,0.12)",
               }}
             >
               <div
                 className="text-[13px] font-bold uppercase tracking-[0.2em]"
-                style={{ color: "#0F766E" }}
+                style={{ color: "#14B8A6" }}
               >
                 Ambulance
               </div>
               <div
                 className="font-display font-black text-2xl mt-1 leading-none"
-                style={{ color: "#0F172A" }}
+                style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
               >
                 {ambulanceNumber || "—"}
               </div>
-              <div className="text-xs" style={{ color: "#64748B" }}>
+              <div className="text-xs" style={{ color: isDark ? "#94A3B8" : "#64748B" }}>
                 {ambulanceDetails || "Emergency transport"}
               </div>
             </div>
@@ -353,8 +387,9 @@ export default function DisplayPage() {
         <div
           className="h-full rounded-xl overflow-hidden"
           style={{
-            border: "1px solid rgba(148, 163, 184, 0.45)",
-            background: "rgba(255,255,255,0.84)",
+            border: isDark ? "1px solid rgba(148, 163, 184, 0.2)" : "1px solid rgba(148, 163, 184, 0.45)",
+            background: isDark ? "rgba(15, 23, 42, 0.6)" : "rgba(255,255,255,0.84)",
+            backdropFilter: isDark ? "blur(12px)" : "none",
           }}
         >
           <table className="w-full h-full" style={{ tableLayout: "fixed" }}>
@@ -363,14 +398,14 @@ export default function DisplayPage() {
                 <th
                   className="w-[200px] p-4 text-left"
                   style={{
-                    background: "rgba(248, 250, 252, 0.95)",
-                    borderBottom: "2px solid rgba(148,163,184,0.45)",
-                    borderRight: "1px solid rgba(148,163,184,0.3)",
+                    background: isDark ? "rgba(11, 17, 32, 0.8)" : "rgba(248, 250, 252, 0.95)",
+                    borderBottom: isDark ? "2px solid rgba(148,163,184,0.2)" : "2px solid rgba(148,163,184,0.45)",
+                    borderRight: isDark ? "1px solid rgba(148,163,184,0.1)" : "1px solid rgba(148,163,184,0.3)",
                   }}
                 >
                   <span
                     className="font-display font-bold text-xs uppercase tracking-[0.15em]"
-                    style={{ color: "#334155" }}
+                    style={{ color: isDark ? "#94A3B8" : "#334155" }}
                   >
                     Category / Shift
                   </span>
@@ -385,9 +420,9 @@ export default function DisplayPage() {
                       style={{
                         background: isCurrent
                           ? colors.bgActive
-                          : "rgba(248, 250, 252, 0.95)",
-                        borderBottom: `2px solid ${isCurrent ? colors.border : "rgba(148,163,184,0.45)"}`,
-                        borderRight: "1px solid rgba(148,163,184,0.3)",
+                          : isDark ? "rgba(11, 17, 32, 0.8)" : "rgba(248, 250, 252, 0.95)",
+                        borderBottom: `2px solid ${isCurrent ? colors.border : isDark ? "rgba(148,163,184,0.2)" : "rgba(148,163,184,0.45)"}`,
+                        borderRight: isDark ? "1px solid rgba(148,163,184,0.1)" : "1px solid rgba(148,163,184,0.3)",
                         boxShadow: isCurrent ? colors.glow : "none",
                         transition: "all 1.5s ease",
                       }}
@@ -400,7 +435,7 @@ export default function DisplayPage() {
                       </div>
                       <div
                         className="text-xs mt-1 font-mono"
-                        style={{ color: "#64748B" }}
+                        style={{ color: isDark ? "#64748B" : "#64748B" }}
                       >
                         {shift.start_time?.slice(0, 5)} –{" "}
                         {shift.end_time?.slice(0, 5)}
@@ -431,12 +466,12 @@ export default function DisplayPage() {
                 return (
                   <tr
                     key={cat.id}
-                    style={{ borderBottom: "1px solid rgba(148,163,184,0.2)" }}
+                    style={{ borderBottom: isDark ? "1px solid rgba(148,163,184,0.1)" : "1px solid rgba(148,163,184,0.2)" }}
                   >
                     <td
                       className="p-4 align-top"
                       style={{
-                        background: "rgba(248, 250, 252, 0.9)",
+                        background: isDark ? "rgba(11, 17, 32, 0.4)" : "rgba(248, 250, 252, 0.9)",
                         borderRight: `3px solid ${catColor}`,
                       }}
                     >
@@ -467,7 +502,7 @@ export default function DisplayPage() {
                           className="p-3 align-top"
                           style={{
                             background: isCurrent ? colors.bg : "transparent",
-                            borderRight: "1px solid rgba(148,163,184,0.2)",
+                            borderRight: isDark ? "1px solid rgba(148,163,184,0.1)" : "1px solid rgba(148,163,184,0.2)",
                             transition: "background 1.5s ease",
                           }}
                         >
@@ -485,13 +520,13 @@ export default function DisplayPage() {
                                 key={s.id}
                                 className="px-3 py-2.5 rounded-lg text-base font-medium"
                                 style={{
-                                  background: isCurrent
-                                    ? "rgba(255, 255, 255, 0.95)"
-                                    : "rgba(248, 250, 252, 0.92)",
+                                  background: isDark
+                                    ? (isCurrent ? "rgba(30, 41, 59, 0.9)" : "rgba(15, 23, 42, 0.6)")
+                                    : (isCurrent ? "rgba(255, 255, 255, 0.95)" : "rgba(248, 250, 252, 0.92)"),
                                   border: isCurrent
                                     ? `1px solid ${colors.border}`
-                                    : "1px solid rgba(148,163,184,0.3)",
-                                  color: "#0F172A",
+                                    : isDark ? "1px solid rgba(148,163,184,0.15)" : "1px solid rgba(148,163,184,0.3)",
+                                  color: isDark ? "#F8FAFC" : "#0F172A",
                                   transition: "all 1s ease",
                                 }}
                               >
@@ -499,7 +534,7 @@ export default function DisplayPage() {
                                 {s.designation && (
                                   <span
                                     className="block text-xs mt-1"
-                                    style={{ color: "#64748B" }}
+                                    style={{ color: isDark ? "#94A3B8" : "#64748B" }}
                                   >
                                     {s.designation}
                                   </span>
@@ -507,7 +542,7 @@ export default function DisplayPage() {
                                 {s.specialization && (
                                   <span
                                     className="block text-xs mt-0.5"
-                                    style={{ color: "#9CA3AF" }}
+                                    style={{ color: isDark ? "#64748B" : "#9CA3AF" }}
                                   >
                                     {s.specialization}
                                   </span>
@@ -537,15 +572,18 @@ export default function DisplayPage() {
       {/* ===== CERTIFICATE TICKER ===== */}
       <footer
         className="shrink-0 px-8 py-3"
-        style={{ borderTop: "1px solid rgba(148,163,184,0.35)" }}
+        style={{ 
+          borderTop: isDark ? "1px solid rgba(148, 163, 184, 0.15)" : "1px solid rgba(148, 163, 184, 0.35)",
+          background: isDark ? "rgba(11, 17, 32, 0.4)" : "transparent"
+        }}
       >
         <div className="flex items-center gap-4">
           <span
             className="shrink-0 text-xs font-bold uppercase tracking-[0.15em] px-3 py-1.5 rounded-lg"
             style={{
-              background: "rgba(15, 118, 110, 0.12)",
-              color: "#0F766E",
-              border: "1px solid rgba(15,118,110,0.2)",
+              background: isDark ? "rgba(20, 184, 166, 0.15)" : "rgba(15, 118, 110, 0.12)",
+              color: "#14B8A6",
+              border: isDark ? "1px solid rgba(20,184,166,0.3)" : "1px solid rgba(15,118,110,0.2)",
             }}
           >
             Licenses
@@ -555,15 +593,17 @@ export default function DisplayPage() {
             <div
               className="absolute left-0 top-0 bottom-0 w-8 z-10"
               style={{
-                background:
-                  "linear-gradient(to right, rgba(248,250,252,1), transparent)",
+                background: isDark 
+                  ? "linear-gradient(to right, #060D1A, transparent)"
+                  : "linear-gradient(to right, rgba(248,250,252,1), transparent)",
               }}
             ></div>
             <div
               className="absolute right-0 top-0 bottom-0 w-8 z-10"
               style={{
-                background:
-                  "linear-gradient(to left, rgba(248,250,252,1), transparent)",
+                background: isDark 
+                  ? "linear-gradient(to left, #060D1A, transparent)"
+                  : "linear-gradient(to left, rgba(248,250,252,1), transparent)",
               }}
             ></div>
 
@@ -578,15 +618,15 @@ export default function DisplayPage() {
                       <span
                         key={i}
                         className="text-sm inline-flex items-center gap-2.5"
-                        style={{ color: "#64748B" }}
+                        style={{ color: isDark ? "#94A3B8" : "#64748B" }}
                       >
                         <span
                           className="w-1.5 h-1.5 rounded-full shrink-0"
-                          style={{ background: "#0F766E" }}
+                          style={{ background: "#14B8A6" }}
                         ></span>
                         <span
                           className="font-medium"
-                          style={{ color: "#0F172A" }}
+                          style={{ color: isDark ? "#F1F5F9" : "#0F172A" }}
                         >
                           {cert.staff_name}
                         </span>
@@ -595,13 +635,13 @@ export default function DisplayPage() {
                         {cert.certificate_number && (
                           <span
                             className="font-mono text-xs"
-                            style={{ color: "#64748B" }}
+                            style={{ color: isDark ? "#94A3B8" : "#64748B" }}
                           >
                             #{cert.certificate_number}
                           </span>
                         )}
                         {cert.issuing_authority && (
-                          <span style={{ color: "#64748B" }}>
+                          <span style={{ color: isDark ? "#64748B" : "#64748B" }}>
                             ({cert.issuing_authority})
                           </span>
                         )}
