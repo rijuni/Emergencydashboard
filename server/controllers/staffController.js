@@ -183,7 +183,7 @@ exports.getDoctors = async (req, res) => {
 // Get employee master list (all non-doctor staff)
 exports.getEmployees = async (req, res) => {
   try {
-    const { is_active, search } = req.query;
+    const { category_id, is_active, search } = req.query;
     const page = parsePositiveInt(req.query.page, DEFAULT_PAGE);
     const requestedLimit = parsePositiveInt(req.query.limit, DEFAULT_LIMIT);
     const limit = Math.min(requestedLimit, MAX_LIMIT);
@@ -191,12 +191,14 @@ exports.getEmployees = async (req, res) => {
     const doctorCategoryId = await getDoctorCategoryId();
 
     const { query, params } = buildStaffListQuery({
+      categoryId: category_id,
       excludeCategoryId: doctorCategoryId,
       isActive: normalizeBoolQuery(is_active),
       search
     });
 
     const { query: countQuery, params: countParams } = buildStaffCountQuery({
+      categoryId: category_id,
       excludeCategoryId: doctorCategoryId,
       isActive: normalizeBoolQuery(is_active),
       search
