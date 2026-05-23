@@ -153,7 +153,8 @@ export default function DoctorsDisplayPage() {
     acc[category.key] = (data?.roster || []).filter(
       (entry) =>
         entry.category_name === category.key &&
-        entry.shift_id === currentShiftId,
+        entry.shift_id === currentShiftId &&
+        entry.notes !== "ON_CALL",
     );
     return acc;
   }, {});
@@ -167,7 +168,7 @@ export default function DoctorsDisplayPage() {
   const onCallDoctorsByDept = useMemo(() => {
     if (!data?.roster) return {};
     const doctors = data.roster.filter(r => 
-      normalizeName(r.category_name) === "doctor" && r.shift_id === currentShiftId
+      normalizeName(r.category_name) === "doctor" && r.shift_id === currentShiftId && r.notes === "ON_CALL"
     );
     const grouped = {};
     doctors.forEach(doc => {

@@ -95,7 +95,7 @@ export default function DisplayPage() {
   const getStaffForCell = (categoryName, shiftId) => {
     if (!data?.roster) return [];
     return data.roster.filter(
-      (r) => r.category_name === categoryName && r.shift_id === shiftId,
+      (r) => r.category_name === categoryName && r.shift_id === shiftId && r.notes !== "ON_CALL",
     );
   };
 

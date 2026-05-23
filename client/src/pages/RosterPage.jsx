@@ -170,7 +170,8 @@ export default function RosterPage() {
       (r) =>
         r.category_name ===
           rosterCategories.find((c) => c.id === categoryId)?.name &&
-        r.shift_id === shiftId,
+        r.shift_id === shiftId &&
+        r.notes !== "ON_CALL",
     );
   };
 

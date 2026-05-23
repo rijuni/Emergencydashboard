@@ -98,7 +98,15 @@ export default function OnCallDoctorDutyPage() {
   }, [staff, doctorCategoryId]);
 
   const departments = useMemo(() => {
-    const deps = new Set(doctors.map((d) => d.department).filter(Boolean));
+    const deps = new Set(
+      doctors
+        .map((d) => d.department)
+        .filter(Boolean)
+        .filter((dept) => {
+          const lower = dept.toLowerCase();
+          return lower !== "emergency" && lower !== "emrgency";
+        })
+    );
     return Array.from(deps).sort();
   }, [doctors]);
 
@@ -108,7 +116,10 @@ export default function OnCallDoctorDutyPage() {
 
   // Get unique assigned doctors for the day
   const assignedDoctors = useMemo(() => {
-    const docs = roster.filter(r => r.category_name?.toLowerCase() === "doctor");
+    const docs = roster.filter(r => 
+      r.category_name?.toLowerCase() === "doctor" && 
+      r.notes === "ON_CALL"
+    );
     const uniqueDocsMap = new Map();
     docs.forEach(d => uniqueDocsMap.set(d.staff_id, d));
     return Array.from(uniqueDocsMap.values());
@@ -134,6 +145,7 @@ export default function OnCallDoctorDutyPage() {
             roster_date: date,
             shift_id: shift.id,
             staff_id: parseInt(selection.doctorId),
+            notes: "ON_CALL",
             allow_duplicate: true
           }).catch(err => {
             // Ignore duplicate entry errors if they are already assigned
