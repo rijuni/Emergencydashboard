@@ -13,6 +13,7 @@ import DisplayPage from "./pages/DisplayPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import ShiftManagementPage from "./pages/ShiftManagementPage";
 import DoctorsDisplayPage from "./pages/DoctorsDisplayPage";
+import OnCallDoctorDutyPage from "./pages/OnCallDoctorDutyPage";
 import Layout from "./components/common/Layout";
 
 const ProtectedRoute = ({ children }) => {
@@ -80,6 +81,14 @@ function AppRoutes() {
           element={
             <RoleRoute allowedRoles={["casualty_incharge", "super_admin"]}>
               <RosterPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="on-call-duty"
+          element={
+            <RoleRoute allowedRoles={["casualty_incharge", "super_admin"]}>
+              <OnCallDoctorDutyPage />
             </RoleRoute>
           }
         />

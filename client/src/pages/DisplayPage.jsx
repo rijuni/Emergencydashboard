@@ -7,6 +7,7 @@ export default function DisplayPage() {
   const [data, setData] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(true);
+  const [activeScreen, setActiveScreen] = useState("roster");
   const tickerRef = useRef(null);
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
 
@@ -57,6 +58,14 @@ export default function DisplayPage() {
 
     return () => clearInterval(refreshInterval);
   }, [data?.settings?.auto_refresh_seconds]);
+
+  // Screen rotation interval
+  useEffect(() => {
+    const screenInterval = setInterval(() => {
+      setActiveScreen(prev => prev === "roster" ? "onCallDoctors" : "roster");
+    }, 10000);
+    return () => clearInterval(screenInterval);
+  }, []);
 
   // Get current shift
   const getCurrentShift = () => {
@@ -212,6 +221,21 @@ export default function DisplayPage() {
 
   const ambulanceNumber = data?.settings?.ambulance_contact_number || "";
   const ambulanceDetails = data?.settings?.ambulance_contact_details || "";
+
+  // Group on-call doctors by department
+  const onCallDoctorsByDept = useMemo(() => {
+    if (!data?.roster) return {};
+    const doctors = data.roster.filter(r => 
+      normalizeName(r.category_name) === "doctor" && r.shift_id === currentShiftId
+    );
+    const grouped = {};
+    doctors.forEach(doc => {
+      const dept = doc.department || "Unassigned";
+      if (!grouped[dept]) grouped[dept] = [];
+      grouped[dept].push(doc);
+    });
+    return grouped;
+  }, [data?.roster, currentShiftId]);
 
   if (loading) {
     return (
@@ -382,17 +406,18 @@ export default function DisplayPage() {
         </div>
       </header>
 
-      {/* ===== MAIN ROSTER TABLE ===== */}
-      <div className="flex-1 px-8 py-4 overflow-hidden">
+      {/* ===== MAIN CONTENT AREA ===== */}
+      <div className="flex-1 px-8 py-4 overflow-hidden relative">
         <div
-          className="h-full rounded-xl overflow-hidden shadow-2xl"
+          className="h-full rounded-xl overflow-hidden shadow-2xl relative"
           style={{
             border: isDark ? "1px solid rgba(148, 163, 184, 0.2)" : "1px solid rgba(148, 163, 184, 0.45)",
             background: isDark ? "rgba(15, 23, 42, 0.6)" : "rgba(255,255,255,0.84)",
             backdropFilter: isDark ? "blur(12px)" : "none",
           }}
         >
-          <table className="w-full h-full" style={{ tableLayout: "fixed" }}>
+          {activeScreen === "roster" ? (
+          <table key="roster" className="w-full h-full animate-flip-in" style={{ tableLayout: "fixed" }}>
             <thead>
               <tr>
                 <th
@@ -566,6 +591,62 @@ export default function DisplayPage() {
               })}
             </tbody>
           </table>
+          ) : (
+          <div key="onCall" className="w-full h-full p-6 animate-flip-in overflow-y-auto" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="flex items-center justify-between mb-6 shrink-0">
+              <h2 className="font-display font-bold text-2xl tracking-wide" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
+                On Call Doctors
+              </h2>
+              <div className="text-xs font-bold uppercase tracking-[0.2em] px-4 py-2 rounded-xl"
+                   style={{ background: isDark ? "rgba(59,130,246,0.15)" : "rgba(59,130,246,0.1)", color: "#3B82F6", border: isDark ? "1px solid rgba(59,130,246,0.3)" : "1px solid rgba(59,130,246,0.2)" }}>
+                By Department
+              </div>
+            </div>
+            
+            {Object.keys(onCallDoctorsByDept).length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 flex-1 content-start">
+                {Object.entries(onCallDoctorsByDept).map(([dept, doctors], idx) => {
+                  const color = categoryColors[idx % categoryColors.length];
+                  return (
+                    <div key={dept} className="rounded-xl p-4 flex flex-col h-full shadow-lg"
+                         style={{
+                           background: isDark ? "rgba(30, 41, 59, 0.5)" : "rgba(248, 250, 252, 0.8)",
+                           border: isDark ? "1px solid rgba(148,163,184,0.15)" : "1px solid rgba(148,163,184,0.3)",
+                           borderTop: `4px solid ${color}`
+                         }}>
+                      <h3 className="font-display font-bold text-lg mb-3 uppercase tracking-wider" style={{ color }}>
+                        {dept}
+                      </h3>
+                      <div className="space-y-2 flex-1">
+                        {doctors.map(doc => (
+                          <div key={`${doc.id}-${doc.shift_id}`} className="rounded-lg p-3"
+                               style={{ background: isDark ? "rgba(15, 23, 42, 0.4)" : "rgba(255, 255, 255, 0.8)", border: isDark ? "1px solid rgba(148,163,184,0.05)" : "1px solid rgba(148,163,184,0.2)" }}>
+                            <div className="font-medium text-base" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
+                              {doc.staff_name}
+                            </div>
+                            {doc.designation && (
+                              <div className="text-xs mt-0.5" style={{ color: isDark ? "#94A3B8" : "#64748B" }}>
+                                {doc.designation}
+                              </div>
+                            )}
+                            <div className="text-[10px] font-bold uppercase mt-1 inline-block px-2 py-0.5 rounded"
+                                 style={{ background: isDark ? "rgba(148,163,184,0.1)" : "rgba(148,163,184,0.15)", color: isDark ? "#CBD5E1" : "#475569" }}>
+                              {doc.shift_name}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-lg" style={{ color: isDark ? "#94A3B8" : "#64748B" }}>
+                No doctors on call today.
+              </div>
+            )}
+          </div>
+          )}
         </div>
       </div>
 

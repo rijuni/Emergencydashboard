@@ -12,6 +12,7 @@ import {
   HiOutlineMoon,
   HiOutlineSun,
   HiOutlineClock,
+  HiOutlineIdentification,
 } from "react-icons/hi";
 import kimsLogo from "../../assets/kims-logo.png";
 
@@ -21,6 +22,7 @@ const navItemsByRole = {
     { to: "/employee-master", icon: HiOutlineUsers, label: "Employee Master" },
     { to: "/doctor-master", icon: HiOutlineUsers, label: "Doctor Directory" },
     { to: "/roster", icon: HiOutlineCalendar, label: "Roster Duty" },
+    { to: "/on-call-duty", icon: HiOutlineIdentification, label: "On Call Duty" },
     { to: "/certificates", icon: HiOutlineDocumentText, label: "Certificates" },
     { to: "/users", icon: HiOutlineUsers, label: "User Master" },
     { to: "/shifts", icon: HiOutlineClock, label: "Shift Management" },
@@ -29,6 +31,7 @@ const navItemsByRole = {
   casualty_incharge: [
     { to: "/", icon: HiOutlineViewGrid, label: "Dashboard", end: true },
     { to: "/roster", icon: HiOutlineCalendar, label: "Roster Duty" },
+    { to: "/on-call-duty", icon: HiOutlineIdentification, label: "On Call Duty" },
   ],
 };
 
@@ -86,7 +89,7 @@ export default function Layout() {
             </div>
             <div>
               <h1 className="font-display font-bold text-text-primary text-sm tracking-wide">
-                Casualty
+                Emergency
               </h1>
               <p className="text-primary-light/60 text-xs font-medium tracking-wider uppercase">
                 Dashboard

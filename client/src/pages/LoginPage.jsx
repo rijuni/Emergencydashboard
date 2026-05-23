@@ -101,7 +101,7 @@ export default function LoginPage() {
             ></div>
           </div>
           <h1 className="text-3xl font-display font-bold gradient-text">
-            Casualty Dashboard
+            Emergency Dashboard
           </h1>
           <p className="text-text-muted mt-2 text-sm tracking-wide">
             Hospital Duty Roster Management

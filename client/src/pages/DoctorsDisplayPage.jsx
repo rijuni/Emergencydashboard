@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import kimsLogo from "../assets/kims-logo.png";
 import { HiOutlineMoon, HiOutlineSun } from "react-icons/hi";
 
@@ -6,6 +6,7 @@ export default function DoctorsDisplayPage() {
   const [data, setData] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(true);
+  const [activeScreen, setActiveScreen] = useState("roster");
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
 
   const isDark = theme === "dark";
@@ -52,6 +53,14 @@ export default function DoctorsDisplayPage() {
 
     return () => clearInterval(refreshInterval);
   }, [data?.settings?.auto_refresh_seconds]);
+
+  // Screen rotation interval
+  useEffect(() => {
+    const screenInterval = setInterval(() => {
+      setActiveScreen(prev => prev === "roster" ? "onCallDoctors" : "roster");
+    }, 10000);
+    return () => clearInterval(screenInterval);
+  }, []);
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr + "T00:00:00");
@@ -148,6 +157,26 @@ export default function DoctorsDisplayPage() {
     );
     return acc;
   }, {});
+
+  const normalizeName = (value) => (value || "").trim().toLowerCase();
+  const categoryColors = [
+    "#14B8A6", "#3B82F6", "#A855F7", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#6366F1"
+  ];
+
+  // Group on-call doctors by department
+  const onCallDoctorsByDept = useMemo(() => {
+    if (!data?.roster) return {};
+    const doctors = data.roster.filter(r => 
+      normalizeName(r.category_name) === "doctor" && r.shift_id === currentShiftId
+    );
+    const grouped = {};
+    doctors.forEach(doc => {
+      const dept = doc.department || "Unassigned";
+      if (!grouped[dept]) grouped[dept] = [];
+      grouped[dept].push(doc);
+    });
+    return grouped;
+  }, [data?.roster, currentShiftId]);
 
   if (loading) {
     return (
@@ -332,92 +361,147 @@ export default function DoctorsDisplayPage() {
             backdropFilter: isDark ? "blur(12px)" : "none",
           }}
         >
-          <div className="flex items-center justify-between mb-3">
-            <h2
-              className="font-display font-bold text-base tracking-wide"
-              style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
-            >
-              Live Duty Roster
-            </h2>
-            <div
-              className="text-[10px] font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full"
-              style={{
-                background: isDark ? "rgba(20,184,166,0.2)" : "rgba(20,184,166,0.16)",
-                color: "#14B8A6",
-                border: isDark ? "1px solid rgba(20,184,166,0.3)" : "1px solid rgba(15,118,110,0.25)",
-              }}
-            >
-              Live Now
-            </div>
-          </div>
+          {activeScreen === "roster" ? (
+            <div key="roster" className="animate-flip-in h-full flex flex-col">
+              <div className="flex items-center justify-between mb-3 shrink-0">
+                <h2
+                  className="font-display font-bold text-base tracking-wide"
+                  style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
+                >
+                  Live Duty Roster
+                </h2>
+                <div
+                  className="text-[10px] font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full"
+                  style={{
+                    background: isDark ? "rgba(20,184,166,0.2)" : "rgba(20,184,166,0.16)",
+                    color: "#14B8A6",
+                    border: isDark ? "1px solid rgba(20,184,166,0.3)" : "1px solid rgba(15,118,110,0.25)",
+                  }}
+                >
+                  Live Now
+                </div>
+              </div>
 
-          {currentShiftId ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {liveCategories.map((category) => {
-                const staffList = onDutyByCategory[category.key] || [];
-                const style =
-                  categoryStyles[category.key] || categoryStyles.Doctor;
-                return (
-                  <div key={category.key} className="flex flex-col">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3
-                        className="text-sm font-semibold uppercase tracking-[0.2em]"
-                        style={{ color: style.text }}
-                      >
-                        {category.label}
-                      </h3>
-                    </div>
-                    {staffList.length > 0 ? (
-                      <div className="flex flex-col gap-2">
-                        {staffList.map((entry) => (
-                          <div
-                            key={entry.id}
-                            className="rounded-lg px-3 py-2"
-                            style={{
-                              border: `1px solid ${style.border}`,
-                              borderLeft: `4px solid ${style.accent}`,
-                              background: style.cardBg,
-                              boxShadow: isDark ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 12px rgba(15,23,42,0.06)",
-                            }}
+              {currentShiftId ? (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 content-start overflow-y-auto">
+                  {liveCategories.map((category) => {
+                    const staffList = onDutyByCategory[category.key] || [];
+                    const style =
+                      categoryStyles[category.key] || categoryStyles.Doctor;
+                    return (
+                      <div key={category.key} className="flex flex-col">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3
+                            className="text-sm font-semibold uppercase tracking-[0.2em]"
+                            style={{ color: style.text }}
                           >
-                            <div
-                              className="text-base md:text-lg font-bold"
-                              style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
-                            >
-                              {entry.staff_name}
-                            </div>
-                            {(entry.designation || entry.specialization) && (
+                            {category.label}
+                          </h3>
+                        </div>
+                        {staffList.length > 0 ? (
+                          <div className="flex flex-col gap-2">
+                            {staffList.map((entry) => (
                               <div
-                                className="text-xs mt-0.5"
-                                style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                                key={entry.id}
+                                className="rounded-lg px-3 py-2"
+                                style={{
+                                  border: `1px solid ${style.border}`,
+                                  borderLeft: `4px solid ${style.accent}`,
+                                  background: style.cardBg,
+                                  boxShadow: isDark ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 12px rgba(15,23,42,0.06)",
+                                }}
                               >
-                                {[entry.designation, entry.specialization]
-                                  .filter(Boolean)
-                                  .join(" • ")}
+                                <div
+                                  className="text-base md:text-lg font-bold"
+                                  style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
+                                >
+                                  {entry.staff_name}
+                                </div>
+                                {(entry.designation || entry.specialization) && (
+                                  <div
+                                    className="text-xs mt-0.5"
+                                    style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                                  >
+                                    {[entry.designation, entry.specialization]
+                                      .filter(Boolean)
+                                      .join(" • ")}
+                                  </div>
+                                )}
                               </div>
-                            )}
+                            ))}
                           </div>
-                        ))}
+                        ) : (
+                          <div
+                            className="text-center py-4 text-xs"
+                            style={{ color: "#94A3B8" }}
+                          >
+                            No staff assigned for this category in the current
+                            shift.
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div
-                        className="text-center py-4 text-xs"
-                        style={{ color: "#94A3B8" }}
-                      >
-                        No staff assigned for this category in the current
-                        shift.
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              ) : (
+                <div
+                  className="text-center py-8 text-sm flex-1"
+                  style={{ color: "#94A3B8" }}
+                >
+                  No active shift matches the current time.
+                </div>
+              )}
             </div>
           ) : (
-            <div
-              className="text-center py-8 text-sm"
-              style={{ color: "#94A3B8" }}
-            >
-              No active shift matches the current time.
+            <div key="onCall" className="animate-flip-in h-full flex flex-col">
+              <div className="flex items-center justify-between mb-4 shrink-0">
+                <h2 className="font-display font-bold text-xl tracking-wide" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
+                  On Call Doctors
+                </h2>
+                <div className="text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full"
+                     style={{ background: isDark ? "rgba(59,130,246,0.15)" : "rgba(59,130,246,0.1)", color: "#3B82F6", border: isDark ? "1px solid rgba(59,130,246,0.3)" : "1px solid rgba(59,130,246,0.2)" }}>
+                  By Department
+                </div>
+              </div>
+              
+              {Object.keys(onCallDoctorsByDept).length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 flex-1 content-start overflow-y-auto">
+                  {Object.entries(onCallDoctorsByDept).map(([dept, doctors], idx) => {
+                    const color = categoryColors[idx % categoryColors.length];
+                    return (
+                      <div key={dept} className="rounded-xl p-4 flex flex-col h-full shadow-sm"
+                           style={{
+                             background: isDark ? "rgba(30, 41, 59, 0.5)" : "rgba(248, 250, 252, 0.8)",
+                             border: isDark ? "1px solid rgba(148,163,184,0.15)" : "1px solid rgba(148,163,184,0.3)",
+                             borderTop: `4px solid ${color}`
+                           }}>
+                        <h3 className="font-display font-bold text-base mb-3 uppercase tracking-wider" style={{ color }}>
+                          {dept}
+                        </h3>
+                        <div className="space-y-2 flex-1">
+                          {doctors.map(doc => (
+                            <div key={`${doc.id}-${doc.shift_id}`} className="rounded-lg p-3"
+                                 style={{ background: isDark ? "rgba(15, 23, 42, 0.4)" : "rgba(255, 255, 255, 0.8)", border: isDark ? "1px solid rgba(148,163,184,0.05)" : "1px solid rgba(148,163,184,0.2)" }}>
+                              <div className="font-bold text-sm md:text-base" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
+                                {doc.staff_name}
+                              </div>
+                              {doc.designation && (
+                                <div className="text-[11px] mt-0.5" style={{ color: isDark ? "#94A3B8" : "#64748B" }}>
+                                  {doc.designation}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-sm" style={{ color: isDark ? "#94A3B8" : "#64748B" }}>
+                  No doctors on call currently.
+                </div>
+              )}
             </div>
           )}
         </div>

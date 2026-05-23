@@ -59,6 +59,7 @@ export default {
         'scale-in': 'scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
         'pulse-ring': 'pulse-ring 1.5s ease-out infinite',
         'spin-slow': 'spin-slow 3s linear infinite',
+        'flip-in': 'flip-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
       },
       keyframes: {
         'glow-pulse': {
@@ -121,6 +122,10 @@ export default {
         'spin-slow': {
           from: { transform: 'rotate(0deg)' },
           to: { transform: 'rotate(360deg)' },
+        },
+        'flip-in': {
+          '0%': { transform: 'perspective(1000px) rotateY(-90deg)', opacity: '0' },
+          '100%': { transform: 'perspective(1000px) rotateY(0)', opacity: '1' },
         },
       },
     },

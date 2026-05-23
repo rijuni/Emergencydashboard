@@ -18,8 +18,8 @@ const allowedOrigins = (process.env.CLIENT_URL || "")
 
 const devOriginPattern = new RegExp(
   "^http://(localhost|127\\.0\\.0\\.1)(:\\d+)?$|" +
-    "^http://10\\.10\\.2\\.95(:\\d+)?$|" +
-    "^http://[a-zA-Z0-9-]+(:\\d+)?$",
+  "^http://10\\.10\\.2\\.95(:\\d+)?$|" +
+  "^http://[a-zA-Z0-9-]+(:\\d+)?$",
   "i",
 );
 
@@ -28,7 +28,7 @@ const isAllowedOrigin = (origin) => {
   if (allowedOrigins.includes(origin)) return true;
   if (process.env.NODE_ENV !== "production") {
     // In non-production, trust all origins for easier local network testing
-    return true; 
+    return true;
   }
   return false;
 };
