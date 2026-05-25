@@ -170,7 +170,7 @@ export default function RosterPage() {
     return roster.filter(
       (r) =>
         r.category_name ===
-          rosterCategories.find((c) => c.id === categoryId)?.name &&
+        rosterCategories.find((c) => c.id === categoryId)?.name &&
         r.shift_id === shiftId &&
         r.notes !== "ON_CALL",
     );
@@ -251,25 +251,25 @@ export default function RosterPage() {
 
   const stickyCellStyle = isLightTheme
     ? {
-        background: "rgba(248,250,252,0.95)",
-        backdropFilter: "blur(8px)",
-        borderRight: "1px solid rgba(148,163,184,0.35)",
-      }
+      background: "rgba(248,250,252,0.95)",
+      backdropFilter: "blur(8px)",
+      borderRight: "1px solid rgba(148,163,184,0.35)",
+    }
     : {
-        background: "rgba(11,17,32,0.95)",
-        backdropFilter: "blur(8px)",
-      };
+      background: "rgba(11,17,32,0.95)",
+      backdropFilter: "blur(8px)",
+    };
 
   const addSelectStyle = isLightTheme
     ? {
-        background: "rgba(255,255,255,0.95)",
-        borderColor: "rgba(148,163,184,0.55)",
-        color: "#334155",
-      }
+      background: "rgba(255,255,255,0.95)",
+      borderColor: "rgba(148,163,184,0.55)",
+      color: "#334155",
+    }
     : {
-        background: "rgba(11,17,32,0.3)",
-        borderColor: "rgba(42,63,100,0.4)",
-      };
+      background: "rgba(11,17,32,0.3)",
+      borderColor: "rgba(42,63,100,0.4)",
+    };
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -423,8 +423,8 @@ export default function RosterPage() {
                         : [];
                       const available = isShiftAllowed
                         ? (staffByCategory[cat.id] || []).filter(
-                            (s) => !isAssigned(s.id, shift.id),
-                          )
+                          (s) => !isAssigned(s.id, shift.id),
+                        )
                         : [];
                       const colors = getShiftStyles(shift, shiftIndex);
                       return (
