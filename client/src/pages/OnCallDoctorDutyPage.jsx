@@ -100,7 +100,7 @@ export default function OnCallDoctorDutyPage() {
   const departments = useMemo(() => {
     const deps = new Set(
       doctors
-        .map((d) => d.department)
+        .map((d) => (d.department || "").trim().toUpperCase())
         .filter(Boolean)
         .filter((dept) => {
           const lower = dept.toLowerCase();
@@ -111,7 +111,7 @@ export default function OnCallDoctorDutyPage() {
   }, [doctors]);
 
   // Derived Selection State
-  const availableDoctors = doctors.filter((d) => d.department === selection.department);
+  const availableDoctors = doctors.filter((d) => (d.department || "").trim().toUpperCase() === selection.department);
   const selectedDoctor = doctors.find((d) => d.id === parseInt(selection.doctorId));
 
   // Get unique assigned doctors for the day

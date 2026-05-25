@@ -183,7 +183,7 @@ export default function DoctorsDisplayPage() {
     );
     const grouped = {};
     doctors.forEach(doc => {
-      const dept = doc.department || "Unassigned";
+      const dept = (doc.department || "Unassigned").trim().toUpperCase();
       if (!grouped[dept]) grouped[dept] = [];
       grouped[dept].push(doc);
     });
