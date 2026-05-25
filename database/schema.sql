@@ -123,7 +123,8 @@ INSERT INTO staff_categories (name, display_order) VALUES
 ('Pharmacist', 3),
 ('Night Supervisor', 4),
 ('Ambulance', 5),
-('Technician', 6);
+('Technician', 6),
+('Security Supervisor', 7);
 
 -- Shifts
 INSERT INTO shifts (name, start_time, end_time, display_order) VALUES
