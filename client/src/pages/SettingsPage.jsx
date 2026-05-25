@@ -138,7 +138,7 @@ export default function SettingsPage() {
                 setSettings({ ...settings, hospital_name: e.target.value })
               }
               className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
-              placeholder="District Hospital"
+              placeholder="KIMS Hospital"
             />
           </div>
           <div>

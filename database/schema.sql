@@ -133,7 +133,7 @@ INSERT INTO shifts (name, start_time, end_time, display_order) VALUES
 
 -- Display Settings
 INSERT INTO display_settings (setting_key, setting_value) VALUES
-('hospital_name', 'District Hospital'),
+('hospital_name', 'KIMS Hospital'),
 ('code_blue', '33'),
 ('display_title', 'CASUALTY DEPARTMENT'),
 ('auto_refresh_seconds', '30'),
