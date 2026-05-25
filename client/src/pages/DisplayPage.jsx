@@ -192,6 +192,7 @@ export default function DisplayPage() {
     "Doctor",
     "Nursing Officer",
     "Pharmacist",
+    "Security Supervisor",
     "Technician",
     "Night Supervisor",
   ];

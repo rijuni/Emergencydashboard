@@ -114,6 +114,7 @@ export default function DoctorsDisplayPage() {
     { key: "Doctor", label: "Doctors" },
     { key: "Nursing Officer", label: "Nursing Staffs" },
     { key: "Pharmacist", label: "Pharmacists" },
+    { key: "Security Supervisor", label: "Security Supervisor" },
   ];
 
   const categoryStyles = {
@@ -146,6 +147,16 @@ export default function DoctorsDisplayPage() {
       cardBg: isDark
         ? "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(30,41,59,0.7))"
         : "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(255,255,255,0.8))",
+    },
+    "Security Supervisor": {
+      accent: "#8B5CF6",
+      text: isDark ? "#A78BFA" : "#6D28D9",
+      badgeBg: "rgba(139,92,246,0.14)",
+      badgeText: "#6D28D9",
+      border: isDark ? "rgba(139,92,246,0.25)" : "rgba(139,92,246,0.35)",
+      cardBg: isDark
+        ? "linear-gradient(135deg, rgba(139,92,246,0.15), rgba(30,41,59,0.7))"
+        : "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(255,255,255,0.8))",
     },
   };
 
@@ -384,7 +395,7 @@ export default function DoctorsDisplayPage() {
               </div>
 
               {currentShiftId ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 content-start overflow-y-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 content-start overflow-y-auto">
                   {liveCategories.map((category) => {
                     const staffList = onDutyByCategory[category.key] || [];
                     const style =
@@ -459,10 +470,6 @@ export default function DoctorsDisplayPage() {
                 <h2 className="font-display font-bold text-xl tracking-wide" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
                   On Call Doctors
                 </h2>
-                <div className="text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full"
-                     style={{ background: isDark ? "rgba(59,130,246,0.15)" : "rgba(59,130,246,0.1)", color: "#3B82F6", border: isDark ? "1px solid rgba(59,130,246,0.3)" : "1px solid rgba(59,130,246,0.2)" }}>
-                  By Department
-                </div>
               </div>
               
               {Object.keys(onCallDoctorsByDept).length > 0 ? (

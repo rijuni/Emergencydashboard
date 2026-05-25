@@ -70,6 +70,7 @@ const ROSTER_CATEGORY_ALLOWLIST = [
   "Doctor",
   "Nursing Officer",
   "Pharmacist",
+  "Security Supervisor",
   "Technician",
   "Night Supervisor",
 ];
