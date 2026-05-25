@@ -104,7 +104,7 @@ export default function OnCallDoctorDutyPage() {
         .filter(Boolean)
         .filter((dept) => {
           const lower = dept.toLowerCase();
-          return lower !== "emergency" && lower !== "emrgency";
+          return lower !== "emergency medicine" && lower !== "emrgency medicine";
         })
     );
     return Array.from(deps).sort();
