@@ -29,6 +29,7 @@ export default function StaffPage() {
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       if (filterCategory) params.append('category_id', filterCategory);
+      params.append('is_active', 'true');
       const res = await api.get(`/staff?${params}`);
       setStaff(res.data.staff);
     } catch (err) { console.error(err); } finally { setLoading(false); }

@@ -94,6 +94,7 @@ export default function StaffMasterPage({
         if (search) params.append("search", search);
         if (!isDoctorMode && filterCategory)
           params.append("category_id", filterCategory);
+        params.append("is_active", "true");
         params.append("page", String(currentPage));
         params.append("limit", "10");
         const res = await api.get(`${listEndpoint}?${params.toString()}`);

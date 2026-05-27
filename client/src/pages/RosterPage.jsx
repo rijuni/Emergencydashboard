@@ -179,7 +179,18 @@ export default function RosterPage() {
   const staffByCategory = useMemo(() => {
     const map = {};
     rosterCategories.forEach((c) => {
-      map[c.id] = staff.filter((s) => s.category_id === c.id);
+      let catStaff = staff.filter((s) => s.category_id === c.id);
+      
+      // Strictly filter out non-emergency doctors for the normal roster
+      if (normalizeName(c.name) === "doctor") {
+        catStaff = catStaff.filter((s) => {
+          if (!s.department) return false;
+          const dept = s.department.toLowerCase();
+          return dept.includes("emerg") || dept.includes("emrg");
+        });
+      }
+      
+      map[c.id] = catStaff;
     });
     return map;
   }, [staff, rosterCategories]);
