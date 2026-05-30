@@ -175,20 +175,32 @@ export default function DoctorsDisplayPage() {
     "#14B8A6", "#3B82F6", "#A855F7", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#6366F1"
   ];
 
-  // Group on-call doctors by department
+  // Group on-call doctors by department (deduplicated by staff_id)
   const onCallDoctorsByDept = useMemo(() => {
     if (!data?.roster) return {};
-    const doctors = data.roster.filter(r => 
-      normalizeName(r.category_name) === "doctor" && r.shift_id === currentShiftId && r.notes === "ON_CALL"
+    // Filter all ON_CALL doctors for the day (no shift_id filter — doctors are
+    // added to all shifts so we must deduplicate by staff_id to avoid repeats)
+    const allOnCall = data.roster.filter(r =>
+      normalizeName(r.category_name) === "doctor" && r.notes === "ON_CALL"
     );
+    // Deduplicate by staff_id, keeping the first occurrence
+    const seen = new Set();
+    const uniqueDoctors = [];
+    allOnCall.forEach(doc => {
+      if (!seen.has(doc.staff_id)) {
+        seen.add(doc.staff_id);
+        uniqueDoctors.push(doc);
+      }
+    });
+    // Group unique doctors by department
     const grouped = {};
-    doctors.forEach(doc => {
+    uniqueDoctors.forEach(doc => {
       const dept = (doc.department || "Unassigned").trim().toUpperCase();
       if (!grouped[dept]) grouped[dept] = [];
       grouped[dept].push(doc);
     });
     return grouped;
-  }, [data?.roster, currentShiftId]);
+  }, [data?.roster]);
 
   if (loading) {
     return (
