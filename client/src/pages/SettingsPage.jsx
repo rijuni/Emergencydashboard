@@ -5,7 +5,7 @@ import {
   HiOutlineSave,
   HiOutlineDesktopComputer,
   HiOutlineCog,
-  HiOutlineCheck,
+  HiOutlineCheck
 } from "react-icons/hi";
 
 export default function SettingsPage() {
@@ -18,6 +18,7 @@ export default function SettingsPage() {
     night_mode_end: "06:00",
     ambulance_contact_number: "",
     ambulance_contact_details: "",
+    security_supervisor_name: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -225,6 +226,20 @@ export default function SettingsPage() {
                 placeholder="Vehicle KA-01-AB-1234"
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+              Security Supervisor Name
+            </label>
+            <input
+              type="text"
+              value={settings.security_supervisor_name || ""}
+              onChange={(e) =>
+                setSettings({ ...settings, security_supervisor_name: e.target.value })
+              }
+              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
+              placeholder="e.g. MR. BASANTA KHAMARI"
+            />
           </div>
         </div>
       </div>

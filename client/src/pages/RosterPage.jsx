@@ -6,6 +6,8 @@ import {
   HiOutlineChevronRight,
   HiOutlineDuplicate,
   HiOutlineTrash,
+  HiOutlineUpload,
+  HiOutlineDocumentDownload
 } from "react-icons/hi";
 
 // Static color map — avoids dynamic Tailwind class issues
@@ -70,7 +72,6 @@ const ROSTER_CATEGORY_ALLOWLIST = [
   "Doctor",
   "Nursing Officer",
   "Pharmacist",
-  "Security Supervisor",
   "Technician",
   "Night Supervisor",
 ];
@@ -87,6 +88,7 @@ export default function RosterPage() {
   const [loading, setLoading] = useState(true);
   const [displayLayout, setDisplayLayout] = useState("casualty");
   const [savingLayout, setSavingLayout] = useState(false);
+  const [uploadingExcel, setUploadingExcel] = useState(false);
 
   const fetchMeta = useCallback(async () => {
     try {
@@ -228,6 +230,27 @@ export default function RosterPage() {
     }
   };
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setUploadingExcel(true);
+    try {
+      const res = await api.post("/display/settings/import-monthly-duty", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success(res.data.message || "Schedule imported successfully!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to import schedule");
+    } finally {
+      setUploadingExcel(false);
+      e.target.value = null; // reset input
+    }
+  };
+
   const handleCopyPrevious = async () => {
     const prevDate = new Date(date);
     prevDate.setDate(prevDate.getDate() - 1);
@@ -360,6 +383,48 @@ export default function RosterPage() {
             Jump to Today
           </button>
         )}
+      </div>
+
+      {/* Monthly Duty Schedule Upload */}
+      <div
+        className="glass-card rounded-xl p-6 animate-fade-in-up"
+        style={{ animationDelay: "150ms" }}
+      >
+        <h2 className="text-base font-display font-semibold text-text-primary mb-5 flex items-center gap-2">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ background: "rgba(139, 92, 246, 0.12)" }}
+          >
+            <HiOutlineUpload className="w-4 h-4" style={{ color: "#8B5CF6" }} />
+          </div>
+          Monthly Night Supervisor Schedule
+        </h2>
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+          <div className="flex-1 w-full">
+            <label className="relative flex items-center justify-center w-full p-4 border-2 border-dashed border-border rounded-xl hover:border-primary-light/50 transition-colors cursor-pointer bg-bg-surface/50">
+              <input 
+                type="file" 
+                accept=".xlsx, .xls, .csv" 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                onChange={handleFileUpload}
+                disabled={uploadingExcel}
+              />
+              <div className="flex items-center gap-2 text-sm text-text-secondary">
+                {uploadingExcel ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                    Uploading & Parsing...
+                  </>
+                ) : (
+                  <>
+                    <HiOutlineUpload className="w-5 h-5 text-primary-light" />
+                    <span className="font-medium text-text-primary">Click to upload</span> or drag and drop Excel file (.xlsx)
+                  </>
+                )}
+              </div>
+            </label>
+          </div>
+        </div>
       </div>
 
       {/* Roster Grid */}

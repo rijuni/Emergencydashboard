@@ -192,7 +192,6 @@ export default function DisplayPage() {
     "Doctor",
     "Nursing Officer",
     "Pharmacist",
-    "Security Supervisor",
     "Technician",
     "Night Supervisor",
   ];
@@ -222,6 +221,20 @@ export default function DisplayPage() {
 
   const ambulanceNumber = data?.settings?.ambulance_contact_number || "";
   const ambulanceDetails = data?.settings?.ambulance_contact_details || "";
+
+  const securitySupervisors = useMemo(() => {
+    return (data?.roster || []).filter(
+      (entry) =>
+        entry.category_name === "Security Supervisor" &&
+        entry.shift_id === currentShiftId &&
+        entry.notes !== "ON_CALL"
+    );
+  }, [data?.roster, currentShiftId]);
+  const defaultSupervisorName = data?.settings?.security_supervisor_name || "MR. BASANTA KHAMARI";
+  const securityNames = securitySupervisors.length > 0 
+    ? securitySupervisors.map((s) => s.staff_name).join(" • ")
+    : defaultSupervisorName;
+  const nightSupervisorName = data?.nightSupervisorName || "NOT ASSIGNED";
 
   // Group on-call doctors by department
   const onCallDoctorsByDept = useMemo(() => {
@@ -650,6 +663,32 @@ export default function DisplayPage() {
           )}
         </div>
       </div>
+
+      {/* ===== SECURITY SUPERVISOR MARQUEE ===== */}
+      {securityNames && (
+        <div 
+          className="shrink-0 overflow-hidden py-1"
+          style={{
+            background: isDark 
+              ? "linear-gradient(90deg, rgba(239,68,68,0.05) 0%, rgba(239,68,68,0.2) 50%, rgba(239,68,68,0.05) 100%)"
+              : "linear-gradient(90deg, rgba(239,68,68,0.05) 0%, rgba(239,68,68,0.15) 50%, rgba(239,68,68,0.05) 100%)",
+            borderTop: "1px solid rgba(239, 68, 68, 0.4)",
+            boxShadow: isDark ? "0 -4px 20px rgba(239, 68, 68, 0.15)" : "0 -4px 15px rgba(239, 68, 68, 0.1)",
+          }}
+        >
+          <marquee 
+            scrollamount="10" 
+            className="font-display font-bold text-base tracking-[0.2em] uppercase flex items-center" 
+            style={{ 
+              color: isDark ? "#F87171" : "#DC2626",
+              textShadow: isDark ? "0 0 10px rgba(239,68,68,0.6)" : "0 0 2px rgba(239,68,68,0.2)"
+            }}
+          >
+            <span style={{ color: "#EF4444" }}>•</span>&nbsp;&nbsp;&nbsp;SECURITY SUPERVISOR : {securityNames}&nbsp;&nbsp;&nbsp;<span style={{ color: "#EF4444" }}>•</span>
+            &nbsp;&nbsp;&nbsp;NIGHT SUPERVISOR : {nightSupervisorName}&nbsp;&nbsp;&nbsp;<span style={{ color: "#EF4444" }}>•</span>
+          </marquee>
+        </div>
+      )}
 
       {/* ===== CERTIFICATE TICKER ===== */}
       <footer

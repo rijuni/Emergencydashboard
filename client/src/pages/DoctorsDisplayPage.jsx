@@ -114,7 +114,6 @@ export default function DoctorsDisplayPage() {
     { key: "Doctor", label: "Doctors" },
     { key: "Nursing Officer", label: "Nursing Staffs" },
     { key: "Pharmacist", label: "Pharmacists" },
-    { key: "Security Supervisor", label: "Security Supervisor" },
   ];
 
   const categoryStyles = {
@@ -201,6 +200,20 @@ export default function DoctorsDisplayPage() {
     });
     return grouped;
   }, [data?.roster]);
+
+  const securitySupervisors = useMemo(() => {
+    return (data?.roster || []).filter(
+      (entry) =>
+        entry.category_name === "Security Supervisor" &&
+        entry.shift_id === currentShiftId &&
+        entry.notes !== "ON_CALL"
+    );
+  }, [data?.roster, currentShiftId]);
+  const defaultSupervisorName = data?.settings?.security_supervisor_name || "MR. BASANTA KHAMARI";
+  const securityNames = securitySupervisors.length > 0 
+    ? securitySupervisors.map((s) => s.staff_name).join(" • ")
+    : defaultSupervisorName;
+  const nightSupervisorName = data?.nightSupervisorName || "NOT ASSIGNED";
 
   if (loading) {
     return (
@@ -407,7 +420,7 @@ export default function DoctorsDisplayPage() {
               </div>
 
               {currentShiftId ? (
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 content-start overflow-y-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 content-start overflow-y-auto">
                   {liveCategories.map((category) => {
                     const staffList = onDutyByCategory[category.key] || [];
                     const style =
@@ -526,6 +539,31 @@ export default function DoctorsDisplayPage() {
           )}
         </div>
       </main>
+
+      {securityNames && (
+        <div 
+          className="shrink-0 overflow-hidden py-1"
+          style={{
+            background: isDark 
+              ? "linear-gradient(90deg, rgba(239,68,68,0.05) 0%, rgba(239,68,68,0.2) 50%, rgba(239,68,68,0.05) 100%)"
+              : "linear-gradient(90deg, rgba(239,68,68,0.05) 0%, rgba(239,68,68,0.15) 50%, rgba(239,68,68,0.05) 100%)",
+            borderTop: "1px solid rgba(239, 68, 68, 0.4)",
+            boxShadow: isDark ? "0 -4px 20px rgba(239, 68, 68, 0.15)" : "0 -4px 15px rgba(239, 68, 68, 0.1)",
+          }}
+        >
+          <marquee 
+            scrollamount="10" 
+            className="font-display font-bold text-base tracking-[0.2em] uppercase flex items-center" 
+            style={{ 
+              color: isDark ? "#F87171" : "#DC2626",
+              textShadow: isDark ? "0 0 10px rgba(239,68,68,0.6)" : "0 0 2px rgba(239,68,68,0.2)"
+            }}
+          >
+            <span style={{ color: "#EF4444" }}>•</span>&nbsp;&nbsp;&nbsp;SECURITY SUPERVISOR : {securityNames}&nbsp;&nbsp;&nbsp;<span style={{ color: "#EF4444" }}>•</span>
+            &nbsp;&nbsp;&nbsp;NIGHT SUPERVISOR : {nightSupervisorName}&nbsp;&nbsp;&nbsp;<span style={{ color: "#EF4444" }}>•</span>
+          </marquee>
+        </div>
+      )}
     </div>
   );
 }

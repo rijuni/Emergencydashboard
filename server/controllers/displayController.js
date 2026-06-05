@@ -1,4 +1,6 @@
 const pool = require('../config/db');
+const xlsx = require('xlsx');
+const fs = require('fs');
 
 let hasSlotIndexCache;
 let hasSlotIndexCheckedAt = 0;
@@ -77,6 +79,13 @@ exports.getToday = async (req, res) => {
       certificates = certs;
     }
 
+    // Get today's Night Supervisor / MOD
+    const [nightSupervisorData] = await pool.query(
+      'SELECT staff_name FROM monthly_duty_schedule WHERE duty_date = ? AND role_name = "Night Supervisor"',
+      [date]
+    );
+    const nightSupervisorName = nightSupervisorData.length > 0 ? nightSupervisorData[0].staff_name : null;
+
     // Structure data for display
     const displayData = {
       date,
@@ -84,7 +93,8 @@ exports.getToday = async (req, res) => {
       categories,
       shifts,
       roster,
-      certificates
+      certificates,
+      nightSupervisorName
     };
 
     res.json(displayData);
@@ -194,5 +204,122 @@ exports.getDashboardStats = async (req, res) => {
   } catch (error) {
     console.error('Get dashboard stats error:', error);
     res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// Import monthly duty schedule from Excel
+exports.importMonthlyDuty = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const workbook = xlsx.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    // Read raw values first
+    const data = xlsx.utils.sheet_to_json(sheet, { header: 1, raw: true });
+
+    // SAVE FOR DEBUGGING
+    const debugPath = 'uploads/latest_debug.xlsx';
+    if (fs.existsSync(debugPath)) fs.unlinkSync(debugPath);
+    fs.copyFileSync(req.file.path, debugPath);
+    
+    fs.unlinkSync(req.file.path);
+
+    if (data.length === 0) {
+      return res.status(400).json({ message: 'Excel file is empty' });
+    }
+
+    let dateIndex = -1;
+    let nameIndex = -1;
+    let headerRowIndex = -1;
+
+    // Scan for the header row
+    for (let i = 0; i < Math.min(data.length, 20); i++) {
+      const row = data[i];
+      if (!Array.isArray(row)) continue;
+      
+      const cDate = row.findIndex(val => typeof val === 'string' && (val.toLowerCase() === 'date' || val.toLowerCase().includes('duty date')));
+      const cName = row.findIndex(val => typeof val === 'string' && (val.toLowerCase() === 'name' || val.toLowerCase() === 'names' || val.toLowerCase().includes('supervisor')));
+      
+      if (cDate !== -1 && cName !== -1) {
+        dateIndex = cDate;
+        nameIndex = cName;
+        headerRowIndex = i;
+        break;
+      }
+    }
+
+    if (headerRowIndex === -1) {
+      return res.status(400).json({ message: 'Could not find "Date" and "Name" columns in the Excel file.' });
+    }
+
+    // Process data
+    let insertedRows = 0;
+    
+    for (let i = headerRowIndex + 1; i < data.length; i++) {
+      const row = data[i];
+      if (!Array.isArray(row) || row.length <= Math.max(dateIndex, nameIndex)) continue;
+
+      let dateRaw = row[dateIndex];
+      let nameRaw = row[nameIndex];
+
+      if (!dateRaw || !nameRaw) continue; // Skip incomplete rows
+      if (typeof nameRaw !== 'string') nameRaw = String(nameRaw);
+      
+      let formattedDate;
+
+      // Handle Excel Date Serial Number vs String
+      if (typeof dateRaw === 'number') {
+        const parsed = xlsx.SSF.parse_date_code(dateRaw);
+        if (parsed) {
+          const y = parsed.y;
+          const m = String(parsed.m).padStart(2, '0');
+          const d = String(parsed.d).padStart(2, '0');
+          formattedDate = `${y}-${m}-${d}`;
+        }
+      } else {
+        // String format parsing (DD-MM-YYYY or MM/DD/YYYY)
+        let strDate = String(dateRaw).trim();
+        // check for DD-MM-YYYY or DD/MM/YYYY
+        const dmyMatch = strDate.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+        if (dmyMatch) {
+          // If the user specified DD-MM-YYYY
+          const d = dmyMatch[1].padStart(2, '0');
+          const m = dmyMatch[2].padStart(2, '0');
+          const y = dmyMatch[3];
+          formattedDate = `${y}-${m}-${d}`;
+        } else {
+          // Fallback to JS standard Date parsing
+          let dutyDate = new Date(strDate);
+          if (!isNaN(dutyDate.getTime())) {
+            formattedDate = dutyDate.toISOString().split('T')[0];
+          }
+        }
+      }
+
+      if (!formattedDate) continue;
+
+      await pool.query(
+        'INSERT INTO monthly_duty_schedule (duty_date, role_name, staff_name) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE staff_name = ?',
+        [formattedDate, 'Night Supervisor', nameRaw.trim(), nameRaw.trim()]
+      );
+      insertedRows++;
+    }
+
+    // Audit log
+    await pool.query(
+      'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
+      [req.user.id, 'IMPORT', 'schedule', null, `Imported monthly night supervisor schedule (${insertedRows} rows)`]
+    );
+
+    res.json({ message: `Successfully imported ${insertedRows} schedule assignments.`, rows: insertedRows });
+  } catch (error) {
+    console.error('Import monthly duty error:', error);
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ message: 'Server error while parsing Excel file.' });
   }
 };
