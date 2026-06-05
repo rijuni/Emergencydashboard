@@ -142,3 +142,13 @@ INSERT INTO display_settings (setting_key, setting_value) VALUES
 ('night_mode_end', '06:00'),
 ('ambulance_contact_number', ''),
 ('ambulance_contact_details', '');
+
+-- Monthly Duty Schedule
+CREATE TABLE monthly_duty_schedule (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  duty_date DATE NOT NULL,
+  role_name VARCHAR(255) NOT NULL,
+  staff_name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_duty (duty_date, role_name)
+);
