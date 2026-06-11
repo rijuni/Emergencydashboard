@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { HiOutlineDownload, HiOutlineDocumentText } from 'react-icons/hi';
+import { HiOutlineDownload, HiOutlineDocumentText, HiOutlineTrash } from 'react-icons/hi';
 
 export default function FileArchivesPage() {
   const [files, setFiles] = useState([]);
@@ -35,6 +35,17 @@ export default function FileArchivesPage() {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       toast.error('Download failed');
+    }
+  };
+
+  const handleDelete = async (file) => {
+    if (!window.confirm(`Are you sure you want to delete the file "${file.original_name}" from history?`)) return;
+    try {
+      await api.delete(`/files/${file.id}`);
+      toast.success('File deleted successfully');
+      fetchFiles();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Delete failed');
     }
   };
 
@@ -108,13 +119,20 @@ export default function FileArchivesPage() {
                     <td className="py-4 px-6 text-sm text-text-muted">
                       {file.uploaded_by_name || 'System'}
                     </td>
-                    <td className="py-4 px-6 text-right">
+                    <td className="py-4 px-6 text-right space-x-1">
                       <button
                         onClick={() => handleDownload(file)}
                         className="p-2 rounded-lg text-text-muted hover:text-primary-light hover:bg-primary/10 transition-all duration-200 inline-flex"
                         title="Download"
                       >
                         <HiOutlineDownload className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(file)}
+                        className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-all duration-200 inline-flex"
+                        title="Delete Archive File"
+                      >
+                        <HiOutlineTrash className="w-5 h-5" />
                       </button>
                     </td>
                   </tr>

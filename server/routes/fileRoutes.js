@@ -13,4 +13,7 @@ router.get('/download/:id', auth, roleCheck('super_admin', 'admin', 'casualty_in
 // Download a template
 router.get('/templates/:type', auth, fileController.downloadTemplate);
 
+// Delete an uploaded file
+router.delete('/:id', auth, roleCheck('super_admin'), fileController.deleteFile);
+
 module.exports = router;

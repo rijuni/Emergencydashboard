@@ -17,6 +17,17 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- Uploaded files archives
+CREATE TABLE IF NOT EXISTS uploaded_files (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    original_name VARCHAR(255) NOT NULL,
+    stored_name VARCHAR(255) NOT NULL,
+    upload_type VARCHAR(100) NOT NULL,
+    uploaded_by INT,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (uploaded_by) REFERENCES users(id)
+);
+
 -- Staff categories lookup
 CREATE TABLE IF NOT EXISTS staff_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -64,11 +75,13 @@ CREATE TABLE IF NOT EXISTS roster (
     slot_index INT NOT NULL DEFAULT 1,
     assigned_by INT,
     notes VARCHAR(255),
+    uploaded_file_id INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (shift_id) REFERENCES shifts(id),
     FOREIGN KEY (staff_id) REFERENCES staff(id),
     FOREIGN KEY (assigned_by) REFERENCES users(id),
+    FOREIGN KEY (uploaded_file_id) REFERENCES uploaded_files(id) ON DELETE CASCADE,
     UNIQUE KEY unique_roster (roster_date, shift_id, staff_id, slot_index)
 );
 
@@ -149,17 +162,16 @@ CREATE TABLE monthly_duty_schedule (
   duty_date DATE NOT NULL,
   role_name VARCHAR(255) NOT NULL,
   staff_name VARCHAR(255) NOT NULL,
+  uploaded_file_id INT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY unique_duty (duty_date, role_name)
+  UNIQUE KEY unique_duty (duty_date, role_name),
+  FOREIGN KEY (uploaded_file_id) REFERENCES uploaded_files(id) ON DELETE CASCADE
 );
 
--- Uploaded files archives
-CREATE TABLE IF NOT EXISTS uploaded_files (
+-- Departments Master Table
+CREATE TABLE IF NOT EXISTS departments (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    original_name VARCHAR(255) NOT NULL,
-    stored_name VARCHAR(255) NOT NULL,
-    upload_type VARCHAR(100) NOT NULL,
-    uploaded_by INT,
-    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (uploaded_by) REFERENCES users(id)
+    name VARCHAR(100) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+

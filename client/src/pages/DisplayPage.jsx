@@ -453,16 +453,14 @@ export default function DisplayPage() {
                                 >
                                   {entry.staff_name}
                                 </div>
-                                {(entry.designation || entry.specialization) && (
-                                  <div
-                                    className="text-xs mt-0.5"
-                                    style={{ color: isDark ? "#94A3B8" : "#64748B" }}
-                                  >
-                                    {[entry.designation, entry.specialization]
-                                      .filter(Boolean)
-                                      .join(" • ")}
-                                  </div>
-                                )}
+                                <div
+                                  className="text-xs mt-0.5"
+                                  style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                                >
+                                  {[entry.designation, entry.specialization]
+                                    .filter(Boolean)
+                                    .join(" • ") || "\u00A0"}
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -517,11 +515,9 @@ export default function DisplayPage() {
                               <div className="font-bold text-sm md:text-base" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
                                 {doc.staff_name}
                               </div>
-                              {doc.designation && (
-                                <div className="text-[11px] mt-0.5" style={{ color: isDark ? "#94A3B8" : "#64748B" }}>
-                                  {doc.designation}
-                                </div>
-                              )}
+                              <div className="text-[11px] mt-0.5" style={{ color: isDark ? "#94A3B8" : "#64748B" }}>
+                                {doc.designation || "\u00A0"}
+                              </div>
                             </div>
                           ))}
                         </div>

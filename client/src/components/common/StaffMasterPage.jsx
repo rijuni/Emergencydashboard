@@ -23,6 +23,7 @@ export default function StaffMasterPage({
 
   const [staff, setStaff] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
@@ -79,6 +80,25 @@ export default function StaffMasterPage({
     };
 
     loadCategories();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+    const loadDepartments = async () => {
+      try {
+        const res = await api.get("/departments");
+        if (!isActive) return;
+        setDepartments(res.data.departments || []);
+      } catch (error) {
+        console.error("Failed to load departments:", error);
+      }
+    };
+
+    loadDepartments();
 
     return () => {
       isActive = false;
@@ -620,14 +640,20 @@ export default function StaffMasterPage({
                     <label className="block text-sm text-text-secondary mb-1.5 font-medium">
                       Department
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={form.department}
                       onChange={(event) =>
                         setForm({ ...form, department: event.target.value })
                       }
                       className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
-                    />
+                    >
+                      <option value="">Select Department</option>
+                      {departments.map((dept) => (
+                        <option key={dept.id} value={dept.name}>
+                          {dept.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
 

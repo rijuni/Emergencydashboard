@@ -350,11 +350,37 @@ async function handleMatrixUpload(req, res, categoryStr) {
        return res.status(400).json({ message: 'Could not find days 1-31 in the Excel file. Please use the official template.' });
     }
 
+    // Archive file and register it in uploaded_files BEFORE inserting the roster entries
+    const archivesDir = path.join(__dirname, '..', 'uploads', 'archives');
+    if (!fs.existsSync(archivesDir)) fs.mkdirSync(archivesDir, { recursive: true });
+    
+    let originalName = req.file.originalname || `${uploadTypeStr}.xlsx`;
+    originalName = Buffer.from(originalName, 'latin1').toString('utf8').replace(/Â/g, '').replace(/\s+/g, ' ').trim();
+    
+    const timestamp = Date.now();
+    const storedName = `${timestamp}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const archivePath = path.join(archivesDir, storedName);
+    fs.copyFileSync(req.file.path, archivePath);
+
+    const [fileResult] = await pool.query(
+      'INSERT INTO uploaded_files (original_name, stored_name, upload_type, uploaded_by) VALUES (?, ?, ?, ?)',
+      [originalName, storedName, uploadTypeStr, req.user.id]
+    );
+    const uploadedFileId = fileResult.insertId;
+
     const [staffRows] = await pool.query('SELECT id, full_name FROM staff WHERE category_id = ? AND is_active = TRUE', [categoryId]);
     console.log(`[MatrixUpload] Found ${staffRows.length} active staff for category ${categoryStr}`);
     
-    const shiftMap = { 'M': 1, 'E': 2, 'N': 3, 'G': 1 }; // G defaults to morning shift
+    const shiftMap = { 
+      'M': 1, 'MORNING': 1,
+      'E': 2, 'EVENING': 2,
+      'N': 3, 'NIGHT': 3,
+      'G': 1, 'GENERAL': 1,
+      'D': 1, 'DAY': 1,
+      'W': 1, 'WARD': 1
+    };
     let insertedRows = 0;
+    const skippedNames = [];
     
     for (let i = headerRowIndex + 1; i < data.length; i++) {
        const row = data[i];
@@ -363,21 +389,36 @@ async function handleMatrixUpload(req, res, categoryStr) {
        const nameRaw = String(row[nameIndex] || '').trim();
        if (!nameRaw || nameRaw.toUpperCase().includes('SL NO')) continue;
 
-       // Basic clean up
-       const cleanStr = str => str.toLowerCase().replace(/[^a-z0-9]/g, '');
-       const cleanedNameRaw = cleanStr(nameRaw);
+       // Robust name cleaning and matching
+       const cleanWords = name => {
+         return name.toLowerCase()
+           .replace(/dr\.|dr\b|mr\.|mr\b|mrs\.|mrs\b|ms\.|ms\b/g, '') // strip titles
+           .replace(/[^a-z0-9\s]/g, '') // strip special characters
+           .split(/\s+/)
+           .filter(w => w.length > 1);
+       };
 
-       const staffMatch = staffRows.find(s => 
-         cleanStr(s.full_name).includes(cleanedNameRaw) || 
-         cleanedNameRaw.includes(cleanStr(s.full_name))
-       );
+       const excelWords = cleanWords(nameRaw);
+       
+       const staffMatch = staffRows.find(s => {
+         const dbWords = cleanWords(s.full_name);
+         if (dbWords.length === 0 || excelWords.length === 0) return false;
+         const intersection = dbWords.filter(w => excelWords.includes(w));
+         const minMatch = Math.min(dbWords.length, excelWords.length, 2);
+         return intersection.length >= minMatch;
+       });
        
        if (!staffMatch) {
-         console.log(`[MatrixUpload] Skipped row: Could not match Excel name "${nameRaw}" to any active staff member.`);
+         if (!skippedNames.includes(nameRaw)) {
+           skippedNames.push(nameRaw);
+         }
+         console.log(`[MatrixUpload] Skipped row: Excel name "${nameRaw}" not found in DB master.`);
          continue;
        }
 
-       console.log(`[MatrixUpload] Matched Excel name "${nameRaw}" to DB staff "${staffMatch.full_name}" (ID: ${staffMatch.id})`);
+       const staffId = staffMatch.id;
+       const staffNameForLog = staffMatch.full_name;
+       console.log(`[MatrixUpload] Matched Excel name "${nameRaw}" to DB staff "${staffMatch.full_name}" (ID: ${staffId})`);
 
        for (let day = 1; day <= 31; day++) {
           const colIndex = datesStartIndex + (day - 1);
@@ -390,34 +431,17 @@ async function handleMatrixUpload(req, res, categoryStr) {
              const d = new Date(dateStr);
              if (isNaN(d.getTime()) || d.getMonth() + 1 !== month) continue;
 
-             const [existing] = await pool.query('SELECT id FROM roster WHERE roster_date = ? AND shift_id = ? AND staff_id = ?', [dateStr, shiftId, staffMatch.id]);
+             const [existing] = await pool.query('SELECT id FROM roster WHERE roster_date = ? AND shift_id = ? AND staff_id = ?', [dateStr, shiftId, staffId]);
              if (existing.length === 0) {
-                await pool.query('INSERT INTO roster (roster_date, shift_id, staff_id, assigned_by) VALUES (?, ?, ?, ?)', [dateStr, shiftId, staffMatch.id, req.user.id]);
-                console.log(`[MatrixUpload] Inserted shift ${shiftId} on ${dateStr} for ${staffMatch.full_name}`);
+                await pool.query('INSERT INTO roster (roster_date, shift_id, staff_id, assigned_by, uploaded_file_id) VALUES (?, ?, ?, ?, ?)', [dateStr, shiftId, staffId, req.user.id, uploadedFileId]);
+                console.log(`[MatrixUpload] Inserted shift ${shiftId} on ${dateStr} for ${staffNameForLog}`);
                 insertedRows++;
              } else {
-                console.log(`[MatrixUpload] Shift ${shiftId} on ${dateStr} for ${staffMatch.full_name} already exists. Skipping.`);
+                console.log(`[MatrixUpload] Shift ${shiftId} on ${dateStr} for ${staffNameForLog} already exists. Skipping.`);
              }
           }
        }
     }
-
-    // Archiving
-    const archivesDir = path.join(__dirname, '..', 'uploads', 'archives');
-    if (!fs.existsSync(archivesDir)) fs.mkdirSync(archivesDir, { recursive: true });
-    
-    let originalName = req.file.originalname || `${uploadTypeStr}.xlsx`;
-    originalName = Buffer.from(originalName, 'latin1').toString('utf8').replace(/Â/g, '').replace(/\s+/g, ' ').trim();
-    
-    const timestamp = Date.now();
-    const storedName = `${timestamp}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const archivePath = path.join(archivesDir, storedName);
-    fs.copyFileSync(req.file.path, archivePath);
-
-    await pool.query(
-      'INSERT INTO uploaded_files (original_name, stored_name, upload_type, uploaded_by) VALUES (?, ?, ?, ?)',
-      [originalName, storedName, uploadTypeStr, req.user.id]
-    );
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 
@@ -426,7 +450,12 @@ async function handleMatrixUpload(req, res, categoryStr) {
       [req.user.id, 'IMPORT', 'roster', null, `Imported ${uploadTypeStr} schedule (${insertedRows} shifts assigned)`]
     );
 
-    return res.json({ message: `Successfully imported ${insertedRows} shift assignments for ${uploadTypeStr}.`, rows: insertedRows });
+    let responseMessage = `Successfully imported ${insertedRows} shift assignments for ${uploadTypeStr}.`;
+    if (skippedNames.length > 0) {
+      responseMessage += ` Note: The following staff names were not found in your master directory and were skipped: ${skippedNames.join(', ')}`;
+    }
+
+    return res.json({ message: responseMessage, rows: insertedRows });
 
   } catch (error) {
     console.error('Matrix upload error:', error);
@@ -532,12 +561,37 @@ async function handleMatrixUpload(req, res, categoryStr) {
       parsedRows.push({ formattedDate, nameRaw: nameRaw.trim() });
     }
 
+    // Save filename to settings
+    let originalName = req.file.originalname || 'MOD_Schedule.xlsx';
+    // Fix UTF-8 encoding issue often caused by multer with latin1 fallback
+    originalName = Buffer.from(originalName, 'latin1').toString('utf8');
+    // Remove the Â character which usually accompanies non-breaking spaces
+    originalName = originalName.replace(/Â/g, '').replace(/\s+/g, ' ').trim();
+
+    const timestamp = Date.now();
+    const storedName = `${timestamp}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+
+    // Save to historical archives
+    const archivesDir = path.join(__dirname, '..', 'uploads', 'archives');
+    if (!fs.existsSync(archivesDir)) {
+      fs.mkdirSync(archivesDir, { recursive: true });
+    }
+    const archivePath = path.join(archivesDir, storedName);
+    fs.copyFileSync(req.file.path, archivePath);
+
+    // Log to uploaded_files table BEFORE inserting schedule entries
+    const [fileResult] = await pool.query(
+      'INSERT INTO uploaded_files (original_name, stored_name, upload_type, uploaded_by) VALUES (?, ?, ?, ?)',
+      [originalName, storedName, 'Manager On Duty Schedule', req.user.id]
+    );
+    const uploadedFileId = fileResult.insertId;
+
     // Phase 2: Insert into database
     let insertedRows = 0;
     for (const item of parsedRows) {
       await pool.query(
-        'INSERT INTO monthly_duty_schedule (duty_date, role_name, staff_name) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE staff_name = ?',
-        [item.formattedDate, 'Night Supervisor', item.nameRaw, item.nameRaw]
+        'INSERT INTO monthly_duty_schedule (duty_date, role_name, staff_name, uploaded_file_id) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE staff_name = ?, uploaded_file_id = ?',
+        [item.formattedDate, 'Night Supervisor', item.nameRaw, uploadedFileId, item.nameRaw, uploadedFileId]
       );
       insertedRows++;
     }
@@ -547,33 +601,9 @@ async function handleMatrixUpload(req, res, categoryStr) {
     if (fs.existsSync(schedulePath)) fs.unlinkSync(schedulePath);
     fs.copyFileSync(req.file.path, schedulePath);
     
-    // Save filename to settings
-    let originalName = req.file.originalname || 'MOD_Schedule.xlsx';
-    // Fix UTF-8 encoding issue often caused by multer with latin1 fallback
-    originalName = Buffer.from(originalName, 'latin1').toString('utf8');
-    // Remove the Â character which usually accompanies non-breaking spaces
-    originalName = originalName.replace(/Â/g, '').replace(/\s+/g, ' ').trim();
-
     await pool.query(
       'INSERT INTO display_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
       ['active_mod_schedule_filename', originalName, originalName]
-    );
-
-    // Save to historical archives
-    const archivesDir = path.join(__dirname, '..', 'uploads', 'archives');
-    if (!fs.existsSync(archivesDir)) {
-      fs.mkdirSync(archivesDir, { recursive: true });
-    }
-    
-    const timestamp = Date.now();
-    const storedName = `${timestamp}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const archivePath = path.join(archivesDir, storedName);
-    fs.copyFileSync(req.file.path, archivePath);
-
-    // Log to uploaded_files table
-    await pool.query(
-      'INSERT INTO uploaded_files (original_name, stored_name, upload_type, uploaded_by) VALUES (?, ?, ?, ?)',
-      [originalName, storedName, 'Manager On Duty Schedule', req.user.id]
     );
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
