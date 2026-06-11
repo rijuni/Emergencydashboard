@@ -71,6 +71,7 @@ export default function OnCallDoctorDutyPage() {
   };
 
   const handleCopyPrevious = async () => {
+    if (isPastDate) return toast.error("Cannot copy into a past date");
     const prevDate = new Date(date);
     prevDate.setDate(prevDate.getDate() - 1);
     const from = prevDate.toISOString().split("T")[0];
@@ -90,6 +91,12 @@ export default function OnCallDoctorDutyPage() {
   };
 
   const isToday = date === new Date().toISOString().split("T")[0];
+
+  const getTodayLocalString = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const isPastDate = date < getTodayLocalString();
 
   // Derive Doctors and Departments
   const doctors = useMemo(() => {
@@ -191,7 +198,9 @@ export default function OnCallDoctorDutyPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleCopyPrevious}
-            className="btn-secondary flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium"
+            disabled={isPastDate}
+            className="btn-secondary flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            title={isPastDate ? "Cannot copy into a past date" : "Copy previous day's roster"}
           >
             <HiOutlineDuplicate className="w-4 h-4" /> Copy Previous Day
           </button>
@@ -273,7 +282,8 @@ export default function OnCallDoctorDutyPage() {
                 <select
                   value={selection.department}
                   onChange={(e) => updateSelection("department", e.target.value)}
-                  className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-primary-light transition-all appearance-none"
+                  disabled={isPastDate}
+                  className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-primary-light transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="">Select Department...</option>
                   {departments.map((dep) => (
@@ -286,8 +296,8 @@ export default function OnCallDoctorDutyPage() {
                 <select
                   value={selection.doctorId}
                   onChange={(e) => updateSelection("doctorId", e.target.value)}
-                  disabled={!selection.department}
-                  className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-primary-light transition-all appearance-none disabled:opacity-50"
+                  disabled={!selection.department || isPastDate}
+                  className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-primary-light transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="">Select Doctor...</option>
                   {availableDoctors.map((doc) => (
@@ -309,13 +319,15 @@ export default function OnCallDoctorDutyPage() {
                     <p className="text-text-muted text-xs truncate">{selectedDoctor.department}</p>
                     <p className="text-text-muted text-xs truncate">{(selectedDoctor.qualification || '') + (selectedDoctor.specialization ? `, ${selectedDoctor.specialization}` : '')}</p>
                   </div>
-                  <button
-                    onClick={() => updateSelection("doctorId", "")}
-                    className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors shrink-0"
-                    title="Clear selection"
-                  >
-                    <HiOutlineTrash className="w-5 h-5" />
-                  </button>
+                  {!isPastDate && (
+                    <button
+                      onClick={() => updateSelection("doctorId", "")}
+                      className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors shrink-0"
+                      title="Clear selection"
+                    >
+                      <HiOutlineTrash className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="h-full rounded-xl border border-dashed border-border flex items-center justify-center text-text-muted text-sm">
@@ -326,8 +338,9 @@ export default function OnCallDoctorDutyPage() {
 
             <button
               onClick={handleAddDoctor}
-              disabled={!selectedDoctor}
+              disabled={!selectedDoctor || isPastDate}
               className="w-full py-3 rounded-xl font-bold text-sm bg-primary-light text-bg-dark hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all mb-6"
+              title={isPastDate ? "Cannot edit past dates" : ""}
             >
               + Add Doctor
             </button>
@@ -346,13 +359,15 @@ export default function OnCallDoctorDutyPage() {
                         <h4 className="text-text-primary font-bold text-sm truncate">{r.staff_name}</h4>
                         <p className="text-text-muted text-xs truncate">{doctors.find(d => d.id === r.staff_id)?.department || 'Department'}</p>
                       </div>
-                      <button
-                        onClick={() => handleRemoveDoctor(r.staff_id)}
-                        className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors shrink-0"
-                        title="Remove assignment"
-                      >
-                        <HiOutlineTrash className="w-5 h-5" />
-                      </button>
+                      {!isPastDate && (
+                        <button
+                          onClick={() => handleRemoveDoctor(r.staff_id)}
+                          className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors shrink-0"
+                          title="Remove assignment"
+                        >
+                          <HiOutlineTrash className="w-5 h-5" />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -72,6 +72,7 @@ app.use('/api/staff', require('./routes/staffRoutes'));
 app.use('/api/roster', require('./routes/rosterRoutes'));
 app.use('/api/certificates', require('./routes/certificateRoutes'));
 app.use('/api/display', require('./routes/displayRoutes'));
+app.use('/api/files', require('./routes/fileRoutes'));
 
 // Health check
 app.get('/api/health', (req, res) => {

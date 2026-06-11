@@ -121,7 +121,7 @@ INSERT INTO staff_categories (name, display_order) VALUES
 ('Doctor', 1),
 ('Nursing Officer', 2),
 ('Pharmacist', 3),
-('Night Supervisor', 4),
+('MOD', 4),
 ('Ambulance', 5),
 ('Technician', 6),
 ('Security Supervisor', 7);
@@ -151,4 +151,15 @@ CREATE TABLE monthly_duty_schedule (
   staff_name VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY unique_duty (duty_date, role_name)
+);
+
+-- Uploaded files archives
+CREATE TABLE IF NOT EXISTS uploaded_files (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    original_name VARCHAR(255) NOT NULL,
+    stored_name VARCHAR(255) NOT NULL,
+    upload_type VARCHAR(100) NOT NULL,
+    uploaded_by INT,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (uploaded_by) REFERENCES users(id)
 );

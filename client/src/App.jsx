@@ -12,7 +12,7 @@ import SettingsPage from "./pages/SettingsPage";
 import DisplayPage from "./pages/DisplayPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import ShiftManagementPage from "./pages/ShiftManagementPage";
-import DoctorsDisplayPage from "./pages/DoctorsDisplayPage";
+import FileArchivesPage from "./pages/FileArchivesPage";
 import OnCallDoctorDutyPage from "./pages/OnCallDoctorDutyPage";
 import Layout from "./components/common/Layout";
 
@@ -46,7 +46,6 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/display" element={<DisplayPage />} />
-      <Route path="/display/doctors" element={<DoctorsDisplayPage />} />
       <Route
         path="/"
         element={
@@ -113,6 +112,14 @@ function AppRoutes() {
           element={
             <RoleRoute allowedRoles={["super_admin"]}>
               <ShiftManagementPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="files"
+          element={
+            <RoleRoute allowedRoles={["super_admin"]}>
+              <FileArchivesPage />
             </RoleRoute>
           }
         />

@@ -7,7 +7,8 @@ import {
   HiOutlineDuplicate,
   HiOutlineTrash,
   HiOutlineUpload,
-  HiOutlineDocumentDownload
+  HiOutlineDocumentDownload,
+  HiOutlineCalendar
 } from "react-icons/hi";
 
 // Static color map — avoids dynamic Tailwind class issues
@@ -73,9 +74,9 @@ const ROSTER_CATEGORY_ALLOWLIST = [
   "Nursing Officer",
   "Pharmacist",
   "Technician",
-  "Night Supervisor",
+  "Manager On Duty",
 ];
-const NIGHT_SUPERVISOR_NAME = "Night Supervisor";
+const NIGHT_SUPERVISOR_NAME = "Manager On Duty";
 const NIGHT_SHIFT_NAME = "Night";
 const normalizeName = (value) => (value || "").trim().toLowerCase();
 
@@ -86,9 +87,15 @@ export default function RosterPage() {
   const [categories, setCategories] = useState([]);
   const [shifts, setShifts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [displayLayout, setDisplayLayout] = useState("casualty");
-  const [savingLayout, setSavingLayout] = useState(false);
   const [uploadingExcel, setUploadingExcel] = useState(false);
+  const [manualModName, setManualModName] = useState("");
+  const [savingManualMod, setSavingManualMod] = useState(false);
+  const [restoringMod, setRestoringMod] = useState(false);
+  const [activeFileName, setActiveFileName] = useState("");
+  const [overrideCategory, setOverrideCategory] = useState("MOD");
+  const [overrideShiftId, setOverrideShiftId] = useState("");
+  const [overrideStaffId, setOverrideStaffId] = useState("");
+  const [uploadCategory, setUploadCategory] = useState("mod");
 
   const fetchMeta = useCallback(async () => {
     try {
@@ -101,34 +108,23 @@ export default function RosterPage() {
       setStaff(staffRes.data.staff);
       setCategories(catRes.data.categories);
       setShifts(shiftRes.data.shifts);
-      if (settingsRes.data.settings?.display_layout) {
-        setDisplayLayout(settingsRes.data.settings.display_layout);
+      if (settingsRes.data.settings?.active_mod_schedule_filename) {
+        setActiveFileName(settingsRes.data.settings.active_mod_schedule_filename);
       }
     } catch (err) {
       console.error(err);
     }
   }, []);
 
-  const handleLayoutChange = async (newLayout) => {
-    setDisplayLayout(newLayout);
-    setSavingLayout(true);
-    try {
-      await api.put("/display/settings", {
-        settings: { display_layout: newLayout },
-      });
-      toast.success("Display layout updated");
-    } catch (err) {
-      toast.error("Failed to update layout");
-    } finally {
-      setSavingLayout(false);
-    }
-  };
-
   const fetchRoster = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await api.get(`/roster?date=${date}`);
-      setRoster(res.data.roster);
+      const [rosterRes, displayRes] = await Promise.all([
+        api.get(`/roster?date=${date}`),
+        api.get(`/display/today?date=${date}`)
+      ]);
+      setRoster(rosterRes.data.roster);
+      setManualModName(displayRes.data.nightSupervisorName || "");
     } catch (err) {
       console.error(err);
     } finally {
@@ -211,12 +207,21 @@ export default function RosterPage() {
       if (options.allow_duplicate) {
         payload.allow_duplicate = true;
       }
+      if (options.emergency_override) {
+        payload.emergency_override = true;
+      }
 
       await api.post("/roster", payload);
       toast.success("Staff assigned");
       fetchRoster();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Error assigning staff");
+      if (err.response?.data?.errorCode === 'STAFF_ALREADY_ASSIGNED_TODAY') {
+        if (window.confirm(err.response.data.message)) {
+          handleAssign(shiftId, staffId, { ...options, emergency_override: true });
+        }
+      } else {
+        toast.error(err.response?.data?.message || "Error assigning staff");
+      }
     }
   };
 
@@ -234,8 +239,48 @@ export default function RosterPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Sanitize the filename to remove weird characters like Â
+    const cleanFileName = file.name.replace(/Â/g, '').replace(/\s+/g, ' ').trim();
+
+    // Validation: Confirm before uploading the same file again
+    if (activeFileName && cleanFileName === activeFileName) {
+      const confirmUpload = window.confirm(
+        `You have already uploaded "${cleanFileName}". Are you sure you want to upload it again?`
+      );
+      if (!confirmUpload) {
+        e.target.value = null; // discard and reset input
+        return;
+      }
+    }
+
+    const cleanFileNameLower = cleanFileName.toLowerCase();
+    
+    // Strict Template Validation
+    if (uploadCategory === "doctors" && !cleanFileNameLower.includes("doctor")) {
+      toast.error("Invalid file: Please upload a Doctors Roster Template.");
+      e.target.value = null; return;
+    }
+    if (uploadCategory === "mod" && !cleanFileNameLower.includes("manager_on_duty") && !cleanFileNameLower.includes("mod")) {
+      toast.error("Invalid file: Please upload a Manager On Duty Template.");
+      e.target.value = null; return;
+    }
+    if (uploadCategory === "nursing" && !cleanFileNameLower.includes("nursing")) {
+      toast.error("Invalid file: Please upload a Nursing Roster Template.");
+      e.target.value = null; return;
+    }
+    if (uploadCategory === "pharmacy" && !cleanFileNameLower.includes("pharmacy")) {
+      toast.error("Invalid file: Please upload a Pharmacy Roster Template.");
+      e.target.value = null; return;
+    }
+
+    // We can remove the "coming soon" block now that we are building the backend!
+
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("category", uploadCategory);
+    const selectedDate = new Date(date);
+    formData.append("year", selectedDate.getFullYear());
+    formData.append("month", selectedDate.getMonth() + 1);
 
     setUploadingExcel(true);
     try {
@@ -243,6 +288,8 @@ export default function RosterPage() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       toast.success(res.data.message || "Schedule imported successfully!");
+      setActiveFileName(cleanFileName); // Only update filename in UI if upload succeeded
+      fetchRoster(); // Refresh the roster data automatically after successful upload
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to import schedule");
     } finally {
@@ -251,7 +298,85 @@ export default function RosterPage() {
     }
   };
 
+  const handleDownloadExcel = async () => {
+    try {
+      const response = await api.get('/display/settings/download-mod-schedule', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', activeFileName || 'Manager_On_Duty_Schedule.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      toast.error('Failed to download schedule or no schedule available.');
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    const type = document.getElementById('template-select')?.value;
+    if (!type) {
+      toast.error("Please select a template to download");
+      return;
+    }
+    try {
+      const res = await api.get(`/files/templates/${type}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const typeNames = {
+        'mod': 'Manager_On_Duty_Template.xlsx',
+        'doctors': 'Doctors_Roster_Template.xlsx',
+        'pharmacy': 'Pharmacy_Roster_Template.xlsx',
+        'nursing': 'Nursing_Roster_Template.xlsx'
+      };
+      
+      link.setAttribute('download', typeNames[type]);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      toast.error("Failed to download template");
+    }
+  };
+
+  const handleManualModSave = async () => {
+    setSavingManualMod(true);
+    try {
+      await api.post("/display/settings/manual-mod", { date, staff_name: manualModName });
+      if (!manualModName.trim()) {
+        toast.success("Manager On Duty cleared successfully for " + formatDate(date));
+      } else {
+        toast.success("Manual Manager On Duty updated successfully for " + formatDate(date));
+      }
+      fetchRoster(); // Refetch to show the latest saved value
+      handleDownloadModSchedule(); // Auto-download updated schedule
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to save override");
+    } finally {
+      setSavingManualMod(false);
+    }
+  };
+
+  const handleRestoreDefault = async () => {
+    setRestoringMod(true);
+    try {
+      const formattedDate = date;
+      const res = await api.post("/display/settings/restore-mod", { date: formattedDate });
+      toast.success(res.data.message || "Restored default Manager On Duty");
+      fetchRoster(); // Refresh to show restored name
+      handleDownloadModSchedule(); // Auto-download updated schedule
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to restore default Manager On Duty");
+    } finally {
+      setRestoringMod(false);
+    }
+  };
+
   const handleCopyPrevious = async () => {
+    if (isPastDate) return toast.error("Cannot copy into a past date");
     const prevDate = new Date(date);
     prevDate.setDate(prevDate.getDate() - 1);
     const from = prevDate.toISOString().split("T")[0];
@@ -280,6 +405,13 @@ export default function RosterPage() {
   };
 
   const isToday = date === new Date().toISOString().split("T")[0];
+
+  const getTodayLocalString = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const isPastDate = date < getTodayLocalString();
+
   const isLightTheme =
     document.documentElement.getAttribute("data-theme") === "light";
 
@@ -316,23 +448,11 @@ export default function RosterPage() {
           <p className="text-text-muted text-sm mt-1">Assign staff to shifts</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-bg-surface border border-border px-3 py-2 rounded-xl">
-            <span className="text-xs text-text-secondary font-medium whitespace-nowrap">
-              TV Layout:
-            </span>
-            <select
-              value={displayLayout}
-              onChange={(e) => handleLayoutChange(e.target.value)}
-              disabled={savingLayout}
-              className="bg-transparent text-sm text-text-primary focus:outline-none font-medium disabled:opacity-50"
-            >
-              <option value="casualty">Classic (All Staff)</option>
-              <option value="doctors">Focus</option>
-            </select>
-          </div>
           <button
             onClick={handleCopyPrevious}
-            className="btn-secondary flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium"
+            disabled={isPastDate}
+            className="btn-secondary flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            title={isPastDate ? "Cannot copy into a past date" : "Copy previous day's roster"}
           >
             <HiOutlineDuplicate className="w-4 h-4" /> Copy Previous Day
           </button>
@@ -387,20 +507,28 @@ export default function RosterPage() {
 
       {/* Monthly Duty Schedule Upload */}
       <div
-        className="glass-card rounded-xl p-6 animate-fade-in-up"
+        className="glass-card rounded-xl overflow-hidden animate-fade-in-up"
         style={{ animationDelay: "150ms" }}
       >
-        <h2 className="text-base font-display font-semibold text-text-primary mb-5 flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(139, 92, 246, 0.12)" }}
-          >
-            <HiOutlineUpload className="w-4 h-4" style={{ color: "#8B5CF6" }} />
-          </div>
-          Monthly Night Supervisor Schedule
-        </h2>
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-          <div className="flex-1 w-full">
+        <div className="p-5 border-b border-border bg-bg-surface/50 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-text-primary flex items-center gap-2">
+            <HiOutlineCalendar className="w-5 h-5 text-primary" />
+            Monthly Manager On Duty Schedule & Overrides
+          </h2>
+        </div>
+        <div className="p-6">
+        <div className="flex flex-col md:flex-row gap-4 items-start">
+          <div className="flex-1 w-full flex flex-col gap-2">
+            <select 
+              value={uploadCategory}
+              onChange={e => setUploadCategory(e.target.value)}
+              className="w-full bg-bg-dark border border-border rounded-lg px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 mb-1"
+            >
+              <option value="mod">Manager On Duty Schedule</option>
+              <option value="doctors">Doctors Roster</option>
+              <option value="nursing">Nursing Officer Roster</option>
+              <option value="pharmacy">Pharmacist Roster</option>
+            </select>
             <label className="relative flex items-center justify-center w-full p-4 border-2 border-dashed border-border rounded-xl hover:border-primary-light/50 transition-colors cursor-pointer bg-bg-surface/50">
               <input 
                 type="file" 
@@ -423,8 +551,131 @@ export default function RosterPage() {
                 )}
               </div>
             </label>
+            
+            {/* Template Download Section */}
+            <div className="flex items-center gap-2 mt-1 w-full">
+              <select 
+                id="template-select"
+                defaultValue=""
+                className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary-light/50"
+              >
+                <option value="" disabled>Select a template...</option>
+                <option value="mod">MOD Template</option>
+                <option value="doctors">Doctors Template</option>
+                <option value="pharmacy">Pharmacy Template</option>
+                <option value="nursing">Nursing Template</option>
+              </select>
+              <button
+                onClick={handleDownloadTemplate}
+                className="px-4 py-2.5 bg-primary/10 text-primary-light rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium flex items-center gap-2 whitespace-nowrap"
+              >
+                <HiOutlineDocumentDownload className="w-4 h-4" />
+                Download
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 w-full flex flex-col justify-center h-full">
+            <div className="p-4 rounded-xl border border-border bg-bg-surface/30">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
+                Manual Override for {formatDate(date)}
+              </label>
+              
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <select
+                    value={overrideCategory}
+                    onChange={e => {
+                      setOverrideCategory(e.target.value);
+                      setOverrideShiftId("");
+                      setOverrideStaffId("");
+                    }}
+                    className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 disabled:opacity-50"
+                    disabled={savingManualMod || isPastDate}
+                  >
+                    <option value="MOD">Manager On Duty</option>
+                    <option value="Doctor">Doctor</option>
+                    <option value="Nursing Officer">Nursing Officer</option>
+                    <option value="Pharmacist">Pharmacist</option>
+                  </select>
+
+                  {overrideCategory !== "MOD" && (
+                    <select
+                      value={overrideShiftId}
+                      onChange={e => setOverrideShiftId(e.target.value)}
+                      className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 disabled:opacity-50"
+                      disabled={isPastDate}
+                    >
+                      <option value="" disabled>Select Shift...</option>
+                      {shifts.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {overrideCategory === "MOD" ? (
+                    <input
+                      type="text"
+                      placeholder="Enter Manager On Duty Name"
+                      value={manualModName}
+                      onChange={(e) => setManualModName(e.target.value)}
+                      className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={savingManualMod || isPastDate}
+                    />
+                  ) : (
+                    <select
+                      value={overrideStaffId}
+                      onChange={e => setOverrideStaffId(e.target.value)}
+                      className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 disabled:opacity-50"
+                      disabled={isPastDate || !overrideShiftId}
+                    >
+                      <option value="" disabled>Select Staff...</option>
+                      {staff.filter(s => {
+                        const cat = categories.find(c => c.id === s.category_id);
+                        return cat && normalizeName(cat.name) === normalizeName(overrideCategory);
+                      }).map(s => (
+                        <option key={s.id} value={s.id}>{s.full_name}</option>
+                      ))}
+                    </select>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      if (overrideCategory === "MOD") {
+                        handleManualModSave();
+                      } else {
+                        if (!overrideShiftId || !overrideStaffId) {
+                          toast.error("Please select both a shift and a staff member");
+                          return;
+                        }
+                        handleAssign(parseInt(overrideShiftId), parseInt(overrideStaffId));
+                        setOverrideStaffId(""); // reset staff after assignment
+                      }
+                    }}
+                    disabled={savingManualMod || restoringMod || isPastDate}
+                    className="btn-primary px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                    title={isPastDate ? "Cannot edit past dates" : "Save Override"}
+                  >
+                    {savingManualMod ? "Saving..." : "Save Override"}
+                  </button>
+                  {overrideCategory === "MOD" && activeFileName && (
+                    <button
+                      onClick={handleRestoreDefault}
+                      disabled={savingManualMod || restoringMod || isPastDate}
+                      className="btn-outline border-border px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-primary-light hover:border-primary-light disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      title={isPastDate ? "Cannot edit past dates" : "Restore original name from Excel"}
+                    >
+                      {restoringMod ? "Restoring..." : "Restore Default"}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-text-muted mt-3">
+                Select a category to manually assign a staff member outside of the standard schedule.
+              </p>
+            </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Roster Grid */}
@@ -523,19 +774,21 @@ export default function RosterPage() {
                                 <span className="text-text-primary text-sm">
                                   {r.staff_name}
                                 </span>
-                                <div className="flex items-center gap-1.5">
-                                  <button
-                                    onClick={() => handleRemove(r.id)}
-                                    className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all duration-200"
-                                    style={{ color: "#EF4444" }}
-                                    title="Remove"
-                                  >
-                                    <HiOutlineTrash className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
+                                {!isPastDate && (
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      onClick={() => handleRemove(r.id)}
+                                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all duration-200"
+                                      style={{ color: "#EF4444" }}
+                                      title="Remove"
+                                    >
+                                      <HiOutlineTrash className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             ))}
-                            {available.length > 0 && (
+                            {!isPastDate && available.length > 0 && (
                               <select
                                 onChange={(e) => {
                                   if (e.target.value) {

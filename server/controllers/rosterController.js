@@ -64,15 +64,32 @@ exports.getByDate = async (req, res) => {
 // Create roster assignment
 exports.create = async (req, res) => {
   try {
-    const { roster_date, shift_id, staff_id, notes, allow_duplicate, slot_index } = req.body;
+    const { roster_date, shift_id, staff_id, notes, allow_duplicate, slot_index, emergency_override } = req.body;
 
     if (!roster_date || !shift_id || !staff_id) {
       return res.status(400).json({ message: 'Date, shift, and staff are required.' });
     }
 
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (roster_date < todayStr) {
+      return res.status(400).json({ message: 'Cannot modify roster for past dates.' });
+    }
+
     const hasSlotIndex = await getHasSlotIndex();
     const parsedSlotIndex = Number.parseInt(slot_index, 10);
     let finalSlotIndex = Number.isNaN(parsedSlotIndex) ? 1 : parsedSlotIndex;
+
+    const [existingAnyShift] = await pool.query(
+      `SELECT r.id, s.name as shift_name, r.shift_id 
+       FROM roster r 
+       JOIN shifts s ON r.shift_id = s.id 
+       WHERE r.roster_date = ? AND r.staff_id = ?`,
+      [roster_date, staff_id]
+    );
+
+    const sameShift = existingAnyShift.find(e => e.shift_id === shift_id);
+    const differentShift = existingAnyShift.find(e => e.shift_id !== shift_id);
 
     if (allow_duplicate) {
       if (!hasSlotIndex) {
@@ -86,13 +103,16 @@ exports.create = async (req, res) => {
       );
       finalSlotIndex = (maxSlot[0]?.max_slot || 0) + 1;
     } else {
-      const [existing] = await pool.query(
-        'SELECT id FROM roster WHERE roster_date = ? AND shift_id = ? AND staff_id = ? LIMIT 1',
-        [roster_date, shift_id, staff_id]
-      );
-      if (existing.length > 0) {
+      if (sameShift) {
         return res.status(409).json({ message: 'This staff is already assigned to this shift on this date.' });
       }
+    }
+
+    if (differentShift && !emergency_override) {
+      return res.status(409).json({ 
+        errorCode: 'STAFF_ALREADY_ASSIGNED_TODAY', 
+        message: `This staff is already assigned to the ${differentShift.shift_name} shift today. Do you want to proceed with an Emergency Override?` 
+      });
     }
 
     const insertQuery = hasSlotIndex
@@ -108,10 +128,14 @@ exports.create = async (req, res) => {
     // Audit log
     const [staff] = await pool.query('SELECT full_name FROM staff WHERE id = ?', [staff_id]);
     const [shift] = await pool.query('SELECT name FROM shifts WHERE id = ?', [shift_id]);
+    
+    const auditDetails = emergency_override
+      ? `EMERGENCY OVERRIDE: Assigned ${staff[0]?.full_name} to ${shift[0]?.name} shift on ${roster_date} (Already working another shift)`
+      : `Assigned ${staff[0]?.full_name} to ${shift[0]?.name} shift on ${roster_date}`;
+
     await pool.query(
       'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
-      [req.user.id, 'CREATE', 'roster', result.insertId, 
-       `Assigned ${staff[0]?.full_name} to ${shift[0]?.name} shift on ${roster_date}`]
+      [req.user.id, 'CREATE', 'roster', result.insertId, auditDetails]
     );
 
     res.status(201).json({ message: 'Roster assignment created.', id: result.insertId });
@@ -154,6 +178,12 @@ exports.delete = async (req, res) => {
       return res.status(404).json({ message: 'Roster entry not found.' });
     }
 
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (existing[0].roster_date < todayStr) {
+      return res.status(400).json({ message: 'Cannot modify roster for past dates.' });
+    }
+
     await pool.query('DELETE FROM roster WHERE id = ?', [id]);
 
     // Audit log
@@ -176,6 +206,12 @@ exports.copyRoster = async (req, res) => {
 
     if (!from_date || !to_date) {
       return res.status(400).json({ message: 'Source and target dates are required.' });
+    }
+
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (to_date < todayStr) {
+      return res.status(400).json({ message: 'Cannot modify roster for past dates.' });
     }
 
     // Get source roster
