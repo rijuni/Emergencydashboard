@@ -40,7 +40,7 @@ export default function StaffMasterPage({
   const [form, setForm] = useState({
     full_name: "",
     category_id: "",
-    branch: "",
+    branch: "PBMH",
     department: "",
     unit: "",
     designation: "",
@@ -160,7 +160,7 @@ export default function StaffMasterPage({
       setForm({
         full_name: staffMember.full_name,
         category_id: staffMember.category_id,
-        branch: staffMember.branch || "",
+        branch: staffMember.branch || "PBMH",
         department: staffMember.department || "",
         unit: staffMember.unit || "",
         designation: staffMember.designation || "",
@@ -175,7 +175,7 @@ export default function StaffMasterPage({
       setForm({
         full_name: "",
         category_id: selectableCategories[0]?.id || "",
-        branch: "",
+        branch: "PBMH",
         department: "",
         unit: "",
         designation: "",

@@ -5,7 +5,7 @@ import {
   HiOutlineChevronLeft,
   HiOutlineChevronRight,
   HiOutlineDuplicate,
-  HiOutlineTrash,
+  HiOutlinePencil,
   HiOutlineUpload,
   HiOutlineDocumentDownload,
   HiOutlineCalendar
@@ -96,6 +96,7 @@ export default function RosterPage() {
   const [overrideShiftId, setOverrideShiftId] = useState("");
   const [overrideStaffId, setOverrideStaffId] = useState("");
   const [uploadCategory, setUploadCategory] = useState("mod");
+  const [editingRosterId, setEditingRosterId] = useState(null);
 
   const fetchMeta = useCallback(async () => {
     try {
@@ -232,6 +233,27 @@ export default function RosterPage() {
       fetchRoster();
     } catch {
       toast.error("Error removing assignment");
+    }
+  };
+
+  const handleUpdateAssignment = async (rosterId, newStaffId) => {
+    try {
+      await api.put(`/roster/${rosterId}`, { staff_id: newStaffId });
+      toast.success("Assignment updated");
+      fetchRoster();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Error updating assignment");
+    }
+  };
+
+  const handleUpdateStaffName = async (staffId, newName) => {
+    try {
+      await api.put(`/staff/${staffId}`, { full_name: newName });
+      toast.success("Staff name updated");
+      fetchRoster();
+      fetchMeta();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Error updating staff name");
     }
   };
 
@@ -771,20 +793,66 @@ export default function RosterPage() {
                                   border: `1px solid ${colors.border}`,
                                 }}
                               >
-                                <span className="text-text-primary text-sm">
-                                  {r.staff_name}
-                                </span>
-                                {!isPastDate && (
-                                  <div className="flex items-center gap-1.5">
+                                {editingRosterId === r.id ? (
+                                  <div className="flex items-center gap-1 w-full">
+                                    <input
+                                      autoFocus
+                                      defaultValue={r.staff_name}
+                                      id={`edit-staff-input-${r.id}`}
+                                      className="w-full bg-transparent border-b border-primary-light text-sm focus:outline-none text-text-primary px-1"
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          const newName = e.target.value.trim();
+                                          if (newName && newName !== r.staff_name) {
+                                            handleUpdateStaffName(r.staff_id, newName);
+                                          }
+                                          setEditingRosterId(null);
+                                        } else if (e.key === 'Escape') {
+                                          setEditingRosterId(null);
+                                        }
+                                      }}
+                                    />
                                     <button
-                                      onClick={() => handleRemove(r.id)}
-                                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all duration-200"
-                                      style={{ color: "#EF4444" }}
-                                      title="Remove"
+                                      onClick={() => {
+                                        const input = document.getElementById(`edit-staff-input-${r.id}`);
+                                        if (input) {
+                                          const newName = input.value.trim();
+                                          if (newName && newName !== r.staff_name) {
+                                            handleUpdateStaffName(r.staff_id, newName);
+                                          }
+                                        }
+                                        setEditingRosterId(null);
+                                      }}
+                                      className="text-primary hover:text-primary-light p-1 font-bold"
+                                      title="Save"
                                     >
-                                      <HiOutlineTrash className="w-3.5 h-3.5" />
+                                      ✓
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingRosterId(null)}
+                                      className="text-text-muted hover:text-danger p-1 text-xs"
+                                      title="Cancel"
+                                    >
+                                      ✕
                                     </button>
                                   </div>
+                                ) : (
+                                  <>
+                                    <span className="text-text-primary text-sm">
+                                      {r.staff_name}
+                                    </span>
+                                    {!isPastDate && (
+                                      <div className="flex items-center gap-1.5">
+                                        <button
+                                          onClick={() => setEditingRosterId(r.id)}
+                                          className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all duration-200 text-text-muted hover:text-primary-light"
+                                          title="Edit"
+                                        >
+                                          <HiOutlinePencil className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             ))}
