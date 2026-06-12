@@ -19,6 +19,7 @@ export default function SettingsPage() {
     ambulance_contact_number: "",
     ambulance_contact_details: "",
     security_supervisor_name: "",
+    housekeeping_supervisor_name: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -227,19 +228,35 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1.5 font-medium">
-              Security Supervisor Name
-            </label>
-            <input
-              type="text"
-              value={settings.security_supervisor_name || ""}
-              onChange={(e) =>
-                setSettings({ ...settings, security_supervisor_name: e.target.value })
-              }
-              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
-              placeholder="e.g. MR. BASANTA KHAMARI"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                Security Supervisor Name
+              </label>
+              <input
+                type="text"
+                value={settings.security_supervisor_name || ""}
+                onChange={(e) =>
+                  setSettings({ ...settings, security_supervisor_name: e.target.value })
+                }
+                className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
+                placeholder="e.g. MR. BASANTA KHAMARI"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                Housekeeping Supervisor Name
+              </label>
+              <input
+                type="text"
+                value={settings.housekeeping_supervisor_name || ""}
+                onChange={(e) =>
+                  setSettings({ ...settings, housekeeping_supervisor_name: e.target.value })
+                }
+                className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
+                placeholder="e.g. MR PRASANNA KUMAR SARANGI"
+              />
+            </div>
           </div>
         </div>
       </div>

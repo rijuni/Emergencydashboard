@@ -47,6 +47,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/display" element={<DisplayPage />} />
+      <Route path="/opendisplay" element={<DisplayPage />} />
       <Route
         path="/"
         element={

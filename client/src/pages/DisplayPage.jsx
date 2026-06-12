@@ -1,7 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import kimsLogo from "../assets/kims-logo.png";
 import { HiOutlineMoon, HiOutlineSun } from "react-icons/hi";
 export default function DisplayPage() {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,19 @@ export default function DisplayPage() {
     }, 10000);
     return () => clearInterval(screenInterval);
   }, []);
+
+  // Intercept browser back button
+  useEffect(() => {
+    // Push a dummy state so the back button is always active
+    window.history.pushState(null, null, window.location.pathname);
+    
+    const handlePopState = () => {
+      navigate("/login");
+    };
+    
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [navigate]);
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr + "T00:00:00");
@@ -212,6 +227,20 @@ export default function DisplayPage() {
   const securityNames = securitySupervisors.length > 0 
     ? securitySupervisors.map((s) => s.staff_name).join(" • ")
     : defaultSupervisorName;
+
+  const housekeepingSupervisors = useMemo(() => {
+    return (data?.roster || []).filter(
+      (entry) =>
+        entry.category_name === "Housekeeping Supervisor" &&
+        entry.shift_id === currentShiftId &&
+        entry.notes !== "ON_CALL"
+    );
+  }, [data?.roster, currentShiftId]);
+  const defaultHkSupervisorName = data?.settings?.housekeeping_supervisor_name || "MR PRASANNA KUMAR SARANGI";
+  const housekeepingNames = housekeepingSupervisors.length > 0 
+    ? housekeepingSupervisors.map((s) => s.staff_name).join(" • ")
+    : defaultHkSupervisorName;
+
   const nightSupervisorName = data?.nightSupervisorName || "NOT ASSIGNED";
 
   if (loading) {
@@ -306,6 +335,7 @@ export default function DisplayPage() {
           </div>
 
           <div className="flex items-center gap-3">
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -555,6 +585,7 @@ export default function DisplayPage() {
             }}
           >
             <span style={{ color: "#EF4444" }}>•</span>&nbsp;&nbsp;&nbsp;SECURITY SUPERVISOR : {securityNames}&nbsp;&nbsp;&nbsp;<span style={{ color: "#EF4444" }}>•</span>
+            &nbsp;&nbsp;&nbsp;HOUSEKEEPING SUPERVISOR : {housekeepingNames}&nbsp;&nbsp;&nbsp;<span style={{ color: "#EF4444" }}>•</span>
             &nbsp;&nbsp;&nbsp;Manager On Duty : {nightSupervisorName}&nbsp;&nbsp;&nbsp;<span style={{ color: "#EF4444" }}>•</span>
           </marquee>
         </div>
