@@ -374,10 +374,7 @@ async function handleMatrixUpload(req, res, categoryStr) {
     const shiftMap = { 
       'M': 1, 'MORNING': 1,
       'E': 2, 'EVENING': 2,
-      'N': 3, 'NIGHT': 3,
-      'G': 1, 'GENERAL': 1,
-      'D': 1, 'DAY': 1,
-      'W': 1, 'WARD': 1
+      'N': 3, 'NIGHT': 3
     };
     let insertedRows = 0;
     const skippedNames = [];
