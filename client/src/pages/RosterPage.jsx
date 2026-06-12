@@ -211,6 +211,9 @@ export default function RosterPage() {
       if (options.emergency_override) {
         payload.emergency_override = true;
       }
+      if (options.is_override) {
+        payload.is_override = true;
+      }
 
       await api.post("/roster", payload);
       toast.success("Staff assigned");
@@ -669,7 +672,7 @@ export default function RosterPage() {
                           toast.error("Please select both a shift and a staff member");
                           return;
                         }
-                        handleAssign(parseInt(overrideShiftId), parseInt(overrideStaffId));
+                        handleAssign(parseInt(overrideShiftId), parseInt(overrideStaffId), { is_override: true });
                         setOverrideStaffId(""); // reset staff after assignment
                       }
                     }}

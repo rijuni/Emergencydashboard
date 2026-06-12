@@ -296,7 +296,7 @@ async function updateExcelFile(dateStr, newName, userId) {
       
       await pool.query(
         'INSERT INTO uploaded_files (original_name, stored_name, upload_type, uploaded_by) VALUES (?, ?, ?, ?)',
-        ['MOD_Schedule_Modified.xlsx', storedName, 'Manager On Duty Schedule', userId]
+        ['MOD_Schedule_Modified.xlsx', storedName, 'Manager On Duty Schedule Modified', userId]
       );
     }
   } catch (error) {

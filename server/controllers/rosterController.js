@@ -64,7 +64,7 @@ exports.getByDate = async (req, res) => {
 // Create roster assignment
 exports.create = async (req, res) => {
   try {
-    const { roster_date, shift_id, staff_id, notes, allow_duplicate, slot_index, emergency_override } = req.body;
+    const { roster_date, shift_id, staff_id, notes, allow_duplicate, slot_index, emergency_override, is_override } = req.body;
 
     if (!roster_date || !shift_id || !staff_id) {
       return res.status(400).json({ message: 'Date, shift, and staff are required.' });
@@ -80,6 +80,13 @@ exports.create = async (req, res) => {
     const parsedSlotIndex = Number.parseInt(slot_index, 10);
     let finalSlotIndex = Number.isNaN(parsedSlotIndex) ? 1 : parsedSlotIndex;
 
+    // Get the category of the staff being assigned
+    const [staffData] = await pool.query('SELECT category_id FROM staff WHERE id = ?', [staff_id]);
+    if (staffData.length === 0) {
+      return res.status(400).json({ message: 'Staff member not found.' });
+    }
+    const staffCategoryId = staffData[0].category_id;
+
     const [existingAnyShift] = await pool.query(
       `SELECT r.id, s.name as shift_name, r.shift_id 
        FROM roster r 
@@ -90,6 +97,19 @@ exports.create = async (req, res) => {
 
     const sameShift = existingAnyShift.find(e => e.shift_id === shift_id);
     const differentShift = existingAnyShift.find(e => e.shift_id !== shift_id);
+
+    // If this is a manual override for a specific shift, delete only entries from the same category for that shift
+    if (is_override) {
+      await pool.query(
+        `DELETE r FROM roster r
+         JOIN staff s ON r.staff_id = s.id
+         WHERE r.roster_date = ?
+           AND r.shift_id = ?
+           AND s.category_id = ?
+           AND (r.notes IS NULL OR r.notes != 'ON_CALL')`,
+        [roster_date, shift_id, staffCategoryId]
+      );
+    }
 
     if (allow_duplicate) {
       if (!hasSlotIndex) {
@@ -103,12 +123,12 @@ exports.create = async (req, res) => {
       );
       finalSlotIndex = (maxSlot[0]?.max_slot || 0) + 1;
     } else {
-      if (sameShift) {
+      if (sameShift && !is_override) {
         return res.status(409).json({ message: 'This staff is already assigned to this shift on this date.' });
       }
     }
 
-    if (differentShift && !emergency_override) {
+    if (differentShift && !emergency_override && !is_override) {
       return res.status(409).json({ 
         errorCode: 'STAFF_ALREADY_ASSIGNED_TODAY', 
         message: `This staff is already assigned to the ${differentShift.shift_name} shift today. Do you want to proceed with an Emergency Override?` 
@@ -129,9 +149,14 @@ exports.create = async (req, res) => {
     const [staff] = await pool.query('SELECT full_name FROM staff WHERE id = ?', [staff_id]);
     const [shift] = await pool.query('SELECT name FROM shifts WHERE id = ?', [shift_id]);
     
-    const auditDetails = emergency_override
-      ? `EMERGENCY OVERRIDE: Assigned ${staff[0]?.full_name} to ${shift[0]?.name} shift on ${roster_date} (Already working another shift)`
-      : `Assigned ${staff[0]?.full_name} to ${shift[0]?.name} shift on ${roster_date}`;
+    let auditDetails;
+    if (is_override) {
+      auditDetails = `OVERRIDE: Replaced existing assignment with ${staff[0]?.full_name} on ${shift[0]?.name} shift for ${roster_date}`;
+    } else if (emergency_override) {
+      auditDetails = `EMERGENCY OVERRIDE: Assigned ${staff[0]?.full_name} to ${shift[0]?.name} shift on ${roster_date} (Already working another shift)`;
+    } else {
+      auditDetails = `Assigned ${staff[0]?.full_name} to ${shift[0]?.name} shift on ${roster_date}`;
+    }
 
     await pool.query(
       'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
