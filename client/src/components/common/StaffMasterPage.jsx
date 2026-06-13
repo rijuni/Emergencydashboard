@@ -39,6 +39,7 @@ export default function StaffMasterPage({
   const [editingStaff, setEditingStaff] = useState(null);
   const [form, setForm] = useState({
     full_name: "",
+    display_name: "",
     category_id: "",
     branch: "PBMH",
     department: "",
@@ -61,8 +62,12 @@ export default function StaffMasterPage({
     if (isDoctorMode) {
       return doctorCategory ? [doctorCategory] : [];
     }
+    // Exclude Doctor and Security Supervisor from the employee master dropdown
     return categories.filter(
-      (category) => category.name?.toLowerCase() !== "doctor",
+      (category) => {
+        const n = (category.name || '').toLowerCase();
+        return n !== 'doctor' && n !== 'security supervisor';
+      }
     );
   }, [categories, doctorCategory, isDoctorMode]);
 
@@ -159,6 +164,7 @@ export default function StaffMasterPage({
       setEditingStaff(staffMember);
       setForm({
         full_name: staffMember.full_name,
+        display_name: staffMember.display_name || "",
         category_id: staffMember.category_id,
         branch: staffMember.branch || "PBMH",
         department: staffMember.department || "",
@@ -588,6 +594,21 @@ export default function StaffMasterPage({
                     required
                   />
                 </div>
+
+                  <div className="col-span-2">
+                    <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                      Display Name (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={form.display_name}
+                      onChange={(event) =>
+                        setForm({ ...form, display_name: event.target.value })
+                      }
+                      placeholder="Alternate name to show on displays"
+                      className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm placeholder-text-muted/50"
+                    />
+                  </div>
 
                 <div>
                   <label className="block text-sm text-text-secondary mb-1.5 font-medium">

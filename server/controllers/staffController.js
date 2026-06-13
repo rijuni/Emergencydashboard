@@ -16,7 +16,7 @@ const MAX_LIMIT = 100;
 
 const buildStaffListQuery = ({ categoryId, excludeCategoryId, isActive, search }) => {
   let query = `
-    SELECT s.*, sc.name as category_name
+    SELECT s.*, s.display_name as staff_display_name, sc.name as category_name
     FROM staff s
     JOIN staff_categories sc ON s.category_id = sc.id
     WHERE 1=1
@@ -233,7 +233,7 @@ exports.getById = async (req, res) => {
     const { id } = req.params;
 
     const [staff] = await pool.query(`
-      SELECT s.*, sc.name as category_name 
+      SELECT s.*, s.display_name as staff_display_name, sc.name as category_name 
       FROM staff s 
       JOIN staff_categories sc ON s.category_id = sc.id 
       WHERE s.id = ?
@@ -282,9 +282,10 @@ exports.create = async (req, res) => {
     }
 
     const [result] = await pool.query(
-      'INSERT INTO staff (full_name, category_id, branch, department, unit, designation, qualification, specialization, registration_number, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO staff (full_name, display_name, category_id, branch, department, unit, designation, qualification, specialization, registration_number, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         full_name,
+        req.body.display_name || null,
         category_id,
         branch || null,
         department || null,
@@ -309,6 +310,7 @@ exports.create = async (req, res) => {
       staff: {
         id: result.insertId,
         full_name,
+        display_name: req.body.display_name || null,
         category_id,
         branch,
         department,
@@ -361,6 +363,7 @@ exports.bulkCreate = async (req, res) => {
 
       values.push([
         fullName,
+        item.display_name ? String(item.display_name).trim() : null,
         categoryId,
         item.branch ? String(item.branch).trim() : null,
         item.department ? String(item.department).trim() : null,
@@ -375,7 +378,7 @@ exports.bulkCreate = async (req, res) => {
     }
 
     await pool.query(
-      'INSERT INTO staff (full_name, category_id, branch, department, unit, designation, qualification, specialization, registration_number, phone, email) VALUES ?',
+      'INSERT INTO staff (full_name, display_name, category_id, branch, department, unit, designation, qualification, specialization, registration_number, phone, email) VALUES ?',
       [values]
     );
 
@@ -419,10 +422,11 @@ exports.update = async (req, res) => {
     }
 
     await pool.query(
-      `UPDATE staff SET full_name = ?, category_id = ?, branch = ?, department = ?, unit = ?, designation = ?,
+      `UPDATE staff SET full_name = ?, display_name = ?, category_id = ?, branch = ?, department = ?, unit = ?, designation = ?,
        qualification = ?, specialization = ?, registration_number = ?, phone = ?, email = ?, is_active = ? WHERE id = ?`,
       [
         full_name || existing[0].full_name,
+        req.body.display_name !== undefined ? req.body.display_name : existing[0].display_name,
         category_id || existing[0].category_id,
         branch !== undefined ? branch : existing[0].branch,
         department !== undefined ? department : existing[0].department,

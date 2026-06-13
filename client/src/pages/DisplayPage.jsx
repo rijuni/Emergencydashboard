@@ -184,6 +184,9 @@ export default function DisplayPage() {
   }, {});
 
   const normalizeName = (value) => (value || "").trim().toLowerCase();
+   const getShownName = (entry) => {
+     return (entry && (entry.staff_display_name || entry.display_name)) || entry.staff_name || entry.full_name || "";
+   };
   const categoryColors = [
     "#14B8A6", "#3B82F6", "#A855F7", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#6366F1"
   ];
@@ -223,10 +226,10 @@ export default function DisplayPage() {
         entry.notes !== "ON_CALL"
     );
   }, [data?.roster, currentShiftId]);
-  const defaultSupervisorName = data?.settings?.security_supervisor_name || "MR. BASANTA KHAMARI";
-  const securityNames = securitySupervisors.length > 0 
-    ? securitySupervisors.map((s) => s.staff_name).join(" • ")
-    : defaultSupervisorName;
+    const defaultSupervisorName = data?.settings?.security_supervisor_name || "MR. BASANTA KHAMARI";
+    const securityNames = securitySupervisors.length > 0 
+      ? securitySupervisors.map((s) => getShownName(s)).join(" • ")
+      : defaultSupervisorName;
 
   const housekeepingSupervisors = useMemo(() => {
     return (data?.roster || []).filter(
@@ -236,10 +239,10 @@ export default function DisplayPage() {
         entry.notes !== "ON_CALL"
     );
   }, [data?.roster, currentShiftId]);
-  const defaultHkSupervisorName = data?.settings?.housekeeping_supervisor_name || "MR PRASANNA KUMAR SARANGI";
-  const housekeepingNames = housekeepingSupervisors.length > 0 
-    ? housekeepingSupervisors.map((s) => s.staff_name).join(" • ")
-    : defaultHkSupervisorName;
+    const defaultHkSupervisorName = data?.settings?.housekeeping_supervisor_name || "MR PRASANNA KUMAR SARANGI";
+    const housekeepingNames = housekeepingSupervisors.length > 0 
+      ? housekeepingSupervisors.map((s) => getShownName(s)).join(" • ")
+      : defaultHkSupervisorName;
 
   const nightSupervisorName = data?.nightSupervisorName || "NOT ASSIGNED";
 
@@ -481,7 +484,7 @@ export default function DisplayPage() {
                                   className="text-base md:text-lg font-bold"
                                   style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
                                 >
-                                  {entry.staff_name}
+                                  {getShownName(entry)}
                                 </div>
                                 <div
                                   className="text-xs mt-0.5"
@@ -543,7 +546,7 @@ export default function DisplayPage() {
                             <div key={`${doc.id}-${doc.shift_id}`} className="rounded-lg p-3"
                                  style={{ background: isDark ? "rgba(15, 23, 42, 0.4)" : "rgba(255, 255, 255, 0.8)", border: isDark ? "1px solid rgba(148,163,184,0.05)" : "1px solid rgba(148,163,184,0.2)" }}>
                               <div className="font-bold text-sm md:text-base" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
-                                {doc.staff_name}
+                                {getShownName(doc)}
                               </div>
                               <div className="text-[11px] mt-0.5" style={{ color: isDark ? "#94A3B8" : "#64748B" }}>
                                 {doc.designation || "\u00A0"}
