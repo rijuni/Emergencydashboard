@@ -5,7 +5,6 @@ import {
   HiOutlineChevronLeft,
   HiOutlineChevronRight,
   HiOutlineDuplicate,
-  HiOutlinePencil,
   HiOutlineUpload,
   HiOutlineDocumentDownload,
   HiOutlineCalendar
@@ -96,7 +95,6 @@ export default function RosterPage() {
   const [overrideShiftId, setOverrideShiftId] = useState("");
   const [overrideStaffId, setOverrideStaffId] = useState("");
   const [uploadCategory, setUploadCategory] = useState("mod");
-  const [editingRosterId, setEditingRosterId] = useState(null);
 
   const fetchMeta = useCallback(async () => {
     try {
@@ -134,20 +132,12 @@ export default function RosterPage() {
   }, [date]);
 
   useEffect(() => {
-    const initialMetaLoad = setTimeout(() => {
-      fetchMeta();
-    }, 0);
-
-    return () => clearTimeout(initialMetaLoad);
-  }, [fetchMeta]);
+    fetchMeta();
+  }, []);
 
   useEffect(() => {
-    const initialRosterLoad = setTimeout(() => {
-      fetchRoster();
-    }, 0);
-
-    return () => clearTimeout(initialRosterLoad);
-  }, [fetchRoster]);
+    fetchRoster();
+  }, [date]);
 
   const changeDate = (delta) => {
     const d = new Date(date);
@@ -246,17 +236,6 @@ export default function RosterPage() {
       fetchRoster();
     } catch (err) {
       toast.error(err.response?.data?.message || "Error updating assignment");
-    }
-  };
-
-  const handleUpdateStaffName = async (staffId, newName) => {
-    try {
-      await api.put(`/staff/${staffId}`, { full_name: newName });
-      toast.success("Staff name updated");
-      fetchRoster();
-      fetchMeta();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Error updating staff name");
     }
   };
 
@@ -376,7 +355,6 @@ export default function RosterPage() {
         toast.success("Manual Manager On Duty updated successfully for " + formatDate(date));
       }
       fetchRoster(); // Refetch to show the latest saved value
-      handleDownloadModSchedule(); // Auto-download updated schedule
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to save override");
     } finally {
@@ -391,7 +369,6 @@ export default function RosterPage() {
       const res = await api.post("/display/settings/restore-mod", { date: formattedDate });
       toast.success(res.data.message || "Restored default Manager On Duty");
       fetchRoster(); // Refresh to show restored name
-      handleDownloadModSchedule(); // Auto-download updated schedule
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || "Failed to restore default Manager On Duty");
@@ -618,9 +595,6 @@ export default function RosterPage() {
                     disabled={savingManualMod || isPastDate}
                   >
                     <option value="MOD">Manager On Duty</option>
-                    <option value="Doctor">Doctor</option>
-                    <option value="Nursing Officer">Nursing Officer</option>
-                    <option value="Pharmacist">Pharmacist</option>
                   </select>
 
                   {overrideCategory !== "MOD" && (
@@ -796,66 +770,36 @@ export default function RosterPage() {
                                   border: `1px solid ${colors.border}`,
                                 }}
                               >
-                                {editingRosterId === r.id ? (
-                                  <div className="flex items-center gap-1 w-full">
-                                    <input
-                                      autoFocus
-                                      defaultValue={r.staff_name}
-                                      id={`edit-staff-input-${r.id}`}
-                                      className="w-full bg-transparent border-b border-primary-light text-sm focus:outline-none text-text-primary px-1"
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                          const newName = e.target.value.trim();
-                                          if (newName && newName !== r.staff_name) {
-                                            handleUpdateStaffName(r.staff_id, newName);
-                                          }
-                                          setEditingRosterId(null);
-                                        } else if (e.key === 'Escape') {
-                                          setEditingRosterId(null);
-                                        }
-                                      }}
-                                    />
-                                    <button
-                                      onClick={() => {
-                                        const input = document.getElementById(`edit-staff-input-${r.id}`);
-                                        if (input) {
-                                          const newName = input.value.trim();
-                                          if (newName && newName !== r.staff_name) {
-                                            handleUpdateStaffName(r.staff_id, newName);
-                                          }
-                                        }
-                                        setEditingRosterId(null);
-                                      }}
-                                      className="text-primary hover:text-primary-light p-1 font-bold"
-                                      title="Save"
-                                    >
-                                      ✓
-                                    </button>
-                                    <button
-                                      onClick={() => setEditingRosterId(null)}
-                                      className="text-text-muted hover:text-danger p-1 text-xs"
-                                      title="Cancel"
-                                    >
-                                      ✕
-                                    </button>
-                                  </div>
+                                {!isPastDate ? (
+                                  <select
+                                    value={r.staff_id}
+                                    onChange={(e) => {
+                                      if (e.target.value && e.target.value !== String(r.staff_id)) {
+                                        handleUpdateAssignment(r.id, parseInt(e.target.value));
+                                      }
+                                    }}
+                                    className="flex-1 bg-transparent border-0 text-sm focus:outline-none text-text-primary"
+                                  >
+                                    <option value={r.staff_id}>{r.staff_name}</option>
+                                    {staffByCategory[cat.id]?.filter(s => !isAssigned(s.id, shift.id) || s.id === r.staff_id).map((s) => (
+                                      <option key={s.id} value={s.id}>
+                                        {s.full_name}
+                                      </option>
+                                    ))}
+                                  </select>
                                 ) : (
-                                  <>
-                                    <span className="text-text-primary text-sm">
-                                      {r.staff_name}
-                                    </span>
-                                    {!isPastDate && (
-                                      <div className="flex items-center gap-1.5">
-                                        <button
-                                          onClick={() => setEditingRosterId(r.id)}
-                                          className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all duration-200 text-text-muted hover:text-primary-light"
-                                          title="Edit"
-                                        >
-                                          <HiOutlinePencil className="w-3.5 h-3.5" />
-                                        </button>
-                                      </div>
-                                    )}
-                                  </>
+                                  <span className="text-text-primary text-sm">
+                                    {r.staff_name}
+                                  </span>
+                                )}
+                                {!isPastDate && (
+                                  <button
+                                    onClick={() => handleRemove(r.id)}
+                                    className="p-1 rounded text-text-muted hover:text-danger transition-all duration-200"
+                                    title="Remove"
+                                  >
+                                    ✕
+                                  </button>
                                 )}
                               </div>
                             ))}

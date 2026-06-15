@@ -15,6 +15,7 @@ export default function OnCallDoctorDutyPage() {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [roster, setRoster] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [activeDepartments, setActiveDepartments] = useState([]);
   const [shifts, setShifts] = useState([]);
   const [doctorCategoryId, setDoctorCategoryId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,13 +25,15 @@ export default function OnCallDoctorDutyPage() {
 
   const fetchMeta = useCallback(async () => {
     try {
-      const [staffRes, catRes, shiftRes] = await Promise.all([
+      const [staffRes, catRes, shiftRes, deptRes] = await Promise.all([
         api.get("/staff?is_active=true"),
         api.get("/staff/categories"),
         api.get("/roster/shifts"),
+        api.get("/departments?is_active=true"),
       ]);
       setStaff(staffRes.data.staff);
       setShifts(shiftRes.data.shifts);
+      setActiveDepartments(deptRes.data.departments || []);
 
       const docCategory = catRes.data.categories.find(
         (c) => c.name.toLowerCase() === "doctor"
@@ -104,21 +107,35 @@ export default function OnCallDoctorDutyPage() {
     return staff.filter((s) => s.category_id === doctorCategoryId);
   }, [staff, doctorCategoryId]);
 
+  const activeDepartmentNames = useMemo(
+    () =>
+      new Set(
+        activeDepartments
+          .map((department) => (department.name || "").trim().toUpperCase())
+          .filter(Boolean)
+      ),
+    [activeDepartments]
+  );
+
   const departments = useMemo(() => {
     const deps = new Set(
       doctors
         .map((d) => (d.department || "").trim().toUpperCase())
         .filter(Boolean)
+        .filter((dept) => activeDepartmentNames.has(dept))
         .filter((dept) => {
           const lower = dept.toLowerCase();
           return lower !== "emergency medicine" && lower !== "emrgency medicine";
         })
     );
     return Array.from(deps).sort();
-  }, [doctors]);
+  }, [activeDepartmentNames, doctors]);
 
   // Derived Selection State
-  const availableDoctors = doctors.filter((d) => (d.department || "").trim().toUpperCase() === selection.department);
+  const availableDoctors = doctors.filter((d) => {
+    const department = (d.department || "").trim().toUpperCase();
+    return department === selection.department && activeDepartmentNames.has(department);
+  });
   const selectedDoctor = doctors.find((d) => d.id === parseInt(selection.doctorId));
 
   // Get unique assigned doctors for the day

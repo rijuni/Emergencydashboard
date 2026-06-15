@@ -9,6 +9,8 @@ router.get('/', auth, departmentController.getAll);
 
 // Only super admin can manage the department master
 router.post('/', auth, roleCheck('super_admin'), departmentController.create);
+router.put('/:id', auth, roleCheck('super_admin'), departmentController.update);
+router.put('/:id/reactivate', auth, roleCheck('super_admin'), departmentController.reactivate);
 router.delete('/:id', auth, roleCheck('super_admin'), departmentController.delete);
 
 module.exports = router;

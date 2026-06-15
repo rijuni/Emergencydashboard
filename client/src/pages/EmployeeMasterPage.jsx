@@ -9,6 +9,7 @@ export default function EmployeeMasterPage() {
       addButtonLabel="Add Employee"
       listEndpoint="/staff/master/employees"
       emptyStateMessage="No employees found. Add your first employee record."
+      showStatusFilter={true}
     />
   );
 }

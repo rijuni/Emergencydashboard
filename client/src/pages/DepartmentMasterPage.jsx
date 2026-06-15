@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import toast from "react-hot-toast";
-import { HiOutlineTrash, HiOutlineOfficeBuilding } from "react-icons/hi";
+import { HiOutlinePencil, HiOutlineOfficeBuilding } from "react-icons/hi";
 
 export default function DepartmentMasterPage() {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newDepartmentName, setNewDepartmentName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [editingDeptId, setEditingDeptId] = useState(null);
+  const [editingDeptName, setEditingDeptName] = useState("");
+  const [statusFilter, setStatusFilter] = useState("active");
 
   const fetchDepartments = async () => {
     try {
-      const res = await api.get("/departments");
+      const res = await api.get(`/departments?is_active=${statusFilter === "active" ? "true" : "false"}`);
       setDepartments(res.data.departments || []);
     } catch (err) {
       console.error(err);
@@ -30,7 +33,7 @@ export default function DepartmentMasterPage() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [statusFilter]);
 
   const handleCreateDepartment = async (event) => {
     event.preventDefault();
@@ -51,17 +54,56 @@ export default function DepartmentMasterPage() {
     }
   };
 
-  const handleDeleteDepartment = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete department "${name}"?`)) {
+  const handleDeactivate = async (id, name) => {
+    const confirmAction = window.confirm(`Do you really want to mark ${name} inactive?`);
+    if (!confirmAction) return;
+    try {
+      await api.delete(`/departments/${id}`);
+      toast.success("Department deactivated");
+      setDepartments((prev) => prev.map((d) => (d.id === id ? { ...d, is_active: false } : d)));
+      if (statusFilter === "active") setStatusFilter("inactive");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error deactivating department");
+    }
+  };
+
+  const handleReactivate = async (id, name) => {
+    const confirmAction = window.confirm(`Do you want to reactivate ${name}?`);
+    if (!confirmAction) return;
+    try {
+      await api.put(`/departments/${id}/reactivate`, {});
+      toast.success("Department reactivated");
+      setDepartments((prev) => prev.map((d) => (d.id === id ? { ...d, is_active: true } : d)));
+      if (statusFilter === "inactive") setStatusFilter("active");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error reactivating department");
+    }
+  };
+
+  const handleEditDepartment = (dept) => {
+    setEditingDeptId(dept.id);
+    setEditingDeptName(dept.name);
+  };
+
+  const handleUpdateDepartment = async (id) => {
+    if (!editingDeptName.trim()) {
+      toast.error("Department name is required");
       return;
     }
     try {
-      await api.delete(`/departments/${id}`);
-      toast.success("Department deleted successfully");
+      await api.put(`/departments/${id}`, { name: editingDeptName.trim() });
+      toast.success("Department updated successfully");
+      setEditingDeptId(null);
+      setEditingDeptName("");
       await fetchDepartments();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete department");
+      toast.error(err.response?.data?.message || "Failed to update department");
     }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingDeptId(null);
+    setEditingDeptName("");
   };
 
   return (
@@ -110,6 +152,23 @@ export default function DepartmentMasterPage() {
       </div>
 
       <div
+        className="flex flex-wrap gap-3 animate-fade-in-up"
+        style={{ animationDelay: "100ms" }}
+      >
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setLoading(true);
+            setStatusFilter(e.target.value);
+          }}
+          className="bg-bg-surface border border-border rounded-xl px-3 py-2.5 text-text-primary text-sm min-w-[140px]"
+        >
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+
+      <div
         className="glass-card rounded-xl p-6 animate-fade-in-up"
         style={{ animationDelay: "100ms" }}
       >
@@ -126,6 +185,9 @@ export default function DepartmentMasterPage() {
                 <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider">
                   Department Name
                 </th>
+                <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider w-20">
+                  Status
+                </th>
                 <th className="text-right p-4 text-text-muted text-xs font-semibold uppercase tracking-wider w-24">
                   Actions
                 </th>
@@ -134,7 +196,7 @@ export default function DepartmentMasterPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={3} className="p-6 text-center text-text-muted text-sm">
+                  <td colSpan={4} className="p-6 text-center text-text-muted text-sm">
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 border-2 border-t-transparent border-primary-light rounded-full animate-spin"></div>
                       Loading departments...
@@ -143,7 +205,7 @@ export default function DepartmentMasterPage() {
                 </tr>
               ) : departments.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="p-6 text-center text-text-muted text-sm">
+                  <td colSpan={4} className="p-6 text-center text-text-muted text-sm">
                     No departments configured. Add one above.
                   </td>
                 </tr>
@@ -157,17 +219,69 @@ export default function DepartmentMasterPage() {
                       {index + 1}
                     </td>
                     <td className="p-4 text-sm font-medium text-text-primary">
-                      {dept.name}
+                      {editingDeptId === dept.id ? (
+                        <input
+                          type="text"
+                          value={editingDeptName}
+                          onChange={(e) => setEditingDeptName(e.target.value)}
+                          className="w-full bg-bg-dark border border-border rounded-lg px-3 py-2 text-text-primary text-sm"
+                          autoFocus
+                        />
+                      ) : (
+                        dept.name
+                      )}
+                    </td>
+                    <td className="p-4">
+                      {dept.is_active ? (
+                        <button
+                          onClick={() => handleDeactivate(dept.id, dept.name)}
+                          className="text-xs px-2.5 py-1 rounded-full status-active hover:opacity-90"
+                          title="Deactivate"
+                        >
+                          Active
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleReactivate(dept.id, dept.name)}
+                          className="text-xs px-2.5 py-1 rounded-full status-inactive hover:opacity-90"
+                          title="Reactivate"
+                        >
+                          Inactive
+                        </button>
+                      )}
                     </td>
                     <td className="p-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteDepartment(dept.id, dept.name)}
-                        className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-all duration-200"
-                        title="Delete Department"
-                      >
-                        <HiOutlineTrash className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        {editingDeptId === dept.id ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateDepartment(dept.id)}
+                              className="p-2 rounded-lg text-text-muted hover:text-primary-light hover:bg-primary/10 transition-all duration-200"
+                              title="Save"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelEdit}
+                              className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-all duration-200"
+                              title="Cancel"
+                            >
+                              ✕
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleEditDepartment(dept)}
+                            className="p-2 rounded-lg text-text-muted hover:text-primary-light hover:bg-primary/10 transition-all duration-200"
+                            title="Edit Department"
+                          >
+                            <HiOutlinePencil className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

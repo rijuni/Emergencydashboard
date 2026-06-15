@@ -9,6 +9,7 @@ export default function DoctorMasterPage() {
       addButtonLabel="Add Doctor"
       listEndpoint="/staff/master/doctors"
       emptyStateMessage="No doctors found. Add your first doctor record."
+      showStatusFilter={true}
     />
   );
 }

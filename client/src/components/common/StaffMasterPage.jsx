@@ -17,6 +17,7 @@ export default function StaffMasterPage({
   listEndpoint,
   emptyStateMessage,
   enableBulkAdd = false,
+  showStatusFilter = false,
 }) {
   const isDoctorMode = mode === "doctor";
   const tableColumnCount = isDoctorMode ? 9 : 7;
@@ -27,6 +28,7 @@ export default function StaffMasterPage({
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [statusFilter, setStatusFilter] = useState("active");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -70,6 +72,31 @@ export default function StaffMasterPage({
       }
     );
   }, [categories, doctorCategory, isDoctorMode]);
+
+  const departmentStatusByName = useMemo(() => {
+    const statusMap = new Map();
+    departments.forEach((department) => {
+      const name = (department.name || "").trim().toLowerCase();
+      if (name) {
+        statusMap.set(name, department.is_active !== false && department.is_active !== 0);
+      }
+    });
+    return statusMap;
+  }, [departments]);
+
+  const isInactiveDepartment = (departmentName) => {
+    const name = (departmentName || "").trim().toLowerCase();
+    return name ? departmentStatusByName.get(name) === false : false;
+  };
+
+  const selectableDepartments = useMemo(
+    () =>
+      departments.filter(
+        (department) =>
+          department.is_active !== false && department.is_active !== 0
+      ),
+    [departments]
+  );
 
   useEffect(() => {
     let isActive = true;
@@ -119,7 +146,7 @@ export default function StaffMasterPage({
         if (search) params.append("search", search);
         if (!isDoctorMode && filterCategory)
           params.append("category_id", filterCategory);
-        params.append("is_active", "true");
+        params.append("is_active", statusFilter === "active" ? "true" : "false");
         params.append("page", String(currentPage));
         params.append("limit", "10");
         const res = await api.get(`${listEndpoint}?${params.toString()}`);
@@ -145,6 +172,7 @@ export default function StaffMasterPage({
   }, [
     currentPage,
     filterCategory,
+    statusFilter,
     isDoctorMode,
     listEndpoint,
     reloadKey,
@@ -238,13 +266,43 @@ export default function StaffMasterPage({
     }
   };
 
+    const handleDeactivate = async (id, name) => {
+      const confirmAction = window.confirm(`Do you really want to mark ${name} inactive? This will remove them from future roster assignments.`);
+      if (!confirmAction) return;
+      try {
+        await api.delete(`/staff/${id}`);
+        // Keep the record visible and mark as inactive in the current list
+        setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, is_active: false } : s)));
+        // Switch UI filter to show inactive records so the item remains visible on refetch
+        if (showStatusFilter) setStatusFilter("inactive");
+        toast.success("Record deactivated and removed from roster");
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Error deactivating record");
+      }
+    };
+
+    const handleReactivate = async (id, name) => {
+      const confirmAction = window.confirm(`Do you want to reactivate ${name}?`);
+      if (!confirmAction) return;
+      try {
+        await api.put(`/staff/${id}`, { is_active: true });
+        // Update local list to keep the item visible and show active status
+        setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, is_active: true } : s)));
+        // Switch UI filter back to active so item is visible in active list
+        if (showStatusFilter) setStatusFilter("active");
+        toast.success("Record reactivated");
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Error reactivating record");
+      }
+    };
+
   const handleDelete = async (id, name) => {
-    if (!window.confirm(`Deactivate ${name}?`)) return;
+    if (!window.confirm(`Do you want to inactive ${name}? It will remove from roster data.`)) return;
 
     try {
       await api.delete(`/staff/${id}`);
+      setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, is_active: false } : s)));
       toast.success("Record deactivated");
-      setReloadKey((current) => current + 1);
     } catch (error) {
       toast.error(error.response?.data?.message || "Error deactivating record");
     }
@@ -347,6 +405,20 @@ export default function StaffMasterPage({
             className="w-full bg-bg-surface border border-border rounded-xl pl-10 pr-4 py-2.5 text-text-primary text-sm placeholder-text-muted/50"
           />
         </div>
+
+        {showStatusFilter && (
+          <select
+            value={statusFilter}
+            onChange={(event) => {
+              setCurrentPage(1);
+              setStatusFilter(event.target.value);
+            }}
+            className="bg-bg-surface border border-border rounded-xl px-3 py-2.5 text-text-primary text-sm min-w-[140px]"
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        )}
 
         {!isDoctorMode && (
           <select
@@ -471,7 +543,18 @@ export default function StaffMasterPage({
                       </span>
                     </td>
                     {isDoctorMode && (
-                      <td className="p-4 text-text-secondary text-sm hidden md:table-cell">
+                      <td
+                        className={`p-4 text-sm hidden md:table-cell ${
+                          isInactiveDepartment(item.department)
+                            ? "text-danger font-semibold"
+                            : "text-text-secondary"
+                        }`}
+                        title={
+                          isInactiveDepartment(item.department)
+                            ? "This department is inactive"
+                            : undefined
+                        }
+                      >
                         {item.department || "—"}
                       </td>
                     )}
@@ -490,11 +573,31 @@ export default function StaffMasterPage({
                       {item.phone || "—"}
                     </td>
                     <td className="p-4">
-                      <span
-                        className={`text-xs px-2.5 py-1 rounded-full ${item.is_active ? "status-active" : "status-inactive"}`}
-                      >
-                        {item.is_active ? "Active" : "Inactive"}
-                      </span>
+                      {showStatusFilter ? (
+                        item.is_active ? (
+                          <button
+                            onClick={() => handleDeactivate(item.id, item.full_name)}
+                            className="text-xs px-2.5 py-1 rounded-full status-active hover:opacity-90"
+                            title="Deactivate"
+                          >
+                            Active
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleReactivate(item.id, item.full_name)}
+                            className="text-xs px-2.5 py-1 rounded-full status-inactive hover:opacity-90"
+                            title="Reactivate"
+                          >
+                            Inactive
+                          </button>
+                        )
+                      ) : (
+                        <span
+                          className={`text-xs px-2.5 py-1 rounded-full ${item.is_active ? "status-active" : "status-inactive"}`}
+                        >
+                          {item.is_active ? "Active" : "Inactive"}
+                        </span>
+                      )}
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -669,7 +772,14 @@ export default function StaffMasterPage({
                       className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
                     >
                       <option value="">Select Department</option>
-                      {departments.map((dept) => (
+                      {editingStaff &&
+                        form.department &&
+                        isInactiveDepartment(form.department) && (
+                          <option value={form.department} disabled>
+                            {form.department} (Inactive)
+                          </option>
+                        )}
+                      {selectableDepartments.map((dept) => (
                         <option key={dept.id} value={dept.name}>
                           {dept.name}
                         </option>

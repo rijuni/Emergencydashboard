@@ -465,12 +465,16 @@ exports.delete = async (req, res) => {
       return res.status(404).json({ message: 'Staff not found.' });
     }
 
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
     await pool.query('UPDATE staff SET is_active = FALSE WHERE id = ?', [id]);
+    await pool.query('DELETE FROM roster WHERE staff_id = ? AND roster_date >= ?', [id, todayStr]);
 
     // Audit log
     await pool.query(
       'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
-      [req.user.id, 'DELETE', 'staff', id, `Deactivated staff: ${existing[0].full_name}`]
+      [req.user.id, 'DELETE', 'staff', id, `Deactivated staff: ${existing[0].full_name} and removed future roster assignments`]
     );
 
     res.json({ message: 'Staff deactivated successfully.' });
