@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS staff_categories (
 CREATE TABLE IF NOT EXISTS staff (
     id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
+    display_name VARCHAR(100),
     category_id INT NOT NULL,
     branch VARCHAR(100),
     department VARCHAR(100),
