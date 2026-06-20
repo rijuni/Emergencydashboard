@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import toast from "react-hot-toast";
-import { HiOutlinePencil, HiOutlineOfficeBuilding } from "react-icons/hi";
+import { HiOutlinePencil, HiOutlineOfficeBuilding, HiOutlineSearch } from "react-icons/hi";
 
 export default function DepartmentMasterPage() {
   const [departments, setDepartments] = useState([]);
@@ -11,6 +11,11 @@ export default function DepartmentMasterPage() {
   const [editingDeptId, setEditingDeptId] = useState(null);
   const [editingDeptName, setEditingDeptName] = useState("");
   const [statusFilter, setStatusFilter] = useState("active");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredDepartments = departments.filter((dept) =>
+    dept.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const fetchDepartments = async () => {
     try {
@@ -152,9 +157,21 @@ export default function DepartmentMasterPage() {
       </div>
 
       <div
-        className="flex flex-wrap gap-3 animate-fade-in-up"
+        className="flex flex-wrap gap-3 animate-fade-in-up items-center"
         style={{ animationDelay: "100ms" }}
       >
+        <div className="relative flex-1 min-w-[200px] max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <HiOutlineSearch className="w-5 h-5 text-text-muted" />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search departments..."
+            className="w-full bg-bg-surface border border-border rounded-xl pl-10 pr-4 py-2.5 text-text-primary text-sm focus:border-primary-light transition-colors"
+          />
+        </div>
         <select
           value={statusFilter}
           onChange={(e) => {
@@ -173,7 +190,7 @@ export default function DepartmentMasterPage() {
         style={{ animationDelay: "100ms" }}
       >
         <h2 className="text-base font-display font-semibold text-text-primary mb-5">
-          Departments List ({departments.length})
+          Departments List ({filteredDepartments.length})
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full table-premium">
@@ -203,14 +220,14 @@ export default function DepartmentMasterPage() {
                     </div>
                   </td>
                 </tr>
-              ) : departments.length === 0 ? (
+              ) : filteredDepartments.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-6 text-center text-text-muted text-sm">
-                    No departments configured. Add one above.
+                    {searchQuery ? "No departments match your search." : "No departments configured. Add one above."}
                   </td>
                 </tr>
               ) : (
-                departments.map((dept, index) => (
+                filteredDepartments.map((dept, index) => (
                   <tr
                     key={dept.id}
                     className="border-b border-border/30 hover:bg-bg-card/40 transition-all duration-200"
