@@ -179,14 +179,17 @@ exports.getDashboardStats = async (req, res) => {
       ORDER BY c.expiry_date
     `);
 
+    const startDate = req.query.startDate || today;
+    const endDate = req.query.endDate || today;
+
     // Recent activity
     const [recentActivity] = await pool.query(`
       SELECT a.*, u.full_name as user_name
       FROM audit_log a
       LEFT JOIN users u ON a.user_id = u.id
+      WHERE a.created_at BETWEEN ? AND ?
       ORDER BY a.created_at DESC
-      LIMIT 10
-    `);
+    `, [`${startDate} 00:00:00`, `${endDate} 23:59:59`]);
 
     // Total counts
     const [totalStaff] = await pool.query('SELECT COUNT(*) as count FROM staff WHERE is_active = TRUE');
@@ -214,6 +217,14 @@ exports.importMonthlyDuty = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const fileExtension = path.extname(req.file.originalname).toLowerCase();
+    if (fileExtension !== '.xlsx') {
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({ message: 'Invalid file format. Only Excel files (.xlsx) are allowed.' });
     }
 
     const categoryStr = req.body.category || 'mod';
@@ -796,5 +807,60 @@ exports.restoreMod = async (req, res) => {
   } catch (error) {
     console.error('Restore MOD error:', error);
     res.status(500).json({ message: 'Server error restoring MOD.' });
+  }
+};
+
+// Export audit logs to Excel
+exports.exportAuditLogs = async (req, res) => {
+  try {
+    // Only super admin allowed
+    if (req.user.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Forbidden. Super Admin only.' });
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const startDate = req.query.startDate || today;
+    const endDate = req.query.endDate || today;
+
+    const [rows] = await pool.query(`
+      SELECT a.id, a.created_at, u.full_name as user_name, a.action, a.entity_type, a.details
+      FROM audit_log a
+      LEFT JOIN users u ON a.user_id = u.id
+      WHERE a.created_at BETWEEN ? AND ?
+      ORDER BY a.created_at DESC
+    `, [`${startDate} 00:00:00`, `${endDate} 23:59:59`]);
+
+    const excelData = rows.map(r => ({
+      'Log ID': r.id,
+      'Timestamp': new Date(r.created_at).toLocaleString('en-IN'),
+      'User': r.user_name || 'System',
+      'Action': r.action,
+      'Entity Type': r.entity_type,
+      'Details': r.details
+    }));
+
+    const worksheet = xlsx.utils.json_to_sheet(excelData);
+    
+    const colWidths = [
+      { wch: 10 },
+      { wch: 25 },
+      { wch: 25 },
+      { wch: 15 },
+      { wch: 20 },
+      { wch: 60 }
+    ];
+    worksheet['!cols'] = colWidths;
+
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, 'Audit Logs');
+
+    const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="Audit_Logs_${startDate}_to_${endDate}.xlsx"`);
+    res.end(buffer);
+  } catch (error) {
+    console.error('Export audit logs error:', error);
+    res.status(500).json({ message: 'Server error exporting logs.' });
   }
 };

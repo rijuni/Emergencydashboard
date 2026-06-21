@@ -73,7 +73,7 @@ exports.register = async (req, res) => {
 
     const [result] = await pool.query(
       'INSERT INTO users (username, password_hash, full_name, role) VALUES (?, ?, ?, ?)',
-      [username, password_hash, full_name, role || 'casualty_incharge']
+      [username, password_hash, full_name, role || 'admin']
     );
 
     // Audit log
@@ -84,7 +84,7 @@ exports.register = async (req, res) => {
 
     res.status(201).json({
       message: 'User created successfully',
-      user: { id: result.insertId, username, full_name, role: role || 'casualty_incharge' }
+      user: { id: result.insertId, username, full_name, role: role || 'admin' }
     });
   } catch (error) {
     console.error('Register error:', error);

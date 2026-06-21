@@ -1,0 +1,229 @@
+-- Migration: Insert custom department list and remove previous default seed
+-- Run once: mysql -u <user> -p casualty_dashboard < insert_custom_departments.sql
+
+START TRANSACTION;
+
+-- Remove earlier default departments inserted by the app (case-insensitive match)
+-- Use id IN (SELECT id FROM (SELECT id ...) AS tmp) form to avoid MySQL safe-update errors
+-- Temporarily disable SQL_SAFE_UPDATES for this session to ensure the DELETE runs
+SET @OLD_SQL_SAFE_UPDATES = @@SQL_SAFE_UPDATES;
+SET SQL_SAFE_UPDATES = 0;
+
+DELETE FROM departments
+WHERE id IN (
+  SELECT id FROM (
+    SELECT id FROM departments WHERE LOWER(name) IN (
+      'medicine', 'surgery', 'pediatrics', 'obstetrics & gynaecology',
+      'orthopedics', 'ophthalmology', 'ent', 'dermatology',
+      'psychiatry', 'radiology', 'anesthesiology', 'emergency medicine'
+    )
+  ) AS tmp
+);
+
+-- Restore SQL_SAFE_UPDATES to previous value
+SET SQL_SAFE_UPDATES = @OLD_SQL_SAFE_UPDATES;
+
+-- Insert provided department list if not already present (case-insensitive)
+-- For each department perform an idempotent insert
+
+INSERT INTO departments (name, is_active)
+SELECT 'EAR NOSE AND THROAT', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('EAR NOSE AND THROAT')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'ANAESTHESIOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('ANAESTHESIOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'CARDIOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('CARDIOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'CARDIOTHORACIC AND VASCULAR SURGERY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('CARDIOTHORACIC AND VASCULAR SURGERY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'EMERGENCY MEDICINE', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('EMERGENCY MEDICINE')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'CLINICAL IMMUNOLOGY AND RHEUMATOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('CLINICAL IMMUNOLOGY AND RHEUMATOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'CRITICAL CARE', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('CRITICAL CARE')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'DERMATOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('DERMATOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'ENDOCRINOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('ENDOCRINOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'GENERAL MEDICINE', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('GENERAL MEDICINE')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'GENERAL SURGERY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('GENERAL SURGERY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'HAEMATOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('HAEMATOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'MEDICAL GASTROENTEROLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('MEDICAL GASTROENTEROLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'MEDICAL ONCOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('MEDICAL ONCOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'NEPHROLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('NEPHROLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'NEUROLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('NEUROLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'NEUROSURGERY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('NEUROSURGERY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'OBSTETRICS AND GYNAECOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('OBSTETRICS AND GYNAECOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'OPHTHALMOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('OPHTHALMOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'ORTHOPAEDICS', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('ORTHOPAEDICS')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'PAEDIATRIC SURGERY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('PAEDIATRIC SURGERY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'PAEDIATRICS', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('PAEDIATRICS')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'PAIN MANAGEMENT', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('PAIN MANAGEMENT')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'PALLIATIVE CARE', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('PALLIATIVE CARE')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'PHYSIOTHERAPY AND REHABILITATION', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('PHYSIOTHERAPY AND REHABILITATION')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'PLASTIC SURGERY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('PLASTIC SURGERY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'PSYCHIATRY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('PSYCHIATRY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'PULMONARY MEDICINE', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('PULMONARY MEDICINE')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'RADIATION ONCOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('RADIATION ONCOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'RADIOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('RADIOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'REPRODUCTIVE MEDICINE', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('REPRODUCTIVE MEDICINE')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'SPINE AND ORTHO SURGERY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('SPINE AND ORTHO SURGERY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'SURGICAL GASTROENTEROLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('SURGICAL GASTROENTEROLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'SURGICAL ONCOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('SURGICAL ONCOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'UROLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('UROLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'RETINA CLINIC', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('RETINA CLINIC')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'GERIATRIC CLINIC', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('GERIATRIC CLINIC')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'ORAL AND MAXILLOFACIAL SURGERY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('ORAL AND MAXILLOFACIAL SURGERY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'NEONATOLOGY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('NEONATOLOGY')
+);
+
+INSERT INTO departments (name, is_active)
+SELECT 'ENDOCRINE AND BREAST SURGERY', TRUE FROM DUAL WHERE NOT EXISTS (
+  SELECT 1 FROM departments WHERE LOWER(name) = LOWER('ENDOCRINE AND BREAST SURGERY')
+);
+
+COMMIT;

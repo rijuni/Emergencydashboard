@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { HiOutlinePlus, HiOutlineDownload, HiOutlineTrash, HiOutlineX, HiOutlineDocumentText } from 'react-icons/hi';
+import { useAuth } from '../context/AuthContext';
 
 export default function CertificatesPage() {
+  const { user } = useAuth();
+  const canDelete = user?.role === 'super_admin';
   const [certificates, setCertificates] = useState([]);
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -151,9 +154,11 @@ export default function CertificatesPage() {
                         <HiOutlineDownload className="w-4 h-4" />
                       </button>
                     )}
-                    <button onClick={() => handleDelete(cert.id)} className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-all duration-200" title="Delete">
-                      <HiOutlineTrash className="w-4 h-4" />
-                    </button>
+                    {canDelete && (
+                      <button onClick={() => handleDelete(cert.id)} className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-all duration-200" title="Delete">
+                        <HiOutlineTrash className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

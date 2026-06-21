@@ -29,7 +29,7 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const getDefaultRouteByRole = (role) => {
-  if (role === "casualty_incharge") return "/roster";
+  if (role === "admin") return "/";
   return "/";
 };
 
@@ -64,7 +64,7 @@ function AppRoutes() {
         <Route
           path="employee-master"
           element={
-            <RoleRoute allowedRoles={["super_admin"]}>
+            <RoleRoute allowedRoles={["super_admin","admin"]}>
               <EmployeeMasterPage />
             </RoleRoute>
           }
@@ -72,7 +72,7 @@ function AppRoutes() {
         <Route
           path="doctor-master"
           element={
-            <RoleRoute allowedRoles={["super_admin"]}>
+            <RoleRoute allowedRoles={["super_admin","admin"]}>
               <DoctorMasterPage />
             </RoleRoute>
           }
@@ -88,7 +88,7 @@ function AppRoutes() {
         <Route
           path="roster"
           element={
-            <RoleRoute allowedRoles={["casualty_incharge", "super_admin"]}>
+            <RoleRoute allowedRoles={["admin", "super_admin"]}>
               <RosterPage />
             </RoleRoute>
           }
@@ -96,7 +96,7 @@ function AppRoutes() {
         <Route
           path="on-call-duty"
           element={
-            <RoleRoute allowedRoles={["casualty_incharge", "super_admin"]}>
+            <RoleRoute allowedRoles={["admin", "super_admin"]}>
               <OnCallDoctorDutyPage />
             </RoleRoute>
           }
@@ -104,7 +104,7 @@ function AppRoutes() {
         <Route
           path="certificates"
           element={
-            <RoleRoute allowedRoles={["super_admin"]}>
+            <RoleRoute allowedRoles={["super_admin","admin"]}>
               <CertificatesPage />
             </RoleRoute>
           }
@@ -128,7 +128,7 @@ function AppRoutes() {
         <Route
           path="files"
           element={
-            <RoleRoute allowedRoles={["super_admin"]}>
+            <RoleRoute allowedRoles={["super_admin","admin"]}>
               <FileArchivesPage />
             </RoleRoute>
           }
@@ -136,7 +136,7 @@ function AppRoutes() {
         <Route
           path="settings"
           element={
-            <RoleRoute allowedRoles={["super_admin"]}>
+            <RoleRoute allowedRoles={["super_admin","admin"]}>
               <SettingsPage />
             </RoleRoute>
           }

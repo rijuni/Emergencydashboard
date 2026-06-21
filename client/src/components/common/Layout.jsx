@@ -32,16 +32,21 @@ const navItemsByRole = {
     { to: "/shifts", icon: HiOutlineClock, label: "Shift Management" },
     { to: "/settings", icon: HiOutlineCog, label: "Settings" },
   ],
-  casualty_incharge: [
+  admin: [
     { to: "/", icon: HiOutlineViewGrid, label: "Dashboard", end: true },
+    { to: "/employee-master", icon: HiOutlineUsers, label: "Employee Master" },
+    { to: "/doctor-master", icon: HiOutlineUsers, label: "Doctor Directory" },
     { to: "/roster", icon: HiOutlineCalendar, label: "Roster Duty" },
     { to: "/on-call-duty", icon: HiOutlineIdentification, label: "On Call Duty" },
+    { to: "/certificates", icon: HiOutlineDocumentText, label: "Certificates" },
+    { to: "/files", icon: HiOutlineArchive, label: "File Archives" },
+    { to: "/settings", icon: HiOutlineCog, label: "Settings" },
   ],
 };
 
 const roleLabelByKey = {
   super_admin: "Super Admin",
-  casualty_incharge: "Casualty Head",
+  admin: "Admin",
 };
 
 export default function Layout() {
@@ -51,7 +56,7 @@ export default function Layout() {
     () => localStorage.getItem("theme") || "dark",
   );
   const navItems =
-    navItemsByRole[user?.role] || navItemsByRole.casualty_incharge;
+    navItemsByRole[user?.role] || navItemsByRole.admin;
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);

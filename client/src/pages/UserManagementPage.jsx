@@ -1,17 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import api from "../services/api";
 import toast from "react-hot-toast";
+import SearchableSelect from "../components/common/SearchableSelect";
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [creatingUser, setCreatingUser] = useState(false);
   const [query, setQuery] = useState("");
+  const [employeeOptions, setEmployeeOptions] = useState([]);
   const [newUser, setNewUser] = useState({
     username: "",
     password: "",
     full_name: "",
-    role: "casualty_incharge",
+    role: "admin",
   });
 
   const fetchUsers = async () => {
@@ -30,6 +32,13 @@ export default function UserManagementPage() {
     let isActive = true;
     const load = async () => {
       await fetchUsers();
+      // load employee options for username selection
+      try {
+        const res = await api.get('/staff/master/employees?limit=1000');
+        setEmployeeOptions(res.data.staff || []);
+      } catch (err) {
+        console.error('Failed to load employee options', err);
+      }
       if (!isActive) return;
     };
 
@@ -55,7 +64,7 @@ export default function UserManagementPage() {
         username: "",
         password: "",
         full_name: "",
-        role: "casualty_incharge",
+        role: "admin",
       });
       fetchUsers();
     } catch (err) {
@@ -98,12 +107,20 @@ export default function UserManagementPage() {
     return [
       user.full_name,
       user.username,
-      user.role === "super_admin" ? "super admin" : "casualty head",
+      user.role === "super_admin" ? "super admin" : "admin",
     ]
       .join(" ")
       .toLowerCase()
       .includes(needle);
   });
+
+  const searchableEmployeeOptions = useMemo(() => {
+    return employeeOptions.map((emp) => ({
+      id: emp.id,
+      name: emp.employee_id,
+      label: `${emp.employee_id} - ${emp.full_name}`,
+    }));
+  }, [employeeOptions]);
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -127,6 +144,26 @@ export default function UserManagementPage() {
           onSubmit={handleCreateUser}
           className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
+          {/* Full Name is auto-filled from selected Employee ID (read-only) */}
+          <div>
+            <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+              Employee ID
+            </label>
+            <SearchableSelect
+              options={searchableEmployeeOptions}
+              value={newUser.username}
+              onChange={(val) => {
+                const found = employeeOptions.find((emp) => emp.employee_id === val);
+                if (found) {
+                  setNewUser({ ...newUser, username: found.employee_id, full_name: found.full_name });
+                } else {
+                  setNewUser({ ...newUser, username: val });
+                }
+              }}
+              placeholder="Search Employee ID"
+              searchPlaceholder="Search Employee ID or Name..."
+            />
+          </div>
           <div>
             <label className="block text-sm text-text-secondary mb-1.5 font-medium">
               Full Name
@@ -134,25 +171,9 @@ export default function UserManagementPage() {
             <input
               type="text"
               value={newUser.full_name}
-              onChange={(e) =>
-                setNewUser({ ...newUser, full_name: e.target.value })
-              }
-              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
-              placeholder="Casualty Department Head"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1.5 font-medium">
-              Username
-            </label>
-            <input
-              type="text"
-              value={newUser.username}
-              onChange={(e) =>
-                setNewUser({ ...newUser, username: e.target.value })
-              }
-              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
-              placeholder="head.casualty"
+              readOnly
+              className="w-full bg-bg-dark/70 border border-border rounded-xl px-4 py-3 text-text-muted text-sm"
+              placeholder="Full name will be auto-filled"
             />
           </div>
           <div>
@@ -178,7 +199,7 @@ export default function UserManagementPage() {
               onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
               className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
             >
-              <option value="casualty_incharge">Casualty Head</option>
+              <option value="admin">Admin</option>
               <option value="super_admin">Super Admin</option>
             </select>
           </div>
@@ -263,9 +284,7 @@ export default function UserManagementPage() {
                       {user.username}
                     </td>
                     <td className="p-3 text-text-secondary text-sm">
-                      {user.role === "super_admin"
-                        ? "Super Admin"
-                        : "Casualty Head"}
+                      {user.role === "super_admin" ? "Super Admin" : "Admin"}
                     </td>
                     <td className="p-3">
                       <span

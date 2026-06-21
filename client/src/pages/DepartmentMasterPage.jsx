@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import toast from "react-hot-toast";
 import { HiOutlinePencil, HiOutlineOfficeBuilding, HiOutlineSearch } from "react-icons/hi";
+import { useAuth } from '../context/AuthContext';
 
 export default function DepartmentMasterPage() {
+  const { user } = useAuth();
+  const canDelete = user?.role === 'super_admin';
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newDepartmentName, setNewDepartmentName] = useState("");
@@ -12,15 +15,20 @@ export default function DepartmentMasterPage() {
   const [editingDeptName, setEditingDeptName] = useState("");
   const [statusFilter, setStatusFilter] = useState("active");
   const [searchQuery, setSearchQuery] = useState("");
-
-  const filteredDepartments = departments.filter((dept) =>
-    dept.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const limit = 10;
 
   const fetchDepartments = async () => {
     try {
-      const res = await api.get(`/departments?is_active=${statusFilter === "active" ? "true" : "false"}`);
+      setLoading(true);
+      const res = await api.get(
+        `/departments?is_active=${statusFilter === "active" ? "true" : "false"}&page=${currentPage}&limit=${limit}&search=${encodeURIComponent(searchQuery)}`
+      );
       setDepartments(res.data.departments || []);
+      setTotalRecords(res.data.pagination?.totalRecords || 0);
+      setTotalPages(res.data.pagination?.totalPages || 1);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load departments");
@@ -30,15 +38,8 @@ export default function DepartmentMasterPage() {
   };
 
   useEffect(() => {
-    let isActive = true;
-    const load = async () => {
-      await fetchDepartments();
-    };
-    load();
-    return () => {
-      isActive = false;
-    };
-  }, [statusFilter]);
+    fetchDepartments();
+  }, [statusFilter, currentPage, searchQuery]);
 
   const handleCreateDepartment = async (event) => {
     event.preventDefault();
@@ -167,7 +168,10 @@ export default function DepartmentMasterPage() {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setCurrentPage(1);
+              setSearchQuery(e.target.value);
+            }}
             placeholder="Search departments..."
             className="w-full bg-bg-surface border border-border rounded-xl pl-10 pr-4 py-2.5 text-text-primary text-sm focus:border-primary-light transition-colors"
           />
@@ -175,6 +179,7 @@ export default function DepartmentMasterPage() {
         <select
           value={statusFilter}
           onChange={(e) => {
+            setCurrentPage(1);
             setLoading(true);
             setStatusFilter(e.target.value);
           }}
@@ -190,7 +195,7 @@ export default function DepartmentMasterPage() {
         style={{ animationDelay: "100ms" }}
       >
         <h2 className="text-base font-display font-semibold text-text-primary mb-5">
-          Departments List ({filteredDepartments.length})
+          Departments List ({totalRecords})
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full table-premium">
@@ -206,7 +211,7 @@ export default function DepartmentMasterPage() {
                   Status
                 </th>
                 <th className="text-right p-4 text-text-muted text-xs font-semibold uppercase tracking-wider w-24">
-                  Actions
+                  {/* reserved for actions icons */}
                 </th>
               </tr>
             </thead>
@@ -220,20 +225,20 @@ export default function DepartmentMasterPage() {
                     </div>
                   </td>
                 </tr>
-              ) : filteredDepartments.length === 0 ? (
+              ) : departments.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-6 text-center text-text-muted text-sm">
                     {searchQuery ? "No departments match your search." : "No departments configured. Add one above."}
                   </td>
                 </tr>
               ) : (
-                filteredDepartments.map((dept, index) => (
+                departments.map((dept, index) => (
                   <tr
                     key={dept.id}
                     className="border-b border-border/30 hover:bg-bg-card/40 transition-all duration-200"
                   >
                     <td className="p-4 text-sm text-text-muted font-mono">
-                      {index + 1}
+                      {(currentPage - 1) * limit + index + 1}
                     </td>
                     <td className="p-4 text-sm font-medium text-text-primary">
                       {editingDeptId === dept.id ? (
@@ -289,14 +294,17 @@ export default function DepartmentMasterPage() {
                             </button>
                           </>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleEditDepartment(dept)}
-                            className="p-2 rounded-lg text-text-muted hover:text-primary-light hover:bg-primary/10 transition-all duration-200"
-                            title="Edit Department"
-                          >
-                            <HiOutlinePencil className="w-4 h-4" />
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleEditDepartment(dept)}
+                              className="p-2 rounded-lg text-text-muted hover:text-primary-light hover:bg-primary/10 transition-all duration-200"
+                              title="Edit Department"
+                            >
+                              <HiOutlinePencil className="w-4 h-4" />
+                            </button>
+                            {/* Deactivate button removed from actions - deactivation is available via Status button */}
+                          </>
                         )}
                       </div>
                     </td>
@@ -305,6 +313,43 @@ export default function DepartmentMasterPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination controls */}
+        <div className="px-4 py-3 flex items-center justify-between gap-3 flex-nowrap border-t border-border/30 mt-4">
+          <div className="text-xs text-text-muted whitespace-nowrap mr-auto">
+            Showing {totalRecords === 0 ? "0" : `${(currentPage - 1) * limit + 1}-${Math.min(currentPage * limit, totalRecords)}`} of {totalRecords} records
+          </div>
+
+          <div className="flex items-center gap-2 ml-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={loading || currentPage <= 1 || totalPages === 0}
+              className="px-3 py-1.5 rounded-lg text-xs border border-border text-text-secondary hover:text-text-primary hover:bg-bg-card disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+
+            <span className="text-xs text-text-secondary min-w-[72px] text-center">
+              Page {totalPages === 0 ? 0 : currentPage} / {totalPages}
+            </span>
+
+            <button
+              type="button"
+              onClick={() =>
+                setCurrentPage((page) => Math.min(totalPages || 1, page + 1))
+              }
+              disabled={
+                loading ||
+                totalPages === 0 ||
+                currentPage >= totalPages
+              }
+              className="px-3 py-1.5 rounded-lg text-xs border border-border text-text-secondary hover:text-text-primary hover:bg-bg-card disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </div>

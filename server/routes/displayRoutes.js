@@ -13,10 +13,11 @@ const upload = multer({ dest: 'uploads/temp/' });
 
 // Protected endpoints
 router.put('/settings', auth, roleCheck('super_admin'), displayController.updateSettings);
-router.post('/settings/import-monthly-duty', auth, roleCheck('super_admin'), upload.single('file'), displayController.importMonthlyDuty);
+router.post('/settings/import-monthly-duty', auth, roleCheck('admin', 'super_admin'), upload.single('file'), displayController.importMonthlyDuty);
 router.post('/settings/manual-mod', auth, roleCheck('super_admin', 'admin'), displayController.updateManualMod);
 router.post('/settings/restore-mod', auth, roleCheck('super_admin', 'admin'), displayController.restoreMod);
 router.get('/settings/download-mod-schedule', auth, roleCheck('super_admin', 'admin'), displayController.downloadModSchedule);
 router.get('/dashboard-stats', auth, displayController.getDashboardStats);
+router.get('/audit-logs/export', auth, roleCheck('super_admin'), displayController.exportAuditLogs);
 
 module.exports = router;

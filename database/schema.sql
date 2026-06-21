@@ -11,11 +11,14 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(100) NOT NULL,
-    role ENUM('super_admin', 'casualty_incharge') NOT NULL DEFAULT 'casualty_incharge',
+    role ENUM('super_admin','admin') NOT NULL DEFAULT 'admin',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- Role migration removed from schema; run the one-off migration script instead:
+-- database/migrations/migrate_roles.sql
 
 -- Uploaded files archives
 CREATE TABLE IF NOT EXISTS uploaded_files (
@@ -41,6 +44,8 @@ CREATE TABLE IF NOT EXISTS staff (
     id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
     display_name VARCHAR(100),
+    prefix VARCHAR(10),
+    employee_id VARCHAR(50) UNIQUE NOT NULL,
     category_id INT NOT NULL,
     branch VARCHAR(100),
     department VARCHAR(100),
@@ -138,7 +143,8 @@ INSERT INTO staff_categories (name, display_order) VALUES
 ('MOD', 4),
 ('Ambulance', 5),
 ('Technician', 6),
-('Security Supervisor', 7);
+('Security Supervisor', 7),
+('Housekeeping Supervisor', 8);
 
 -- Shifts
 INSERT INTO shifts (name, start_time, end_time, display_order) VALUES
