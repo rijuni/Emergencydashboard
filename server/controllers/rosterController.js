@@ -26,7 +26,7 @@ exports.getByDate = async (req, res) => {
     const hasSlotIndex = await getHasSlotIndex();
     const rosterQuery = hasSlotIndex
       ? `
-      SELECT r.*, s.full_name as staff_name, s.designation, s.registration_number,
+      SELECT r.*, s.prefix as prefix, s.full_name as staff_name, s.designation, s.registration_number,
              sc.name as category_name, sc.display_order as category_order,
              sh.name as shift_name, sh.start_time, sh.end_time, sh.display_order as shift_order,
              u.full_name as assigned_by_name
@@ -39,7 +39,7 @@ exports.getByDate = async (req, res) => {
       ORDER BY sc.display_order, sh.display_order, r.slot_index, s.full_name
     `
       : `
-      SELECT r.*, 1 as slot_index, s.full_name as staff_name, s.designation, s.registration_number,
+      SELECT r.*, 1 as slot_index, s.prefix as prefix, s.full_name as staff_name, s.designation, s.registration_number,
              sc.name as category_name, sc.display_order as category_order,
              sh.name as shift_name, sh.start_time, sh.end_time, sh.display_order as shift_order,
              u.full_name as assigned_by_name
