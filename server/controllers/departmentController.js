@@ -24,18 +24,9 @@ const ensureTableExists = async () => {
       await pool.query('ALTER TABLE departments ADD COLUMN is_active BOOLEAN DEFAULT TRUE');
     }
     
-    // Seed some initial departments if the table is empty
-    const [rows] = await pool.query('SELECT COUNT(*) as count FROM departments');
-    if (rows[0].count === 0) {
-      const defaultDepts = [
-        'Medicine', 'Surgery', 'Pediatrics', 'Obstetrics & Gynecology', 
-        'Orthopedics', 'Ophthalmology', 'ENT', 'Dermatology', 
-        'Psychiatry', 'Radiology', 'Anesthesiology', 'Emergency Medicine'
-      ];
-      const values = defaultDepts.map(d => [d]);
-      await pool.query('INSERT INTO departments (name) VALUES ?', [values]);
-      console.log('✅ Seeded default departments successfully');
-    }
+    // NOTE: removed automatic seeding of default departments.
+    // The database should be populated externally (migration/import).
+    // If you need initial seed data, run a separate migration script.
   } catch (error) {
     console.error('❌ Error ensuring departments table exists:', error);
   }
@@ -47,19 +38,54 @@ ensureTableExists();
 // Get all departments
 exports.getAll = async (req, res) => {
   try {
-    const { is_active } = req.query;
-    let query = 'SELECT * FROM departments';
+    const { is_active, page, limit, search } = req.query;
+    
+    let query = 'FROM departments WHERE 1=1';
     const params = [];
     
     if (is_active !== undefined) {
       const isActiveVal = is_active === 'true';
-      query += ' WHERE is_active = ?';
+      query += ' AND is_active = ?';
       params.push(isActiveVal);
     }
     
-    query += ' ORDER BY name ASC';
-    const [departments] = await pool.query(query, params);
-    res.json({ departments });
+    if (search !== undefined && search.trim() !== '') {
+      query += ' AND name LIKE ?';
+      params.push(`%${search.trim()}%`);
+    }
+    
+    // Get total count
+    const [countResult] = await pool.query(`SELECT COUNT(*) as total ${query}`, params);
+    const totalRecords = countResult[0].total;
+    
+    let querySelect = `SELECT * ${query} ORDER BY name ASC`;
+    
+    let totalPages = 1;
+    let currentPage = 1;
+    
+    if (page !== undefined && limit !== undefined) {
+      const pageVal = parseInt(page) || 1;
+      const limitVal = parseInt(limit) || 10;
+      const offset = (pageVal - 1) * limitVal;
+      
+      querySelect += ' LIMIT ? OFFSET ?';
+      params.push(limitVal, offset);
+      
+      currentPage = pageVal;
+      totalPages = Math.ceil(totalRecords / limitVal);
+    }
+    
+    const [departments] = await pool.query(querySelect, params);
+    
+    res.json({ 
+      departments,
+      pagination: {
+        totalRecords,
+        totalPages,
+        currentPage,
+        limit: limit ? parseInt(limit) : totalRecords
+      }
+    });
   } catch (error) {
     console.error('Get departments error:', error);
     res.status(500).json({ message: 'Server error.' });
@@ -75,8 +101,8 @@ exports.create = async (req, res) => {
     }
     const trimmedName = name.trim();
     
-    // Check if it already exists
-    const [existing] = await pool.query('SELECT id FROM departments WHERE name = ?', [trimmedName]);
+    // Check if it already exists (case-insensitive)
+    const [existing] = await pool.query('SELECT id FROM departments WHERE LOWER(name) = LOWER(?)', [trimmedName]);
     if (existing.length > 0) {
       return res.status(400).json({ message: 'Department already exists.' });
     }
@@ -165,8 +191,8 @@ exports.update = async (req, res) => {
       return res.status(404).json({ message: 'Department not found.' });
     }
 
-    // Check if new name already exists (excluding current department)
-    const [duplicate] = await pool.query('SELECT id FROM departments WHERE name = ? AND id != ?', [trimmedName, id]);
+    // Check if new name already exists (excluding current department), case-insensitive
+    const [duplicate] = await pool.query('SELECT id FROM departments WHERE LOWER(name) = LOWER(?) AND id != ?', [trimmedName, id]);
     if (duplicate.length > 0) {
       return res.status(400).json({ message: 'Department name already exists.' });
     }

@@ -27,6 +27,16 @@ async function syncDB() {
       console.log('Category added successfully.');
     }
 
+    // Check if Housekeeping Supervisor category exists
+    const [hkCategories] = await connection.execute(`SELECT id FROM staff_categories WHERE name = 'Housekeeping Supervisor' LIMIT 1`);
+    if (hkCategories.length > 0) {
+      console.log('Category "Housekeeping Supervisor" already exists.');
+    } else {
+      console.log('Adding "Housekeeping Supervisor" category...');
+      await connection.execute(`INSERT INTO staff_categories (name, display_order) VALUES ('Housekeeping Supervisor', 8)`);
+      console.log('Housekeeping Supervisor category added successfully.');
+    }
+
     // Update Hospital Name
     console.log('Updating Hospital Name to KIMS Hospital...');
     await connection.execute(`UPDATE display_settings SET setting_value = 'KIMS Hospital' WHERE setting_key = 'hospital_name'`);

@@ -9,6 +9,7 @@ import {
   HiOutlineDocumentDownload,
   HiOutlineCalendar
 } from "react-icons/hi";
+import { useAuth } from '../context/AuthContext';
 
 // Static color map — avoids dynamic Tailwind class issues
 const SHIFT_STYLES = {
@@ -80,6 +81,8 @@ const NIGHT_SHIFT_NAME = "Night";
 const normalizeName = (value) => (value || "").trim().toLowerCase();
 
 export default function RosterPage() {
+  const { user } = useAuth();
+  const canDelete = user?.role === 'super_admin';
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [roster, setRoster] = useState([]);
   const [staff, setStaff] = useState([]);
@@ -242,6 +245,13 @@ export default function RosterPage() {
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    if (fileExtension !== 'xlsx') {
+      toast.error("Invalid file format. Only Excel files (.xlsx) are allowed.");
+      e.target.value = null;
+      return;
+    }
 
     // Sanitize the filename to remove weird characters like Â
     const cleanFileName = file.name.replace(/Â/g, '').replace(/\s+/g, ' ').trim();
@@ -534,7 +544,7 @@ export default function RosterPage() {
             <label className="relative flex items-center justify-center w-full p-4 border-2 border-dashed border-border rounded-xl hover:border-primary-light/50 transition-colors cursor-pointer bg-bg-surface/50">
               <input 
                 type="file" 
-                accept=".xlsx, .xls, .csv" 
+                accept=".xlsx" 
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 onChange={handleFileUpload}
                 disabled={uploadingExcel}
@@ -792,7 +802,7 @@ export default function RosterPage() {
                                     {r.staff_name}
                                   </span>
                                 )}
-                                {!isPastDate && (
+                                {!isPastDate && canDelete && (
                                   <button
                                     onClick={() => handleRemove(r.id)}
                                     className="p-1 rounded text-text-muted hover:text-danger transition-all duration-200"

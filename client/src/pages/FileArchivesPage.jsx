@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { HiOutlineDownload, HiOutlineDocumentText, HiOutlineTrash } from 'react-icons/hi';
+import { useAuth } from '../context/AuthContext';
 
 export default function FileArchivesPage() {
+  const { user } = useAuth();
+  const canDelete = user?.role === 'super_admin';
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -127,13 +130,15 @@ export default function FileArchivesPage() {
                       >
                         <HiOutlineDownload className="w-5 h-5" />
                       </button>
-                      <button
-                        onClick={() => handleDelete(file)}
-                        className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-all duration-200 inline-flex"
-                        title="Delete Archive File"
-                      >
-                        <HiOutlineTrash className="w-5 h-5" />
-                      </button>
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDelete(file)}
+                          className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-all duration-200 inline-flex"
+                          title="Delete Archive File"
+                        >
+                          <HiOutlineTrash className="w-5 h-5" />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

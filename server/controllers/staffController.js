@@ -260,6 +260,8 @@ exports.create = async (req, res) => {
   try {
     const {
       full_name,
+      prefix,
+      employee_id,
       category_id,
       branch,
       department,
@@ -276,16 +278,29 @@ exports.create = async (req, res) => {
       return res.status(400).json({ message: 'Full name and category are required.' });
     }
 
+    // Require employee_id for all staff
+    if (!employee_id || String(employee_id).trim() === '') {
+      return res.status(400).json({ message: 'Employee ID is required.' });
+    }
+
+    // Check duplicate employee_id
+    const [dupCheck] = await pool.query('SELECT id FROM staff WHERE employee_id = ? LIMIT 1', [String(employee_id).trim()]);
+    if (dupCheck.length > 0) {
+      return res.status(409).json({ message: 'Employee ID already exists.' });
+    }
+
     const doctorCategoryId = await getDoctorCategoryId();
     if (doctorCategoryId && Number(category_id) === doctorCategoryId && !designation) {
       return res.status(400).json({ message: 'Designation is required for doctors.' });
     }
 
     const [result] = await pool.query(
-      'INSERT INTO staff (full_name, display_name, category_id, branch, department, unit, designation, qualification, specialization, registration_number, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO staff (full_name, display_name, prefix, employee_id, category_id, branch, department, unit, designation, qualification, specialization, registration_number, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         full_name,
         req.body.display_name || null,
+        prefix || null,
+        String(employee_id).trim(),
         category_id,
         branch || null,
         department || null,
@@ -344,6 +359,7 @@ exports.bulkCreate = async (req, res) => {
 
     const values = [];
     const doctorCategoryId = await getDoctorCategoryId();
+    const empIdsInBatch = new Set();
     for (let index = 0; index < staffList.length; index += 1) {
       const item = staffList[index] || {};
       const fullName = String(item.full_name || '').trim();
@@ -361,9 +377,24 @@ exports.bulkCreate = async (req, res) => {
         });
       }
 
+      // ensure employee_id exists; generate one if missing to allow bulk import
+      let eid = null;
+      if (!item.employee_id || String(item.employee_id).trim() === '') {
+        // generate a deterministic-ish auto id to keep uniqueness in DB
+        eid = `AUTO${Date.now().toString().slice(-6)}${index}`;
+      } else {
+        eid = String(item.employee_id).trim();
+      }
+      if (empIdsInBatch.has(eid)) {
+        return res.status(409).json({ message: `Duplicate Employee ID in request: ${eid}` });
+      }
+      empIdsInBatch.add(eid);
+
       values.push([
         fullName,
         item.display_name ? String(item.display_name).trim() : null,
+        item.prefix ? String(item.prefix).trim() : null,
+        eid,
         categoryId,
         item.branch ? String(item.branch).trim() : null,
         item.department ? String(item.department).trim() : null,
@@ -376,9 +407,18 @@ exports.bulkCreate = async (req, res) => {
         item.email ? String(item.email).trim() : null
       ]);
     }
+    // Check duplicates against existing DB for any provided employee_ids
+    const empArray = Array.from(empIdsInBatch);
+    if (empArray.length > 0) {
+      const placeholders = empArray.map(() => '?').join(',');
+      const [existing] = await pool.query(`SELECT employee_id FROM staff WHERE employee_id IN (${placeholders})`, empArray);
+      if (existing.length > 0) {
+        return res.status(409).json({ message: `Employee ID already exists: ${existing[0].employee_id}` });
+      }
+    }
 
     await pool.query(
-      'INSERT INTO staff (full_name, display_name, category_id, branch, department, unit, designation, qualification, specialization, registration_number, phone, email) VALUES ?',
+      'INSERT INTO staff (full_name, display_name, prefix, employee_id, category_id, branch, department, unit, designation, qualification, specialization, registration_number, phone, email) VALUES ?',
       [values]
     );
 
@@ -403,6 +443,8 @@ exports.update = async (req, res) => {
     const { id } = req.params;
     const {
       full_name,
+      prefix,
+      employee_id,
       category_id,
       branch,
       department,
@@ -421,12 +463,25 @@ exports.update = async (req, res) => {
       return res.status(404).json({ message: 'Staff not found.' });
     }
 
+    // If employee_id provided and different, check for duplicates
+    if (employee_id !== undefined && String(employee_id).trim() !== String(existing[0].employee_id || '').trim()) {
+      if (!employee_id || String(employee_id).trim() === '') {
+        return res.status(400).json({ message: 'Employee ID is required.' });
+      }
+      const [conflict] = await pool.query('SELECT id FROM staff WHERE employee_id = ? AND id <> ? LIMIT 1', [String(employee_id).trim(), id]);
+      if (conflict.length > 0) {
+        return res.status(409).json({ message: 'Employee ID already exists.' });
+      }
+    }
+
     await pool.query(
-      `UPDATE staff SET full_name = ?, display_name = ?, category_id = ?, branch = ?, department = ?, unit = ?, designation = ?,
+      `UPDATE staff SET full_name = ?, display_name = ?, prefix = ?, employee_id = ?, category_id = ?, branch = ?, department = ?, unit = ?, designation = ?,
        qualification = ?, specialization = ?, registration_number = ?, phone = ?, email = ?, is_active = ? WHERE id = ?`,
       [
         full_name || existing[0].full_name,
         req.body.display_name !== undefined ? req.body.display_name : existing[0].display_name,
+        prefix !== undefined ? prefix : existing[0].prefix,
+        employee_id !== undefined ? employee_id : existing[0].employee_id,
         category_id || existing[0].category_id,
         branch !== undefined ? branch : existing[0].branch,
         department !== undefined ? department : existing[0].department,
@@ -493,6 +548,26 @@ exports.getCategories = async (req, res) => {
     res.json({ categories });
   } catch (error) {
     console.error('Get categories error:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// Check if an employee_id exists (optionally exclude an id)
+exports.checkRegistration = async (req, res) => {
+  try {
+    const { employee_id, exclude_id } = req.query;
+    if (!employee_id || String(employee_id).trim() === '') {
+      return res.status(400).json({ message: 'employee_id is required.' });
+    }
+    const eid = String(employee_id).trim();
+    if (exclude_id) {
+      const [rows] = await pool.query('SELECT id FROM staff WHERE employee_id = ? AND id <> ? LIMIT 1', [eid, exclude_id]);
+      return res.json({ exists: rows.length > 0 });
+    }
+    const [rows] = await pool.query('SELECT id FROM staff WHERE employee_id = ? LIMIT 1', [eid]);
+    return res.json({ exists: rows.length > 0 });
+  } catch (error) {
+    console.error('Check employee_id error:', error);
     res.status(500).json({ message: 'Server error.' });
   }
 };

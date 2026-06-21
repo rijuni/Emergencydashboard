@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import api from "../services/api";
 import toast from "react-hot-toast";
 import {
@@ -7,6 +7,7 @@ import {
   HiOutlineCog,
   HiOutlineCheck
 } from "react-icons/hi";
+import SearchableSelect from "../components/common/SearchableSelect";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState({
@@ -21,6 +22,8 @@ export default function SettingsPage() {
     security_supervisor_name: "",
     housekeeping_supervisor_name: "",
   });
+  const [staff, setStaff] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -30,10 +33,16 @@ export default function SettingsPage() {
 
     const loadInitialData = async () => {
       try {
-        const settingsRes = await api.get("/display/settings");
+        const [settingsRes, staffRes, categoriesRes] = await Promise.all([
+          api.get("/display/settings"),
+          api.get("/staff?is_active=true"),
+          api.get("/staff/categories"),
+        ]);
 
         if (!isActive) return;
         setSettings((prev) => ({ ...prev, ...settingsRes.data.settings }));
+        setStaff(staffRes.data.staff || []);
+        setCategories(categoriesRes.data.categories || []);
       } catch (err) {
         console.error(err);
         toast.error("Failed to load settings data");
@@ -50,6 +59,30 @@ export default function SettingsPage() {
       isActive = false;
     };
   }, []);
+
+  const securityCategory = useMemo(
+    () => categories.find((c) => c.name?.toLowerCase() === "security supervisor"),
+    [categories]
+  );
+  const securityOptions = useMemo(
+    () =>
+      staff
+        .filter((s) => s.category_id === securityCategory?.id)
+        .map((s) => s.full_name),
+    [staff, securityCategory]
+  );
+
+  const hkCategory = useMemo(
+    () => categories.find((c) => c.name?.toLowerCase() === "housekeeping supervisor"),
+    [categories]
+  );
+  const hkOptions = useMemo(
+    () =>
+      staff
+        .filter((s) => s.category_id === hkCategory?.id)
+        .map((s) => s.full_name),
+    [staff, hkCategory]
+  );
 
   const handleSave = async () => {
     setSaving(true);
@@ -233,28 +266,28 @@ export default function SettingsPage() {
               <label className="block text-sm text-text-secondary mb-1.5 font-medium">
                 Security Supervisor Name
               </label>
-              <input
-                type="text"
+              <SearchableSelect
+                options={securityOptions}
                 value={settings.security_supervisor_name || ""}
-                onChange={(e) =>
-                  setSettings({ ...settings, security_supervisor_name: e.target.value })
+                onChange={(val) =>
+                  setSettings({ ...settings, security_supervisor_name: val })
                 }
-                className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
-                placeholder="e.g. MR. BASANTA KHAMARI"
+                placeholder="Select Security Supervisor..."
+                searchPlaceholder="Search security supervisors..."
               />
             </div>
             <div>
               <label className="block text-sm text-text-secondary mb-1.5 font-medium">
                 Housekeeping Supervisor Name
               </label>
-              <input
-                type="text"
+              <SearchableSelect
+                options={hkOptions}
                 value={settings.housekeeping_supervisor_name || ""}
-                onChange={(e) =>
-                  setSettings({ ...settings, housekeeping_supervisor_name: e.target.value })
+                onChange={(val) =>
+                  setSettings({ ...settings, housekeeping_supervisor_name: val })
                 }
-                className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
-                placeholder="e.g. MR PRASANNA KUMAR SARANGI"
+                placeholder="Select Housekeeping Supervisor..."
+                searchPlaceholder="Search housekeeping supervisors..."
               />
             </div>
           </div>

@@ -10,8 +10,13 @@ import {
   HiOutlineInformationCircle,
   HiOutlineCalendar
 } from "react-icons/hi";
+import { useAuth } from '../context/AuthContext';
+import SearchableSelect from "../components/common/SearchableSelect";
+
 
 export default function OnCallDoctorDutyPage() {
+  const { user } = useAuth();
+  const canDelete = user?.role === 'super_admin';
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [roster, setRoster] = useState([]);
   const [staff, setStaff] = useState([]);
@@ -296,17 +301,14 @@ export default function OnCallDoctorDutyPage() {
             <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-text-muted text-sm font-medium mb-1.5">Department</label>
-                <select
+                <SearchableSelect
+                  options={departments}
                   value={selection.department}
-                  onChange={(e) => updateSelection("department", e.target.value)}
+                  onChange={(val) => updateSelection("department", val)}
+                  placeholder="Select Department..."
+                  searchPlaceholder="Search departments..."
                   disabled={isPastDate}
-                  className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-primary-light transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <option value="">Select Department...</option>
-                  {departments.map((dep) => (
-                    <option key={dep} value={dep}>{dep}</option>
-                  ))}
-                </select>
+                />
               </div>
               <div>
                 <label className="block text-text-muted text-sm font-medium mb-1.5">Doctor</label>
@@ -336,7 +338,7 @@ export default function OnCallDoctorDutyPage() {
                     <p className="text-text-muted text-xs truncate">{selectedDoctor.department}</p>
                     <p className="text-text-muted text-xs truncate">{(selectedDoctor.qualification || '') + (selectedDoctor.specialization ? `, ${selectedDoctor.specialization}` : '')}</p>
                   </div>
-                  {!isPastDate && (
+                  {!isPastDate && canDelete && (
                     <button
                       onClick={() => updateSelection("doctorId", "")}
                       className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors shrink-0"
@@ -376,7 +378,7 @@ export default function OnCallDoctorDutyPage() {
                         <h4 className="text-text-primary font-bold text-sm truncate">{r.staff_name}</h4>
                         <p className="text-text-muted text-xs truncate">{doctors.find(d => d.id === r.staff_id)?.department || 'Department'}</p>
                       </div>
-                      {!isPastDate && (
+                      {!isPastDate && canDelete && (
                         <button
                           onClick={() => handleRemoveDoctor(r.staff_id)}
                           className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors shrink-0"

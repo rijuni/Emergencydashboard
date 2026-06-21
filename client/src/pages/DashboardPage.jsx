@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import {
   HiOutlineUsers,
   HiOutlineDocumentText,
   HiOutlineCalendar,
   HiOutlineExclamation,
   HiOutlineClock,
+  HiOutlineDownload,
 } from "react-icons/hi";
 
 const statCardConfig = [
@@ -52,27 +54,51 @@ const statCardConfig = [
 ];
 
 export default function DashboardPage() {
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === "super_admin";
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchStats = useCallback(async () => {
+  const getLocalDateString = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const [startDate, setStartDate] = useState(getLocalDateString());
+  const [endDate, setEndDate] = useState(getLocalDateString());
+
+  const fetchStats = useCallback(async (start = startDate, end = endDate) => {
     try {
-      const res = await api.get("/display/dashboard-stats");
+      const res = await api.get(`/display/dashboard-stats?startDate=${start}&endDate=${end}`);
       setStats(res.data.stats);
     } catch (err) {
       console.error("Failed to fetch stats:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [startDate, endDate]);
 
   useEffect(() => {
-    const initialStatsLoad = setTimeout(() => {
-      fetchStats();
-    }, 0);
+    fetchStats();
+  }, [startDate, endDate, fetchStats]);
 
-    return () => clearTimeout(initialStatsLoad);
-  }, [fetchStats]);
+  const handleExportExcel = async () => {
+    try {
+      const response = await api.get(
+        `/display/audit-logs/export?startDate=${startDate}&endDate=${endDate}`,
+        { responseType: "blob" }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Audit_Logs_${startDate}_to_${endDate}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (err) {
+      console.error("Failed to export excel:", err);
+    }
+  };
 
   const isLightTheme =
     document.documentElement.getAttribute("data-theme") === "light";
@@ -263,58 +289,91 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Activity */}
-      <div
-        className="glass-card rounded-xl p-6 animate-stagger-in"
-        style={{ animationDelay: "450ms" }}
-      >
-        <h2 className="text-base font-display font-semibold text-text-primary mb-4 flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(20,184,166,0.12)" }}
-          >
-            <HiOutlineClock className="w-4 h-4" style={{ color: "#14B8A6" }} />
+      {isSuperAdmin && (
+        <div
+          className="glass-card rounded-xl p-6 animate-stagger-in"
+          style={{ animationDelay: "450ms" }}
+        >
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 border-b border-border/20 pb-4">
+            <h2 className="text-base font-display font-semibold text-text-primary flex items-center gap-2">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: "rgba(20,184,166,0.12)" }}
+              >
+                <HiOutlineClock className="w-4 h-4" style={{ color: "#14B8A6" }} />
+              </div>
+              Recent Activity
+            </h2>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-text-muted text-xs font-medium">From:</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-bg-dark border border-border rounded-lg px-2.5 py-1.5 text-text-primary text-xs focus:outline-none"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-text-muted text-xs font-medium">To:</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-bg-dark border border-border rounded-lg px-2.5 py-1.5 text-text-primary text-xs focus:outline-none"
+                />
+              </div>
+              <button
+                onClick={handleExportExcel}
+                className="btn-secondary flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium"
+                title="Export Logs to Excel"
+              >
+                <HiOutlineDownload className="w-3.5 h-3.5" /> Export Excel
+              </button>
+            </div>
           </div>
-          Recent Activity
-        </h2>
-        {stats?.recentActivity?.length > 0 ? (
-          <div className="space-y-1">
-            {stats.recentActivity.map((activity, i) => {
-              const dotColors = {
-                CREATE: "#22C55E",
-                UPDATE: "#F59E0B",
-                DELETE: "#EF4444",
-              };
-              const dotColor = dotColors[activity.action] || "#64748B";
-              return (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-bg-card/30 transition-all duration-200 group"
-                >
-                  <div className="relative mt-1.5 shrink-0">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ background: dotColor }}
-                    ></div>
+
+          {stats?.recentActivity?.length > 0 ? (
+            <div className="space-y-1 max-h-96 overflow-y-auto pr-2">
+              {stats.recentActivity.map((activity, i) => {
+                const dotColors = {
+                  CREATE: "#22C55E",
+                  UPDATE: "#F59E0B",
+                  DELETE: "#EF4444",
+                };
+                const dotColor = dotColors[activity.action] || "#64748B";
+                return (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-bg-card/30 transition-all duration-200 group"
+                  >
+                    <div className="relative mt-1.5 shrink-0">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ background: dotColor }}
+                      ></div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-text-primary text-sm group-hover:text-text-primary transition-colors">
+                        {activity.details}
+                      </p>
+                      <p className="text-text-muted text-xs mt-0.5">
+                        {activity.user_name} •{" "}
+                        {new Date(activity.created_at).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-text-primary text-sm group-hover:text-text-primary transition-colors">
-                      {activity.details}
-                    </p>
-                    <p className="text-text-muted text-xs mt-0.5">
-                      {activity.user_name} •{" "}
-                      {new Date(activity.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-text-muted text-sm text-center py-6">
-            No recent activity
-          </p>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-text-muted text-sm text-center py-6">
+              No recent activity found for this period.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

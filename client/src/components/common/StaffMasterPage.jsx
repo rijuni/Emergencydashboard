@@ -4,10 +4,12 @@ import toast from "react-hot-toast";
 import {
   HiOutlinePlus,
   HiOutlinePencil,
-  HiOutlineTrash,
   HiOutlineSearch,
   HiOutlineX,
 } from "react-icons/hi";
+import { useAuth } from '../../context/AuthContext';
+import SearchableSelect from "./SearchableSelect";
+
 
 export default function StaffMasterPage({
   mode,
@@ -40,8 +42,9 @@ export default function StaffMasterPage({
   const [bulkSaving, setBulkSaving] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [form, setForm] = useState({
+    prefix: "",
     full_name: "",
-    display_name: "",
+    employee_id: "",
     category_id: "",
     branch: "PBMH",
     department: "",
@@ -54,6 +57,10 @@ export default function StaffMasterPage({
     email: "",
   });
 
+  const { user } = useAuth();
+  const canDelete = user?.role === 'super_admin';
+  const canEdit = user?.role === 'super_admin';
+
   const doctorCategory = useMemo(
     () =>
       categories.find((category) => category.name?.toLowerCase() === "doctor"),
@@ -64,11 +71,11 @@ export default function StaffMasterPage({
     if (isDoctorMode) {
       return doctorCategory ? [doctorCategory] : [];
     }
-    // Exclude Doctor and Security Supervisor from the employee master dropdown
+    // Exclude Doctor from the employee master dropdown
     return categories.filter(
       (category) => {
         const n = (category.name || '').toLowerCase();
-        return n !== 'doctor' && n !== 'security supervisor';
+        return n !== 'doctor';
       }
     );
   }, [categories, doctorCategory, isDoctorMode]);
@@ -191,8 +198,9 @@ export default function StaffMasterPage({
     if (staffMember) {
       setEditingStaff(staffMember);
       setForm({
+        prefix: staffMember.prefix || "",
         full_name: staffMember.full_name,
-        display_name: staffMember.display_name || "",
+        employee_id: staffMember.employee_id || "",
         category_id: staffMember.category_id,
         branch: staffMember.branch || "PBMH",
         department: staffMember.department || "",
@@ -207,7 +215,9 @@ export default function StaffMasterPage({
     } else {
       setEditingStaff(null);
       setForm({
+        prefix: isDoctorMode ? "Dr." : "Mr",
         full_name: "",
+        employee_id: "",
         category_id: selectableCategories[0]?.id || "",
         branch: "PBMH",
         department: "",
@@ -234,6 +244,23 @@ export default function StaffMasterPage({
     if (isDoctorMode && !form.designation) {
       toast.error("Designation is required for doctors");
       return;
+    }
+
+    if (!form.employee_id || String(form.employee_id).trim() === '') {
+      toast.error("Employee ID is required");
+      return;
+    }
+
+    try {
+      const checkUrl = `/staff/check-registration?employee_id=${encodeURIComponent(String(form.employee_id).trim())}${editingStaff ? `&exclude_id=${editingStaff.id}` : ''}`;
+      const resp = await api.get(checkUrl);
+      if (resp.data?.exists) {
+        toast.error("Employee ID already exists");
+        return;
+      }
+    } catch (err) {
+      // allow server-side validation to handle errors; don't block on check failure
+      console.warn('Employee ID check failed', err);
     }
 
     let payload = { ...form };
@@ -400,7 +427,7 @@ export default function StaffMasterPage({
             placeholder={
               isDoctorMode
                 ? "Search by name, department, specialization or license no..."
-                : "Search by name, designation or employee number..."
+                : "Search by name, designation or employee ID..."
             }
             className="w-full bg-bg-surface border border-border rounded-xl pl-10 pr-4 py-2.5 text-text-primary text-sm placeholder-text-muted/50"
           />
@@ -437,11 +464,13 @@ export default function StaffMasterPage({
             ))}
           </select>
         )}
+
+        {/* Table header */}
       </div>
 
       <div
         className="glass rounded-xl overflow-hidden animate-fade-in-up"
-        style={{ animationDelay: "200ms" }}
+        style={{ animationDelay: '200ms' }}
       >
         <div className="overflow-x-auto">
           <table className="w-full table-premium">
@@ -467,7 +496,7 @@ export default function StaffMasterPage({
                   </th>
                 )}
                 <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">
-                  {isDoctorMode ? "License No" : "Employee No."}
+                  {isDoctorMode ? 'License No' : 'Employee ID'}
                 </th>
                 <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">
                   Phone
@@ -475,8 +504,8 @@ export default function StaffMasterPage({
                 <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider">
                   Status
                 </th>
-                <th className="text-right p-4 text-text-muted text-xs font-semibold uppercase tracking-wider">
-                  Actions
+                <th className="text-right p-4 text-text-muted text-xs font-semibold uppercase tracking-wider w-28">
+                  {/* reserved for action buttons */}
                 </th>
               </tr>
             </thead>
@@ -567,7 +596,7 @@ export default function StaffMasterPage({
                       </td>
                     )}
                     <td className="p-4 text-text-muted text-sm font-mono hidden lg:table-cell">
-                      {item.registration_number || "—"}
+                      {isDoctorMode ? (item.registration_number || "—") : (item.employee_id || "—")}
                     </td>
                     <td className="p-4 text-text-secondary text-sm hidden lg:table-cell">
                       {item.phone || "—"}
@@ -601,20 +630,15 @@ export default function StaffMasterPage({
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openModal(item)}
-                          className="p-2 rounded-lg text-text-muted hover:text-primary-light hover:bg-primary/10 transition-all duration-200"
-                          title="Edit"
-                        >
-                          <HiOutlinePencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id, item.full_name)}
-                          className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-all duration-200"
-                          title="Deactivate"
-                        >
-                          <HiOutlineTrash className="w-4 h-4" />
-                        </button>
+                        {canEdit && (
+                          <button
+                            onClick={() => openModal(item)}
+                            className="p-2 rounded-lg text-text-muted hover:text-primary-light hover:bg-primary/10 transition-all duration-200"
+                            title="Edit"
+                          >
+                            <HiOutlinePencil className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -683,7 +707,33 @@ export default function StaffMasterPage({
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
+                <div>
+                  <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                    Prefix *
+                  </label>
+                  <select
+                    value={form.prefix}
+                    onChange={(event) =>
+                      setForm({ ...form, prefix: event.target.value })
+                    }
+                    className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
+                    required
+                  >
+                    <option value="">Select Prefix</option>
+                    {isDoctorMode ? (
+                      <>
+                        <option value="Dr.">Dr.</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="Mr">Mr</option>
+                        <option value="Ms">Ms</option>
+                        <option value="Mrs">Mrs</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-sm text-text-secondary mb-1.5 font-medium">
                     Full Name *
                   </label>
@@ -700,16 +750,17 @@ export default function StaffMasterPage({
 
                   <div className="col-span-2">
                     <label className="block text-sm text-text-secondary mb-1.5 font-medium">
-                      Display Name (optional)
+                      Employee ID *
                     </label>
                     <input
                       type="text"
-                      value={form.display_name}
+                      value={form.employee_id}
                       onChange={(event) =>
-                        setForm({ ...form, display_name: event.target.value })
+                        setForm({ ...form, employee_id: event.target.value })
                       }
-                      placeholder="Alternate name to show on displays"
+                      placeholder="Unique employee identifier"
                       className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm placeholder-text-muted/50"
+                      required
                     />
                   </div>
 
@@ -764,27 +815,18 @@ export default function StaffMasterPage({
                     <label className="block text-sm text-text-secondary mb-1.5 font-medium">
                       Department
                     </label>
-                    <select
-                      value={form.department}
-                      onChange={(event) =>
-                        setForm({ ...form, department: event.target.value })
-                      }
-                      className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
-                    >
-                      <option value="">Select Department</option>
-                      {editingStaff &&
-                        form.department &&
-                        isInactiveDepartment(form.department) && (
-                          <option value={form.department} disabled>
-                            {form.department} (Inactive)
-                          </option>
-                        )}
-                      {selectableDepartments.map((dept) => (
-                        <option key={dept.id} value={dept.name}>
-                          {dept.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div>
+                      <SearchableSelect
+                        options={selectableDepartments}
+                        value={form.department}
+                        onChange={(val) => setForm({ ...form, department: val })}
+                        placeholder="Select Department"
+                        searchPlaceholder="Search departments..."
+                      />
+                      {editingStaff && form.department && isInactiveDepartment(form.department) && (
+                        <div className="text-xs text-danger mt-1">{form.department} (Inactive)</div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -852,22 +894,21 @@ export default function StaffMasterPage({
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1.5 font-medium">
-                    {isDoctorMode ? "License No" : "Employee Number"}
-                  </label>
-                  <input
-                    type="text"
-                    value={form.registration_number}
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        registration_number: event.target.value,
-                      })
-                    }
-                    className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
-                  />
-                </div>
+                {isDoctorMode && (
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                      License No
+                    </label>
+                    <input
+                      type="text"
+                      value={form.registration_number}
+                      onChange={(event) =>
+                        setForm({ ...form, registration_number: event.target.value })
+                      }
+                      className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm text-text-secondary mb-1.5 font-medium">

@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineSearch, HiOutlineX } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlinePencil, HiOutlineSearch, HiOutlineX } from 'react-icons/hi';
+import { useAuth } from '../context/AuthContext';
 
 export default function StaffPage() {
+  const { user } = useAuth();
+  const canEdit = user?.role === 'super_admin';
   const [staff, setStaff] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -151,12 +154,11 @@ export default function StaffPage() {
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => openModal(s)} className="p-2 rounded-lg text-text-muted hover:text-primary-light hover:bg-primary/10 transition-all duration-200" title="Edit">
-                          <HiOutlinePencil className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleDelete(s.id, s.full_name)} className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-all duration-200" title="Deactivate">
-                          <HiOutlineTrash className="w-4 h-4" />
-                        </button>
+                        {canEdit && (
+                          <button onClick={() => openModal(s)} className="p-2 rounded-lg text-text-muted hover:text-primary-light hover:bg-primary/10 transition-all duration-200" title="Edit">
+                            <HiOutlinePencil className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
