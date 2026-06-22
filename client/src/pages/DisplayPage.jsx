@@ -9,8 +9,25 @@ export default function DisplayPage() {
   const [loading, setLoading] = useState(true);
   const [activeScreen, setActiveScreen] = useState("roster");
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+  const [scale, setScale] = useState(1);
 
   const isDark = theme === "dark";
+
+  // Dynamic resolution scaling for 4K/8K TVs
+  useEffect(() => {
+    const calculateScale = () => {
+      const currentWidth = window.innerWidth;
+      // 1920px is the baseline 1080p width the layout was built for
+      if (currentWidth > 1920) {
+        setScale(currentWidth / 1920);
+      } else {
+        setScale(1);
+      }
+    };
+    calculateScale();
+    window.addEventListener('resize', calculateScale);
+    return () => window.removeEventListener('resize', calculateScale);
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -282,6 +299,7 @@ export default function DisplayPage() {
     <div
       className="display-fullscreen flex flex-col relative"
       style={{
+        zoom: scale,
         background: isDark
           ? "radial-gradient(circle at 10% 10%, rgba(59,130,246,0.08), transparent 40%), radial-gradient(circle at 90% 0%, rgba(249,115,22,0.08), transparent 45%), #060D1A"
           : "radial-gradient(circle at 10% 10%, rgba(59,130,246,0.12), transparent 40%), radial-gradient(circle at 90% 0%, rgba(249,115,22,0.12), transparent 45%), linear-gradient(180deg, #F8FAFC 0%, #EEF4FF 45%, #F8FAFC 100%)",
