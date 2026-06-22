@@ -340,6 +340,12 @@ export default function DisplayPage() {
               >
                 Live Availability
               </p>
+              <p
+                className="text-lg md:text-xl font-bold mt-1.5 tracking-wider"
+                style={{ color: isDark ? "#10B981" : "#059669" }}
+              >
+                HOD Of Emergancy Madicine : Dr.Siddhartha Mishra
+              </p>
             </div>
           </div>
 
@@ -495,22 +501,22 @@ export default function DisplayPage() {
                             {staffList.map((entry) => (
                               <div
                                 key={entry.id}
-                                className="rounded-lg px-3 py-2"
+                                className="rounded-lg px-5 py-5 mb-3"
                                 style={{
-                                  border: `1px solid ${style.border}`,
-                                  borderLeft: `4px solid ${style.accent}`,
+                                  border: `2px solid ${style.border}`,
+                                  borderLeft: `8px solid ${style.accent}`,
                                   background: style.cardBg,
-                                  boxShadow: isDark ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 12px rgba(15,23,42,0.06)",
+                                  boxShadow: isDark ? "0 6px 24px rgba(0,0,0,0.4)" : "0 6px 16px rgba(15,23,42,0.1)",
                                 }}
                               >
                                 <div
-                                  className="text-base md:text-lg font-bold"
+                                  className="text-2xl md:text-3xl font-bold"
                                   style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
                                 >
                                   {getShownName(entry)}
                                 </div>
                                 <div
-                                  className="text-xs mt-0.5"
+                                  className="text-base md:text-lg mt-2 font-semibold"
                                   style={{ color: isDark ? "#94A3B8" : "#64748B" }}
                                 >
                                   {[entry.designation, entry.specialization]
@@ -564,14 +570,14 @@ export default function DisplayPage() {
                         <h3 className="font-display font-bold text-base mb-3 uppercase tracking-wider" style={{ color }}>
                           {dept}
                         </h3>
-                        <div className="space-y-2 flex-1">
+                        <div className="space-y-3 flex-1">
                           {doctors.map(doc => (
-                            <div key={`${doc.id}-${doc.shift_id}`} className="rounded-lg p-3"
-                                 style={{ background: isDark ? "rgba(15, 23, 42, 0.4)" : "rgba(255, 255, 255, 0.8)", border: isDark ? "1px solid rgba(148,163,184,0.05)" : "1px solid rgba(148,163,184,0.2)" }}>
-                              <div className="font-bold text-sm md:text-base" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
+                            <div key={`${doc.id}-${doc.shift_id}`} className="rounded-lg p-5"
+                                 style={{ background: isDark ? "rgba(15, 23, 42, 0.4)" : "rgba(255, 255, 255, 0.8)", border: isDark ? "2px solid rgba(148,163,184,0.15)" : "2px solid rgba(148,163,184,0.3)" }}>
+                              <div className="font-bold text-xl md:text-2xl" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
                                 {getShownName(doc)}
                               </div>
-                              <div className="text-[11px] mt-0.5" style={{ color: isDark ? "#94A3B8" : "#64748B" }}>
+                              <div className="text-base md:text-lg mt-2 font-semibold" style={{ color: isDark ? "#94A3B8" : "#64748B" }}>
                                 {doc.designation || "\u00A0"}
                               </div>
                             </div>
@@ -596,23 +602,24 @@ export default function DisplayPage() {
           className="shrink-0 overflow-hidden py-1"
           style={{
             background: isDark 
-              ? "linear-gradient(90deg, rgba(239,68,68,0.05) 0%, rgba(239,68,68,0.2) 50%, rgba(239,68,68,0.05) 100%)"
-              : "linear-gradient(90deg, rgba(239,68,68,0.05) 0%, rgba(239,68,68,0.15) 50%, rgba(239,68,68,0.05) 100%)",
-            borderTop: "1px solid rgba(239, 68, 68, 0.4)",
-            boxShadow: isDark ? "0 -4px 20px rgba(239, 68, 68, 0.15)" : "0 -4px 15px rgba(239, 68, 68, 0.1)",
+              ? "linear-gradient(90deg, rgba(16,185,129,0.05) 0%, rgba(16,185,129,0.2) 50%, rgba(16,185,129,0.05) 100%)"
+              : "linear-gradient(90deg, rgba(16,185,129,0.05) 0%, rgba(16,185,129,0.15) 50%, rgba(16,185,129,0.05) 100%)",
+            borderTop: "1px solid rgba(16, 185, 129, 0.4)",
+            boxShadow: isDark ? "0 -4px 20px rgba(16, 185, 129, 0.15)" : "0 -4px 15px rgba(16, 185, 129, 0.1)",
           }}
         >
           <marquee 
             scrollamount="10" 
-            className="font-display font-bold text-base tracking-[0.2em] uppercase flex items-center" 
+            className="font-display font-bold text-xl tracking-[0.2em] uppercase flex items-center" 
             style={{ 
-              color: isDark ? "#F87171" : "#DC2626",
-              textShadow: isDark ? "0 0 10px rgba(239,68,68,0.6)" : "0 0 2px rgba(239,68,68,0.2)"
+              color: isDark ? "#34D399" : "#059669",
+              textShadow: isDark ? "0 0 10px rgba(16,185,129,0.6)" : "0 0 2px rgba(16,185,129,0.2)",
+              padding: "4px 0"
             }}
           >
-            <span style={{ color: "#EF4444" }}>•</span>&nbsp;&nbsp;&nbsp;SECURITY SUPERVISOR : {securityNames}&nbsp;&nbsp;&nbsp;<span style={{ color: "#EF4444" }}>•</span>
-            &nbsp;&nbsp;&nbsp;HOUSEKEEPING SUPERVISOR : {housekeepingNames}&nbsp;&nbsp;&nbsp;<span style={{ color: "#EF4444" }}>•</span>
-            &nbsp;&nbsp;&nbsp;Manager On Duty : {nightSupervisorName}&nbsp;&nbsp;&nbsp;<span style={{ color: "#EF4444" }}>•</span>
+            <span style={{ color: "#10B981" }}>•</span><span style={{ display: "inline-block", width: "15rem" }}></span>SECURITY SUPERVISOR : {securityNames}<span style={{ display: "inline-block", width: "15rem" }}></span><span style={{ color: "#10B981" }}>•</span>
+            <span style={{ display: "inline-block", width: "15rem" }}></span>HOUSEKEEPING SUPERVISOR : {housekeepingNames}<span style={{ display: "inline-block", width: "15rem" }}></span><span style={{ color: "#10B981" }}>•</span>
+            <span style={{ display: "inline-block", width: "15rem" }}></span>Manager On Duty : {nightSupervisorName}<span style={{ display: "inline-block", width: "15rem" }}></span><span style={{ color: "#10B981" }}>•</span>
           </marquee>
         </div>
       )}
