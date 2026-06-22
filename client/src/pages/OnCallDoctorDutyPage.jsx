@@ -16,7 +16,7 @@ import SearchableSelect from "../components/common/SearchableSelect";
 
 export default function OnCallDoctorDutyPage() {
   const { user } = useAuth();
-  const canDelete = user?.role === 'super_admin';
+  const canDelete = user?.role === 'super_admin' || user?.role === 'admin';
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [roster, setRoster] = useState([]);
   const [staff, setStaff] = useState([]);

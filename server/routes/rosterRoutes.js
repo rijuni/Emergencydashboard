@@ -13,6 +13,6 @@ router.post('/', auth, roleCheck('admin', 'super_admin'), rosterController.creat
 router.post('/copy', auth, roleCheck('admin', 'super_admin'), rosterController.copyRoster);
 router.post('/bulk', auth, roleCheck('admin', 'super_admin'), rosterController.bulkAssign);
 router.put('/:id', auth, roleCheck('admin', 'super_admin'), rosterController.update);
-router.delete('/:id', auth, roleCheck('super_admin'), rosterController.delete);
+router.delete('/:id', auth, roleCheck('admin', 'super_admin'), rosterController.delete);
 
 module.exports = router;
