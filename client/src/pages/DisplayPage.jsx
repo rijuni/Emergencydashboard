@@ -84,11 +84,11 @@ export default function DisplayPage() {
   useEffect(() => {
     // Push a dummy state so the back button is always active
     window.history.pushState(null, null, window.location.pathname);
-    
+
     const handlePopState = () => {
       navigate("/login");
     };
-    
+
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [navigate]);
@@ -149,44 +149,44 @@ export default function DisplayPage() {
 
   const categoryStyles = {
     Doctor: {
-      accent: "#F97316",
-      text: isDark ? "#FB923C" : "#9A3412",
-      badgeBg: "rgba(249,115,22,0.15)",
-      badgeText: "#C2410C",
-      border: isDark ? "rgba(249,115,22,0.25)" : "rgba(249,115,22,0.35)",
+      accent: "#F59E0B",
+      text: isDark ? "#FBBF24" : "#B45309",
+      badgeBg: "rgba(245,158,11,0.2)",
+      badgeText: isDark ? "#FBBF24" : "#B45309",
+      border: "#F59E0B",
       cardBg: isDark
-        ? "linear-gradient(135deg, rgba(249,115,22,0.15), rgba(30,41,59,0.7))"
-        : "linear-gradient(135deg, rgba(249,115,22,0.12), rgba(255,255,255,0.8))",
+        ? "linear-gradient(135deg, rgba(245,158,11,0.2), rgba(30,41,59,0.8))"
+        : "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(255,255,255,0.9))",
     },
     "Nursing Officer": {
-      accent: "#3B82F6",
-      text: isDark ? "#60A5FA" : "#1D4ED8",
-      badgeBg: "rgba(59,130,246,0.14)",
-      badgeText: "#1D4ED8",
-      border: isDark ? "rgba(59,130,246,0.25)" : "rgba(59,130,246,0.35)",
+      accent: "#A855F7",
+      text: isDark ? "#D8B4FE" : "#7E22CE",
+      badgeBg: "rgba(168,85,247,0.2)",
+      badgeText: isDark ? "#D8B4FE" : "#7E22CE",
+      border: "#A855F7",
       cardBg: isDark
-        ? "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(30,41,59,0.7))"
-        : "linear-gradient(135deg, rgba(59,130,246,0.12), rgba(255,255,255,0.8))",
+        ? "linear-gradient(135deg, rgba(168,85,247,0.2), rgba(30,41,59,0.8))"
+        : "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(255,255,255,0.9))",
     },
     Pharmacist: {
-      accent: "#10B981",
-      text: isDark ? "#34D399" : "#047857",
-      badgeBg: "rgba(16,185,129,0.14)",
-      badgeText: "#047857",
-      border: isDark ? "rgba(16,185,129,0.25)" : "rgba(16,185,129,0.35)",
+      accent: "#F59E0B",
+      text: isDark ? "#FBBF24" : "#B45309",
+      badgeBg: "rgba(245,158,11,0.2)",
+      badgeText: isDark ? "#FBBF24" : "#B45309",
+      border: "#F59E0B",
       cardBg: isDark
-        ? "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(30,41,59,0.7))"
-        : "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(255,255,255,0.8))",
+        ? "linear-gradient(135deg, rgba(245,158,11,0.2), rgba(30,41,59,0.8))"
+        : "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(255,255,255,0.9))",
     },
     "Security Supervisor": {
-      accent: "#8B5CF6",
-      text: isDark ? "#A78BFA" : "#6D28D9",
-      badgeBg: "rgba(139,92,246,0.14)",
-      badgeText: "#6D28D9",
-      border: isDark ? "rgba(139,92,246,0.25)" : "rgba(139,92,246,0.35)",
+      accent: "#A855F7",
+      text: isDark ? "#D8B4FE" : "#7E22CE",
+      badgeBg: "rgba(168,85,247,0.2)",
+      badgeText: isDark ? "#D8B4FE" : "#7E22CE",
+      border: "#A855F7",
       cardBg: isDark
-        ? "linear-gradient(135deg, rgba(139,92,246,0.15), rgba(30,41,59,0.7))"
-        : "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(255,255,255,0.8))",
+        ? "linear-gradient(135deg, rgba(168,85,247,0.2), rgba(30,41,59,0.8))"
+        : "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(255,255,255,0.9))",
     },
   };
 
@@ -201,16 +201,16 @@ export default function DisplayPage() {
   }, {});
 
   const normalizeName = (value) => (value || "").trim().toLowerCase();
-   const getShownName = (entry) => {
-     if (!entry) return "";
-     const name = (entry.staff_display_name || entry.display_name) || entry.staff_name || entry.full_name || "";
-     if (entry.prefix) {
-       return `${entry.prefix.trim()} ${name}`.toUpperCase();
-     }
-     return name.toUpperCase();
-   };
+  const getShownName = (entry) => {
+    if (!entry) return "";
+    const name = (entry.staff_display_name || entry.display_name) || entry.staff_name || entry.full_name || "";
+    if (entry.prefix) {
+      return `${entry.prefix.trim()} ${name}`.toUpperCase();
+    }
+    return name.toUpperCase();
+  };
   const categoryColors = [
-    "#14B8A6", "#3B82F6", "#A855F7", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#6366F1"
+    "#F59E0B", "#A855F7"
   ];
 
   // Group on-call doctors by department (deduplicated by staff_id)
@@ -248,10 +248,10 @@ export default function DisplayPage() {
         entry.notes !== "ON_CALL"
     );
   }, [data?.roster, currentShiftId]);
-    const defaultSupervisorName = data?.settings?.security_supervisor_name || "MR. BASANTA KHAMARI";
-    const securityNames = securitySupervisors.length > 0 
-      ? securitySupervisors.map((s) => getShownName(s)).join(" • ")
-      : defaultSupervisorName;
+  const defaultSupervisorName = data?.settings?.security_supervisor_name || "MR. BASANTA KHAMARI";
+  const securityNames = securitySupervisors.length > 0
+    ? securitySupervisors.map((s) => getShownName(s)).join(" • ")
+    : defaultSupervisorName;
 
   const housekeepingSupervisors = useMemo(() => {
     return (data?.roster || []).filter(
@@ -261,10 +261,10 @@ export default function DisplayPage() {
         entry.notes !== "ON_CALL"
     );
   }, [data?.roster, currentShiftId]);
-    const defaultHkSupervisorName = data?.settings?.housekeeping_supervisor_name || "MR PRASANNA KUMAR SARANGI";
-    const housekeepingNames = housekeepingSupervisors.length > 0 
-      ? housekeepingSupervisors.map((s) => getShownName(s)).join(" • ")
-      : defaultHkSupervisorName;
+  const defaultHkSupervisorName = data?.settings?.housekeeping_supervisor_name || "MR PRASANNA KUMAR SARANGI";
+  const housekeepingNames = housekeepingSupervisors.length > 0
+    ? housekeepingSupervisors.map((s) => getShownName(s)).join(" • ")
+    : defaultHkSupervisorName;
 
   const nightSupervisorName = data?.nightSupervisorName || "NOT ASSIGNED";
 
@@ -311,8 +311,8 @@ export default function DisplayPage() {
         className="shrink-0 px-4 py-2"
         style={{ borderBottom: isDark ? "2px solid rgba(148, 163, 184, 0.15)" : "2px solid rgba(148, 163, 184, 0.35)" }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
+        <div className="flex items-center justify-between px-4">
+          <div className="flex items-center gap-8 flex-1">
             <div
               className="w-24 h-24 rounded-2xl flex items-center justify-center relative overflow-hidden p-2"
               style={{
@@ -344,12 +344,12 @@ export default function DisplayPage() {
                 className="text-2xl md:text-3xl font-bold mt-2 tracking-wider"
                 style={{ color: isDark ? "#10B981" : "#059669" }}
               >
-                HOD Of Emergancy Madicine : Dr.Siddhartha Mishra
+                Emergency Medicine HOD: Dr.Siddhartha Mishra
               </p>
             </div>
           </div>
 
-          <div className="text-center">
+          <div className="text-center flex-1">
             <div
               className="font-display font-bold text-2xl tracking-wide"
               style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
@@ -366,7 +366,7 @@ export default function DisplayPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-end gap-6 flex-1">
 
             {/* Theme Toggle */}
             <button
@@ -501,31 +501,34 @@ export default function DisplayPage() {
                             {staffList.map((entry) => (
                               <div
                                 key={entry.id}
-                                className="rounded-lg px-5 py-5 mb-3"
+                                className="rounded-lg px-5 py-5 mb-3 flex flex-col justify-center items-start"
                                 style={{
                                   border: `2px solid ${style.border}`,
                                   borderLeft: `8px solid ${style.accent}`,
                                   background: style.cardBg,
                                   boxShadow: isDark ? "0 6px 24px rgba(0,0,0,0.4)" : "0 6px 16px rgba(15,23,42,0.1)",
+                                  minHeight: "160px"
                                 }}
                               >
-                                <div
-                                  className="text-2xl md:text-3xl font-bold"
-                                  style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
-                                >
-                                  {getShownName(entry)}
-                                </div>
-                                <div
-                                  className="text-sm md:text-base mt-3 font-bold inline-block px-3 py-1 rounded-full uppercase tracking-wider"
-                                  style={{
-                                    background: style.badgeBg,
-                                    color: style.badgeText,
-                                    border: `1px solid ${style.border}`,
-                                  }}
-                                >
-                                  {[entry.designation, entry.specialization]
-                                    .filter(Boolean)
-                                    .join(" • ") || "\u00A0"}
+                                <div>
+                                  <div
+                                    className="text-2xl md:text-3xl font-bold"
+                                    style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
+                                  >
+                                    {getShownName(entry)}
+                                  </div>
+                                  <div
+                                    className="text-sm md:text-base mt-3 font-bold inline-block px-3 py-1 rounded-full uppercase tracking-wider"
+                                    style={{
+                                      background: style.badgeBg,
+                                      color: style.badgeText,
+                                      border: `1px solid ${style.border}`,
+                                    }}
+                                  >
+                                    {[entry.designation, entry.specialization]
+                                      .filter(Boolean)
+                                      .join(" • ") || "\u00A0"}
+                                  </div>
                                 </div>
                               </div>
                             ))}
@@ -559,36 +562,43 @@ export default function DisplayPage() {
                   On Call Doctors
                 </h2>
               </div>
-              
+
               {Object.keys(onCallDoctorsByDept).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 flex-1 content-start overflow-y-auto">
                   {Object.entries(onCallDoctorsByDept).map(([dept, doctors], idx) => {
                     const color = categoryColors[idx % categoryColors.length];
                     return (
                       <div key={dept} className="rounded-xl p-4 flex flex-col h-full shadow-sm"
-                           style={{
-                             background: isDark ? "rgba(30, 41, 59, 0.5)" : "rgba(248, 250, 252, 0.8)",
-                             border: isDark ? "1px solid rgba(148,163,184,0.15)" : "1px solid rgba(148,163,184,0.3)",
-                             borderTop: `4px solid ${color}`
-                           }}>
+                        style={{
+                          background: isDark ? "rgba(30, 41, 59, 0.5)" : "rgba(248, 250, 252, 0.8)",
+                          border: isDark ? "1px solid rgba(148,163,184,0.15)" : "1px solid rgba(148,163,184,0.3)",
+                          borderTop: `4px solid ${color}`
+                        }}>
                         <h3 className="font-display font-bold text-base mb-3 uppercase tracking-wider" style={{ color }}>
                           {dept}
                         </h3>
                         <div className="space-y-3 flex-1">
                           {doctors.map(doc => (
-                            <div key={`${doc.id}-${doc.shift_id}`} className="rounded-lg p-5"
-                                 style={{ background: isDark ? "rgba(15, 23, 42, 0.4)" : "rgba(255, 255, 255, 0.8)", border: isDark ? "2px solid rgba(148,163,184,0.15)" : "2px solid rgba(148,163,184,0.3)" }}>
-                              <div className="font-bold text-xl md:text-2xl" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
-                                {getShownName(doc)}
-                              </div>
-                              <div 
-                                className="text-sm md:text-base mt-3 font-bold inline-block px-3 py-1 rounded-full uppercase tracking-wider" 
-                                style={{ 
-                                  color: color, 
-                                  border: `1px solid ${color}` 
-                                }}
-                              >
-                                {doc.designation || "DOCTOR"}
+                            <div key={`${doc.id}-${doc.shift_id}`} className="rounded-lg p-5 flex flex-col justify-center items-start"
+                              style={{
+                                background: isDark ? `linear-gradient(135deg, ${color}33, rgba(30,41,59,0.8))` : `linear-gradient(135deg, ${color}22, rgba(255,255,255,0.9))`,
+                                border: `2px solid ${color}`,
+                                borderLeft: `8px solid ${color}`,
+                                minHeight: "160px"
+                              }}>
+                              <div>
+                                <div className="font-bold text-xl md:text-2xl" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
+                                  {getShownName(doc)}
+                                </div>
+                                <div
+                                  className="text-sm md:text-base mt-3 font-bold inline-block px-3 py-1 rounded-full uppercase tracking-wider"
+                                  style={{
+                                    color: color,
+                                    border: `1px solid ${color}`
+                                  }}
+                                >
+                                  {doc.designation || "DOCTOR"}
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -608,20 +618,20 @@ export default function DisplayPage() {
       </main>
 
       {securityNames && (
-        <div 
+        <div
           className="shrink-0 overflow-hidden py-4"
           style={{
-            background: isDark 
+            background: isDark
               ? "linear-gradient(90deg, rgba(16,185,129,0.05) 0%, rgba(16,185,129,0.2) 50%, rgba(16,185,129,0.05) 100%)"
               : "linear-gradient(90deg, rgba(16,185,129,0.05) 0%, rgba(16,185,129,0.15) 50%, rgba(16,185,129,0.05) 100%)",
             borderTop: "2px solid rgba(16, 185, 129, 0.4)",
             boxShadow: isDark ? "0 -4px 20px rgba(16, 185, 129, 0.15)" : "0 -4px 15px rgba(16, 185, 129, 0.1)",
           }}
         >
-          <marquee 
-            scrollamount="15" 
-            className="font-display font-bold text-5xl tracking-[0.2em] uppercase flex items-center" 
-            style={{ 
+          <marquee
+            scrollamount="15"
+            className="font-display font-bold text-5xl tracking-[0.2em] uppercase flex items-center"
+            style={{
               color: isDark ? "#34D399" : "#059669",
               textShadow: isDark ? "0 0 10px rgba(16,185,129,0.6)" : "0 0 2px rgba(16,185,129,0.2)",
               padding: "16px 0"
