@@ -15,6 +15,7 @@ import {
   HiOutlineIdentification,
   HiOutlineArchive,
   HiOutlineOfficeBuilding,
+  HiOutlineKey,
 } from "react-icons/hi";
 import kimsLogo from "../../assets/kims-logo.png";
 
@@ -170,6 +171,13 @@ export default function Layout() {
               </p>
             </div>
             <div className="flex items-center gap-1">
+              <button
+                onClick={() => navigate("/change-password")}
+                className="p-2 rounded-lg text-text-muted hover:text-primary-light hover:bg-primary/10 transition-all duration-300"
+                title="Change Password"
+              >
+                <HiOutlineKey className="w-4 h-4" />
+              </button>
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg text-text-muted hover:text-primary-light hover:bg-primary/10 transition-all duration-300"

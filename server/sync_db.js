@@ -37,9 +37,15 @@ async function syncDB() {
       console.log('Housekeeping Supervisor category added successfully.');
     }
 
-    // Update Hospital Name
-    console.log('Updating Hospital Name to KIMS Hospital...');
-    await connection.execute(`UPDATE display_settings SET setting_value = 'KIMS Hospital' WHERE setting_key = 'hospital_name'`);
+    // Check if column must_change_password exists in users table
+    const [columns] = await connection.execute(`SHOW COLUMNS FROM users LIKE 'must_change_password'`);
+    if (columns.length === 0) {
+      console.log('Adding must_change_password column to users table...');
+      await connection.execute(`ALTER TABLE users ADD COLUMN must_change_password BOOLEAN DEFAULT FALSE`);
+      console.log('must_change_password column added.');
+    } else {
+      console.log('must_change_password column already exists.');
+    }
 
     console.log('Database sync complete!');
     await connection.end();

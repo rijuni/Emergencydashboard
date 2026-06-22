@@ -59,7 +59,7 @@ export default function StaffMasterPage({
 
   const { user } = useAuth();
   const canDelete = user?.role === 'super_admin';
-  const canEdit = user?.role === 'super_admin';
+  const canEdit = user?.role === 'super_admin' || user?.role === 'admin';
 
   const doctorCategory = useMemo(
     () =>
@@ -602,7 +602,7 @@ export default function StaffMasterPage({
                       {item.phone || "—"}
                     </td>
                     <td className="p-4">
-                      {showStatusFilter ? (
+                      {showStatusFilter && canDelete ? (
                         item.is_active ? (
                           <button
                             onClick={() => handleDeactivate(item.id, item.full_name)}

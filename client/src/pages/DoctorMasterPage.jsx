@@ -5,7 +5,7 @@ export default function DoctorMasterPage() {
     <StaffMasterPage
       mode="doctor"
       title="Doctor Directory"
-      subtitle="Super Admin can maintain the doctor list for casualty duty planning"
+      subtitle="Admin and Super Admin can maintain the doctor list for casualty duty planning"
       addButtonLabel="Add Doctor"
       listEndpoint="/staff/master/doctors"
       emptyStateMessage="No doctors found. Add your first doctor record."
