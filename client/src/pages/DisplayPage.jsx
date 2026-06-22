@@ -188,9 +188,9 @@ export default function DisplayPage() {
      if (!entry) return "";
      const name = (entry.staff_display_name || entry.display_name) || entry.staff_name || entry.full_name || "";
      if (entry.prefix) {
-       return `${entry.prefix.trim()} ${name}`;
+       return `${entry.prefix.trim()} ${name}`.toUpperCase();
      }
-     return name;
+     return name.toUpperCase();
    };
   const categoryColors = [
     "#14B8A6", "#3B82F6", "#A855F7", "#F59E0B", "#EF4444", "#22C55E", "#EC4899", "#6366F1"

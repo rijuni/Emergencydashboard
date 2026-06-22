@@ -334,7 +334,7 @@ export default function OnCallDoctorDutyPage() {
                     <HiOutlineUser className="w-6 h-6" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-text-primary font-bold text-sm truncate">{selectedDoctor.full_name}</h4>
+                    <h4 className="text-text-primary font-bold text-sm truncate uppercase">{selectedDoctor.full_name}</h4>
                     <p className="text-text-muted text-xs truncate">{selectedDoctor.department}</p>
                     <p className="text-text-muted text-xs truncate">{(selectedDoctor.qualification || '') + (selectedDoctor.specialization ? `, ${selectedDoctor.specialization}` : '')}</p>
                   </div>
@@ -375,7 +375,7 @@ export default function OnCallDoctorDutyPage() {
                         <HiOutlineUser className="w-6 h-6" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-text-primary font-bold text-sm truncate">{r.staff_name}</h4>
+                        <h4 className="text-text-primary font-bold text-sm truncate uppercase">{r.staff_name}</h4>
                         <p className="text-text-muted text-xs truncate">{doctors.find(d => d.id === r.staff_id)?.department || 'Department'}</p>
                       </div>
                       {!isPastDate && canDelete && (
