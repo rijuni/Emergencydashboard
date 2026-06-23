@@ -59,10 +59,10 @@ export default function ChangePasswordPage() {
       });
 
       toast.success("Password changed successfully");
-      
+
       // Update local auth context state
       updateUser({ mustChangePassword: false });
-      
+
       // Navigate back to home
       navigate("/");
     } catch (err) {

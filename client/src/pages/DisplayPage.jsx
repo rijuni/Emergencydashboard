@@ -24,16 +24,16 @@ export default function DisplayPage() {
   }, []);
 
   const alertsData = useMemo(() => [
-    { title: "CODE BLUE", count: data?.settings?.code_blue || "33", r: 59, g: 130, b: 246, textLight: "#2563EB", textDark: "#93C5FD", valColor: "#3B82F6" },
-    { title: "CODE RED", count: "44", r: 239, g: 68, b: 68, textLight: "#B91C1C", textDark: "#FCA5A5", valColor: "#EF4444" },
-    { title: "FIRE OFFICER", count: "77", r: 16, g: 185, b: 129, textLight: "#047857", textDark: "#6EE7B7", valColor: "#10B981" },
-    { title: "CODE PINK", count: "44", r: 236, g: 72, b: 153, textLight: "#BE185D", textDark: "#F9A8D4", valColor: "#EC4899" },
-    { title: "CODE YELLOW", count: "44", r: 234, g: 179, b: 8, textLight: "#A16207", textDark: "#FDE047", valColor: "#EAB308" },
-    { title: "CODE VIOLET", count: "44", r: 139, g: 92, b: 246, textLight: "#6D28D9", textDark: "#C4B5FD", valColor: "#8B5CF6" },
-    { title: "CODE BLACK", count: "44", r: 75, g: 85, b: 99, textLight: "#111827", textDark: "#F3F4F6", valColor: isDark ? "#F3F4F6" : "#111827" },
-    { title: "CODE ORANGE", count: "44", r: 249, g: 115, b: 22, textLight: "#C2410C", textDark: "#FDBA74", valColor: "#F97316" },
-    { title: "CODE GREY", count: "44", r: 107, g: 114, b: 128, textLight: "#374151", textDark: "#D1D5DB", valColor: "#6B7280" },
-    { title: "CODE PURPLE", count: "44", r: 168, g: 85, b: 247, textLight: "#7E22CE", textDark: "#D8B4FE", valColor: "#A855F7" },
+    { title: "CODE BLUE", count: data?.settings?.code_blue || "33", r: 239, g: 68, b: 68, textLight: "#B91C1C", textDark: "#FCA5A5", valColor: "#EF4444" },
+    // { title: "CODE RED", count: "44", r: 239, g: 68, b: 68, textLight: "#B91C1C", textDark: "#FCA5A5", valColor: "#EF4444" },
+    // { title: "FIRE OFFICER", count: "77", r: 16, g: 185, b: 129, textLight: "#047857", textDark: "#6EE7B7", valColor: "#10B981" },
+    // { title: "CODE PINK", count: "44", r: 236, g: 72, b: 153, textLight: "#BE185D", textDark: "#F9A8D4", valColor: "#EC4899" },
+    // { title: "CODE YELLOW", count: "44", r: 234, g: 179, b: 8, textLight: "#A16207", textDark: "#FDE047", valColor: "#EAB308" },
+    // { title: "CODE VIOLET", count: "44", r: 139, g: 92, b: 246, textLight: "#6D28D9", textDark: "#C4B5FD", valColor: "#8B5CF6" },
+    // { title: "CODE BLACK", count: "44", r: 75, g: 85, b: 99, textLight: "#111827", textDark: "#F3F4F6", valColor: isDark ? "#F3F4F6" : "#111827" },
+    // { title: "CODE ORANGE", count: "44", r: 249, g: 115, b: 22, textLight: "#C2410C", textDark: "#FDBA74", valColor: "#F97316" },
+    // { title: "CODE GREY", count: "44", r: 107, g: 114, b: 128, textLight: "#374151", textDark: "#D1D5DB", valColor: "#6B7280" },
+    // { title: "CODE PURPLE", count: "44", r: 168, g: 85, b: 247, textLight: "#7E22CE", textDark: "#D8B4FE", valColor: "#A855F7" },
   ], [data?.settings?.code_blue, isDark]);
 
   const normalizeName = (value) => (value || "").trim().toLowerCase();
@@ -408,7 +408,7 @@ export default function DisplayPage() {
         <div className="flex items-center justify-between px-4">
           <div className="flex items-center gap-8 flex-1">
             <div
-              className="w-24 h-24 rounded-2xl flex items-center justify-center relative overflow-hidden p-2"
+              className="w-20 h-20 rounded-xl flex items-center justify-center relative overflow-hidden"
               style={{
                 background: "rgba(255,255,255,0.96)",
                 border: isDark ? "1px solid rgba(148,163,184,0.1)" : "1px solid rgba(148,163,184,0.3)",
@@ -418,7 +418,7 @@ export default function DisplayPage() {
               <img
                 src={kimsLogo}
                 alt="KIMS logo"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain scale-110"
               />
             </div>
             <div>
@@ -609,7 +609,7 @@ export default function DisplayPage() {
                                     className="text-sm md:text-base mt-3 font-bold inline-block px-3 py-1 rounded-full uppercase tracking-wider"
                                     style={{
                                       background: style.badgeBg,
-                                      color: style.badgeText,
+                                      color: "#FFFFFF",
                                       border: `1px solid ${style.border}`,
                                     }}
                                   >
@@ -681,7 +681,7 @@ export default function DisplayPage() {
                                 <div
                                   className="text-sm md:text-base mt-3 font-bold inline-block px-3 py-1 rounded-full uppercase tracking-wider"
                                   style={{
-                                    color: color,
+                                    color: "#FFFFFF",
                                     border: `1px solid ${color}`
                                   }}
                                 >
