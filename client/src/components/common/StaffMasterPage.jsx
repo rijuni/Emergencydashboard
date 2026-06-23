@@ -686,11 +686,11 @@ export default function StaffMasterPage({
       {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4"
-          onClick={() => setShowModal(false)}
+          // onClick={() => setShowModal(false)}
         >
           <div
             className="glass-strong rounded-2xl w-full max-w-lg p-6 animate-scale-in"
-            onClick={(event) => event.stopPropagation()}
+            // onClick={(event) => event.stopPropagation()}
             style={{ boxShadow: "0 25px 60px rgba(0,0,0,0.5)" }}
           >
             <div className="flex items-center justify-between mb-6">
@@ -962,11 +962,11 @@ export default function StaffMasterPage({
       {showBulkModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4"
-          onClick={() => setShowBulkModal(false)}
+          // onClick={() => setShowBulkModal(false)}
         >
           <div
             className="glass-strong rounded-2xl w-full max-w-xl p-6 animate-scale-in"
-            onClick={(event) => event.stopPropagation()}
+            // onClick={(event) => event.stopPropagation()}
             style={{ boxShadow: "0 25px 60px rgba(0,0,0,0.5)" }}
           >
             <div className="flex items-center justify-between mb-6">

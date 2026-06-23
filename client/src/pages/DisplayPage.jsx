@@ -405,12 +405,15 @@ export default function DisplayPage() {
               >
                 Live Availability
               </p>
-              <p
-                className="text-2xl md:text-3xl font-bold mt-2 tracking-wider"
-                style={{ color: isDark ? "#10B981" : "#059669" }}
-              >
-                Emergency Medicine HOD: Dr.Siddhartha Mishra
-              </p>
+ <p
+  className="text-sm md:text-base lg:text-lg font-bold mt-2 tracking-normal whitespace-nowrap"
+  style={{
+    lineHeight: 1.2,
+    color: isDark ? "#ffffff" : "#059669",
+  }}
+>
+  Emergency Medicine HOD: Dr. Siddhartha Mishra
+</p>
             </div>
           </div>
 
