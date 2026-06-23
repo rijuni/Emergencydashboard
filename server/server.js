@@ -50,7 +50,7 @@ app.use(
 // Rate limiting for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20,
+  max: 10000, // Increased drastically for internal NAT usage
   message: { message: 'Too many login attempts. Please try again later.' }
 });
 

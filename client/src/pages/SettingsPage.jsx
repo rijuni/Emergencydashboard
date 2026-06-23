@@ -4,7 +4,6 @@ import toast from "react-hot-toast";
 import {
   HiOutlineSave,
   HiOutlineDesktopComputer,
-  HiOutlineCog,
   HiOutlineCheck
 } from "react-icons/hi";
 import SearchableSelect from "../components/common/SearchableSelect";
@@ -294,118 +293,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Night Mode Settings */}
-      <div
-        className="glass-card rounded-xl p-6 animate-fade-in-up"
-        style={{ animationDelay: "200ms" }}
-      >
-        <h2 className="text-base font-display font-semibold text-text-primary mb-5 flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(59,130,246,0.12)" }}
-          >
-            <HiOutlineCog className="w-4 h-4" style={{ color: "#3B82F6" }} />
-          </div>
-          Night Mode
-          <span className="text-xs font-normal text-text-muted ml-1">
-            (dims display during set hours)
-          </span>
-        </h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-text-secondary mb-1.5 font-medium">
-              Start Time
-            </label>
-            <input
-              type="time"
-              value={settings.night_mode_start}
-              onChange={(e) =>
-                setSettings({ ...settings, night_mode_start: e.target.value })
-              }
-              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1.5 font-medium">
-              End Time
-            </label>
-            <input
-              type="time"
-              value={settings.night_mode_end}
-              onChange={(e) =>
-                setSettings({ ...settings, night_mode_end: e.target.value })
-              }
-              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
-            />
-          </div>
-        </div>
-      </div>
 
-      {/* Quick Links */}
-      <div
-        className="glass-card rounded-xl p-6 animate-fade-in-up"
-        style={{ animationDelay: "300ms" }}
-      >
-        <h2 className="text-base font-display font-semibold text-text-primary mb-4">
-          Quick Links
-        </h2>
-        <div className="space-y-3">
-          <a
-            href="/display"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 p-3.5 rounded-xl transition-all duration-300 group bg-bg-card/50 border border-border hover:border-primary-light/20"
-          >
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: "rgba(245,158,11,0.12)" }}
-            >
-              <HiOutlineDesktopComputer
-                className="w-5 h-5"
-                style={{ color: "#F59E0B" }}
-              />
-            </div>
-            <div className="flex-1">
-              <p className="text-text-primary text-sm font-medium group-hover:text-primary-light transition-colors">
-                Open Public Display
-              </p>
-              <p className="text-text-muted text-xs mt-0.5">
-                Open the full-screen display in a new tab
-              </p>
-            </div>
-            <span className="text-text-muted text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-              →
-            </span>
-          </a>
-          <a
-            href="/display/doctors"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 p-3.5 rounded-xl transition-all duration-300 group bg-bg-card/50 border border-border hover:border-primary-light/20"
-          >
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: "rgba(14,165,233,0.12)" }}
-            >
-              <HiOutlineDesktopComputer
-                className="w-5 h-5"
-                style={{ color: "#0EA5E9" }}
-              />
-            </div>
-            <div className="flex-1">
-              <p className="text-text-primary text-sm font-medium group-hover:text-primary-light transition-colors">
-                Open Doctor Availability Display
-              </p>
-              <p className="text-text-muted text-xs mt-0.5">
-                Show only doctors on duty in a new tab
-              </p>
-            </div>
-            <span className="text-text-muted text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-              →
-            </span>
-          </a>
-        </div>
-      </div>
     </div>
   );
 }

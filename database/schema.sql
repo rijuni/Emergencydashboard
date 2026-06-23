@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     full_name VARCHAR(100) NOT NULL,
     role ENUM('super_admin','admin') NOT NULL DEFAULT 'admin',
     is_active BOOLEAN DEFAULT TRUE,
+    must_change_password BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

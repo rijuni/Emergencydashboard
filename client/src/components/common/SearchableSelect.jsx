@@ -53,17 +53,15 @@ export default function SearchableSelect({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-left text-sm text-text-primary flex items-center justify-between transition-all focus:outline-none focus:border-primary-light disabled:opacity-50 disabled:cursor-not-allowed ${
-          isOpen ? "border-primary-light shadow-[0_0_0_3px_rgba(20,184,166,0.1),_0_0_20px_rgba(20,184,166,0.05)]" : ""
-        }`}
+        className={`w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-left text-sm text-text-primary flex items-center justify-between transition-all focus:outline-none focus:border-primary-light disabled:opacity-50 disabled:cursor-not-allowed ${isOpen ? "border-primary-light shadow-[0_0_0_3px_rgba(20,184,166,0.1),_0_0_20px_rgba(20,184,166,0.05)]" : ""
+          }`}
       >
         <span className={value ? "text-text-primary" : "text-text-muted/50"}>
           {value || placeholder}
         </span>
         <HiOutlineChevronDown
-          className={`w-4 h-4 text-text-muted transition-transform duration-200 ${
-            isOpen ? "transform rotate-180" : ""
-          }`}
+          className={`w-4 h-4 text-text-muted transition-transform duration-200 ${isOpen ? "transform rotate-180" : ""
+            }`}
         />
       </button>
 
@@ -96,11 +94,10 @@ export default function SearchableSelect({
                   <button
                     key={optId}
                     type="button"
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors duration-150 ${
-                      isSelected
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors duration-150 ${isSelected
                         ? "bg-primary/20 text-primary-light font-semibold"
                         : "text-text-secondary hover:bg-bg-card hover:text-text-primary"
-                    }`}
+                      }`}
                     onClick={() => {
                       onChange(optName);
                       setIsOpen(false);

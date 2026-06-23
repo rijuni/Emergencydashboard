@@ -82,7 +82,7 @@ const normalizeName = (value) => (value || "").trim().toLowerCase();
 
 export default function RosterPage() {
   const { user } = useAuth();
-  const canDelete = user?.role === 'super_admin';
+  const canDelete = user?.role === 'super_admin' || user?.role === 'admin';
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [roster, setRoster] = useState([]);
   const [staff, setStaff] = useState([]);

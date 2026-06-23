@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -16,16 +16,26 @@ import ShiftManagementPage from "./pages/ShiftManagementPage";
 import FileArchivesPage from "./pages/FileArchivesPage";
 import OnCallDoctorDutyPage from "./pages/OnCallDoctorDutyPage";
 import Layout from "./components/common/Layout";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
+  const location = useLocation();
+
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen bg-bg-dark">
         <div className="w-8 h-8 border-4 border-primary-light border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
-  return isAuthenticated ? children : <Navigate to="/login" />;
+
+  if (!isAuthenticated) return <Navigate to="/login" />;
+
+  if (user?.mustChangePassword && location.pathname !== "/change-password") {
+    return <Navigate to="/change-password" replace />;
+  }
+
+  return children;
 };
 
 const getDefaultRouteByRole = (role) => {
@@ -48,6 +58,14 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/display" element={<DisplayPage />} />
       <Route path="/opendisplay" element={<DisplayPage />} />
+      <Route
+        path="/change-password"
+        element={
+          <ProtectedRoute>
+            <ChangePasswordPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/"
         element={

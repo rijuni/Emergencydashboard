@@ -44,7 +44,8 @@ exports.login = async (req, res) => {
         id: user.id,
         username: user.username,
         full_name: user.full_name,
-        role: user.role
+        role: user.role,
+        mustChangePassword: !!user.must_change_password
       }
     });
   } catch (error) {
@@ -72,7 +73,7 @@ exports.register = async (req, res) => {
     const password_hash = await bcrypt.hash(password, salt);
 
     const [result] = await pool.query(
-      'INSERT INTO users (username, password_hash, full_name, role) VALUES (?, ?, ?, ?)',
+      'INSERT INTO users (username, password_hash, full_name, role, must_change_password) VALUES (?, ?, ?, ?, TRUE)',
       [username, password_hash, full_name, role || 'admin']
     );
 
@@ -96,7 +97,7 @@ exports.register = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT id, username, full_name, role, created_at FROM users WHERE id = ?',
+      'SELECT id, username, full_name, role, must_change_password, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
 
@@ -104,7 +105,16 @@ exports.getMe = async (req, res) => {
       return res.status(404).json({ message: 'User not found.' });
     }
 
-    res.json({ user: users[0] });
+    res.json({
+      user: {
+        id: users[0].id,
+        username: users[0].username,
+        full_name: users[0].full_name,
+        role: users[0].role,
+        mustChangePassword: !!users[0].must_change_password,
+        created_at: users[0].created_at
+      }
+    });
   } catch (error) {
     console.error('GetMe error:', error);
     res.status(500).json({ message: 'Server error.' });
@@ -131,7 +141,7 @@ exports.changePassword = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(newPassword, salt);
 
-    await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [password_hash, req.user.id]);
+    await pool.query('UPDATE users SET password_hash = ?, must_change_password = FALSE WHERE id = ?', [password_hash, req.user.id]);
 
     res.json({ message: 'Password changed successfully.' });
   } catch (error) {
@@ -200,7 +210,7 @@ exports.resetUserPassword = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(newPassword, salt);
 
-    await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [password_hash, id]);
+    await pool.query('UPDATE users SET password_hash = ?, must_change_password = TRUE WHERE id = ?', [password_hash, id]);
 
     await pool.query(
       'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
