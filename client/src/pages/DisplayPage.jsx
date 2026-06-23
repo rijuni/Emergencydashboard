@@ -8,10 +8,106 @@ export default function DisplayPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [activeScreen, setActiveScreen] = useState("roster");
+  const [onCallPage, setOnCallPage] = useState(0);
+  const [rosterPage, setRosterPage] = useState(0);
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
   const [scale, setScale] = useState(1);
 
   const isDark = theme === "dark";
+
+  const normalizeName = (value) => (value || "").trim().toLowerCase();
+
+  const getCurrentShift = () => {
+    if (!data?.shifts) return null;
+    const now = currentTime;
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    for (const shift of data.shifts) {
+      const [sH, sM] = shift.start_time.split(":").map(Number);
+      const [eH, eM] = shift.end_time.split(":").map(Number);
+      const startMin = sH * 60 + sM;
+      const endMin = eH * 60 + eM;
+
+      if (endMin < startMin) {
+        if (currentMinutes >= startMin || currentMinutes < endMin)
+          return shift.id;
+      } else {
+        if (currentMinutes >= startMin && currentMinutes < endMin)
+          return shift.id;
+      }
+    }
+    return null;
+  };
+
+  const currentShiftId = getCurrentShift();
+  const currentShift = data?.shifts?.find((s) => s.id === currentShiftId);
+
+  const liveCategories = useMemo(() => [
+    { key: "Doctor", label: "Doctors" },
+    { key: "Nursing Officer", label: "Nursing Staffs" },
+    { key: "Pharmacist", label: "Pharmacists" },
+  ], []);
+
+  // Deduplicate and get all unique on-call doctors
+  const uniqueOnCallDoctors = useMemo(() => {
+    if (!data?.roster) return [];
+    // Filter all ON_CALL doctors for the day (no shift_id filter — doctors are
+    // added to all shifts so we must deduplicate by staff_id to avoid repeats)
+    const allOnCall = data.roster.filter(r =>
+      normalizeName(r.category_name) === "doctor" && r.notes === "ON_CALL"
+    );
+    // Deduplicate by staff_id, keeping the first occurrence
+    const seen = new Set();
+    const uniqueDoctors = [];
+    allOnCall.forEach(doc => {
+      if (!seen.has(doc.staff_id)) {
+        seen.add(doc.staff_id);
+        uniqueDoctors.push(doc);
+      }
+    });
+    return uniqueDoctors;
+  }, [data?.roster]);
+
+  // Calculate total pages for on-call doctors (8 per page)
+  const onCallPagesCount = useMemo(() => {
+    return Math.max(1, Math.ceil(uniqueOnCallDoctors.length / 8));
+  }, [uniqueOnCallDoctors]);
+
+  // Get raw on-duty staff list grouped by category
+  const rawOnDutyByCategory = useMemo(() => {
+    if (!data?.roster) return {};
+    return liveCategories.reduce((acc, category) => {
+      acc[category.key] = data.roster.filter(
+        (entry) =>
+          entry.category_name === category.key &&
+          entry.shift_id === currentShiftId &&
+          entry.notes !== "ON_CALL"
+      );
+      return acc;
+    }, {});
+  }, [data?.roster, currentShiftId, liveCategories]);
+
+  // Calculate total pages for Live Duty Roster (at most 3 per page in any category)
+  const rosterPagesCount = useMemo(() => {
+    const lists = Object.values(rawOnDutyByCategory);
+    if (lists.length === 0) return 1;
+    const lengths = lists.map(list => list.length);
+    const maxLen = Math.max(0, ...lengths);
+    return Math.max(1, Math.ceil(maxLen / 3));
+  }, [rawOnDutyByCategory]);
+
+  // Reset page index if pages count changes and current page becomes out of bounds
+  useEffect(() => {
+    if (onCallPage >= onCallPagesCount) {
+      setOnCallPage(0);
+    }
+  }, [onCallPagesCount, onCallPage]);
+
+  useEffect(() => {
+    if (rosterPage >= rosterPagesCount) {
+      setRosterPage(0);
+    }
+  }, [rosterPagesCount, rosterPage]);
 
   // Dynamic resolution scaling for 4K/8K TVs
   useEffect(() => {
@@ -75,10 +171,26 @@ export default function DisplayPage() {
   // Screen rotation interval
   useEffect(() => {
     const screenInterval = setInterval(() => {
-      setActiveScreen(prev => prev === "roster" ? "onCallDoctors" : "roster");
+      if (activeScreen === "roster") {
+        if (rosterPage + 1 < rosterPagesCount) {
+          setRosterPage(prev => prev + 1);
+        } else {
+          setRosterPage(0);
+          setOnCallPage(0);
+          setActiveScreen("onCallDoctors");
+        }
+      } else {
+        if (onCallPage + 1 < onCallPagesCount) {
+          setOnCallPage(prev => prev + 1);
+        } else {
+          setOnCallPage(0);
+          setRosterPage(0);
+          setActiveScreen("roster");
+        }
+      }
     }, 10000);
     return () => clearInterval(screenInterval);
-  }, []);
+  }, [activeScreen, rosterPage, rosterPagesCount, onCallPage, onCallPagesCount]);
 
   // Intercept browser back button
   useEffect(() => {
@@ -116,36 +228,7 @@ export default function DisplayPage() {
     });
   };
 
-  const getCurrentShift = () => {
-    if (!data?.shifts) return null;
-    const now = currentTime;
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-    for (const shift of data.shifts) {
-      const [sH, sM] = shift.start_time.split(":").map(Number);
-      const [eH, eM] = shift.end_time.split(":").map(Number);
-      const startMin = sH * 60 + sM;
-      const endMin = eH * 60 + eM;
-
-      if (endMin < startMin) {
-        if (currentMinutes >= startMin || currentMinutes < endMin)
-          return shift.id;
-      } else {
-        if (currentMinutes >= startMin && currentMinutes < endMin)
-          return shift.id;
-      }
-    }
-    return null;
-  };
-
-  const currentShiftId = getCurrentShift();
-  const currentShift = data?.shifts?.find((s) => s.id === currentShiftId);
-
-  const liveCategories = [
-    { key: "Doctor", label: "Doctors" },
-    { key: "Nursing Officer", label: "Nursing Staffs" },
-    { key: "Pharmacist", label: "Pharmacists" },
-  ];
 
   const categoryStyles = {
     Doctor: {
@@ -190,17 +273,14 @@ export default function DisplayPage() {
     },
   };
 
-  const onDutyByCategory = liveCategories.reduce((acc, category) => {
-    acc[category.key] = (data?.roster || []).filter(
-      (entry) =>
-        entry.category_name === category.key &&
-        entry.shift_id === currentShiftId &&
-        entry.notes !== "ON_CALL",
-    );
-    return acc;
-  }, {});
+  const onDutyByCategory = useMemo(() => {
+    const sliced = {};
+    Object.entries(rawOnDutyByCategory).forEach(([key, list]) => {
+      sliced[key] = list.slice(rosterPage * 3, (rosterPage + 1) * 3);
+    });
+    return sliced;
+  }, [rawOnDutyByCategory, rosterPage]);
 
-  const normalizeName = (value) => (value || "").trim().toLowerCase();
   const getShownName = (entry) => {
     if (!entry) return "";
     const name = (entry.staff_display_name || entry.display_name) || entry.staff_name || entry.full_name || "";
@@ -213,32 +293,17 @@ export default function DisplayPage() {
     "#F59E0B", "#A855F7"
   ];
 
-  // Group on-call doctors by department (deduplicated by staff_id)
+  // Group current page of on-call doctors by department
   const onCallDoctorsByDept = useMemo(() => {
-    if (!data?.roster) return {};
-    // Filter all ON_CALL doctors for the day (no shift_id filter — doctors are
-    // added to all shifts so we must deduplicate by staff_id to avoid repeats)
-    const allOnCall = data.roster.filter(r =>
-      normalizeName(r.category_name) === "doctor" && r.notes === "ON_CALL"
-    );
-    // Deduplicate by staff_id, keeping the first occurrence
-    const seen = new Set();
-    const uniqueDoctors = [];
-    allOnCall.forEach(doc => {
-      if (!seen.has(doc.staff_id)) {
-        seen.add(doc.staff_id);
-        uniqueDoctors.push(doc);
-      }
-    });
-    // Group unique doctors by department
+    const pagedDoctors = uniqueOnCallDoctors.slice(onCallPage * 8, (onCallPage + 1) * 8);
     const grouped = {};
-    uniqueDoctors.forEach(doc => {
+    pagedDoctors.forEach(doc => {
       const dept = (doc.department || "Unassigned").trim().toUpperCase();
       if (!grouped[dept]) grouped[dept] = [];
       grouped[dept].push(doc);
     });
     return grouped;
-  }, [data?.roster]);
+  }, [uniqueOnCallDoctors, onCallPage]);
 
   const securitySupervisors = useMemo(() => {
     return (data?.roster || []).filter(
@@ -466,17 +531,35 @@ export default function DisplayPage() {
                   className="font-display font-bold text-base tracking-wide"
                   style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
                 >
-                  Live Duty Roster
+                  Live Duty Roster {rosterPagesCount > 1 && <span className="text-sm font-semibold opacity-80 ml-2">(Page {rosterPage + 1} of {rosterPagesCount})</span>}
                 </h2>
-                <div
-                  className="text-[10px] font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full"
-                  style={{
-                    background: isDark ? "rgba(20,184,166,0.2)" : "rgba(20,184,166,0.16)",
-                    color: "#14B8A6",
-                    border: isDark ? "1px solid rgba(20,184,166,0.3)" : "1px solid rgba(15,118,110,0.25)",
-                  }}
-                >
-                  Live Now
+                <div className="flex items-center gap-4">
+                  {rosterPagesCount > 1 && (
+                    <div className="flex gap-1.5 items-center mr-2">
+                      {Array.from({ length: rosterPagesCount }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="w-2.5 h-2.5 rounded-full transition-all duration-300"
+                          style={{
+                            background: rosterPage === i 
+                              ? "#14B8A6" 
+                              : (isDark ? "rgba(255,255,255,0.25)" : "rgba(15,23,42,0.2)"),
+                            transform: rosterPage === i ? "scale(1.2)" : "scale(1)",
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  <div
+                    className="text-[10px] font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full"
+                    style={{
+                      background: isDark ? "rgba(20,184,166,0.2)" : "rgba(20,184,166,0.16)",
+                      color: "#14B8A6",
+                      border: isDark ? "1px solid rgba(20,184,166,0.3)" : "1px solid rgba(15,118,110,0.25)",
+                    }}
+                  >
+                    Live Now
+                  </div>
                 </div>
               </div>
 
@@ -559,8 +642,24 @@ export default function DisplayPage() {
             <div key="onCall" className="animate-flip-in h-full flex flex-col">
               <div className="flex items-center justify-between mb-4 shrink-0">
                 <h2 className="font-display font-bold text-xl tracking-wide" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
-                  On Call Doctors
+                  On Call Doctors {onCallPagesCount > 1 && <span className="text-sm font-semibold opacity-80 ml-2">(Page {onCallPage + 1} of {onCallPagesCount})</span>}
                 </h2>
+                {onCallPagesCount > 1 && (
+                  <div className="flex gap-1.5 items-center mr-2">
+                    {Array.from({ length: onCallPagesCount }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-3 h-3 rounded-full transition-all duration-300"
+                        style={{
+                          background: onCallPage === i 
+                            ? "#14B8A6" 
+                            : (isDark ? "rgba(255,255,255,0.25)" : "rgba(15,23,42,0.2)"),
+                          transform: onCallPage === i ? "scale(1.2)" : "scale(1)",
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
 
               {Object.keys(onCallDoctorsByDept).length > 0 ? (
