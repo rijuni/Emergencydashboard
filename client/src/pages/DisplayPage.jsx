@@ -531,35 +531,17 @@ export default function DisplayPage() {
                   className="font-display font-bold text-base tracking-wide"
                   style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
                 >
-                  Live Duty Roster {rosterPagesCount > 1 && <span className="text-sm font-semibold opacity-80 ml-2">(Page {rosterPage + 1} of {rosterPagesCount})</span>}
+                  Live Duty Roster
                 </h2>
-                <div className="flex items-center gap-4">
-                  {rosterPagesCount > 1 && (
-                    <div className="flex gap-1.5 items-center mr-2">
-                      {Array.from({ length: rosterPagesCount }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="w-2.5 h-2.5 rounded-full transition-all duration-300"
-                          style={{
-                            background: rosterPage === i 
-                              ? "#14B8A6" 
-                              : (isDark ? "rgba(255,255,255,0.25)" : "rgba(15,23,42,0.2)"),
-                            transform: rosterPage === i ? "scale(1.2)" : "scale(1)",
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  <div
-                    className="text-[10px] font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full"
-                    style={{
-                      background: isDark ? "rgba(20,184,166,0.2)" : "rgba(20,184,166,0.16)",
-                      color: "#14B8A6",
-                      border: isDark ? "1px solid rgba(20,184,166,0.3)" : "1px solid rgba(15,118,110,0.25)",
-                    }}
-                  >
-                    Live Now
-                  </div>
+                <div
+                  className="text-[10px] font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full"
+                  style={{
+                    background: isDark ? "rgba(20,184,166,0.2)" : "rgba(20,184,166,0.16)",
+                    color: "#14B8A6",
+                    border: isDark ? "1px solid rgba(20,184,166,0.3)" : "1px solid rgba(15,118,110,0.25)",
+                  }}
+                >
+                  Live Now
                 </div>
               </div>
 
@@ -642,24 +624,8 @@ export default function DisplayPage() {
             <div key="onCall" className="animate-flip-in h-full flex flex-col">
               <div className="flex items-center justify-between mb-4 shrink-0">
                 <h2 className="font-display font-bold text-xl tracking-wide" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
-                  On Call Doctors {onCallPagesCount > 1 && <span className="text-sm font-semibold opacity-80 ml-2">(Page {onCallPage + 1} of {onCallPagesCount})</span>}
+                  On Call Doctors
                 </h2>
-                {onCallPagesCount > 1 && (
-                  <div className="flex gap-1.5 items-center mr-2">
-                    {Array.from({ length: onCallPagesCount }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="w-3 h-3 rounded-full transition-all duration-300"
-                        style={{
-                          background: onCallPage === i 
-                            ? "#14B8A6" 
-                            : (isDark ? "rgba(255,255,255,0.25)" : "rgba(15,23,42,0.2)"),
-                          transform: onCallPage === i ? "scale(1.2)" : "scale(1)",
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
 
               {Object.keys(onCallDoctorsByDept).length > 0 ? (
