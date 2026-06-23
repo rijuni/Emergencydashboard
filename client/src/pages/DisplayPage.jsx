@@ -434,15 +434,15 @@ export default function DisplayPage() {
               >
                 Live Availability
               </p>
- <p
-  className="text-sm md:text-base lg:text-lg font-bold mt-2 tracking-normal whitespace-nowrap"
-  style={{
-    lineHeight: 1.2,
-    color: isDark ? "#ffffff" : "#059669",
-  }}
->
-  EMG Medicine HOD: Dr. Siddhartha Mishra
-</p>
+              <p
+                className="text-sm md:text-base lg:text-lg font-bold mt-2 tracking-normal whitespace-nowrap"
+                style={{
+                  lineHeight: 1.2,
+                  color: isDark ? "#ffffff" : "#059669",
+                }}
+              >
+                EMG Medicine HOD: Dr. Siddhartha Mishra
+              </p>
             </div>
           </div>
 
@@ -465,23 +465,7 @@ export default function DisplayPage() {
 
           <div className="flex items-center justify-end gap-6 flex-1">
 
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 mr-2"
-              style={{
-                background: isDark ? "rgba(30, 41, 59, 0.6)" : "rgba(248, 250, 252, 0.8)",
-                border: isDark ? "1px solid rgba(148, 163, 184, 0.2)" : "1px solid rgba(148, 163, 184, 0.3)",
-                color: isDark ? "#F59E0B" : "#F59E0B",
-              }}
-              title={`Switch to ${isDark ? "Light" : "Dark"} Mode`}
-            >
-              {isDark ? (
-                <HiOutlineSun className="w-8 h-8" />
-              ) : (
-                <HiOutlineMoon className="w-8 h-8" />
-              )}
-            </button>
+
 
             <div className="relative min-w-[220px] min-h-[110px]">
               {alertsData.map((alert, idx) => {
