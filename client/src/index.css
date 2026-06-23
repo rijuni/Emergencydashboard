@@ -466,3 +466,26 @@ select {
 :root[data-theme='light'] .modal-overlay {
   background: rgba(15, 23, 42, 0.25);
 }
+
+/* =========================================
+   HARDWARE-ACCELERATED marquee
+   ========================================= */
+@keyframes marquee-horizontal {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+
+.clear-marquee-container {
+  display: flex;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.clear-marquee-content {
+  display: flex;
+  flex-shrink: 0;
+  width: max-content;
+  animation: marquee-horizontal 50s linear infinite;
+  will-change: transform;
+}

@@ -360,6 +360,14 @@ export default function DisplayPage() {
     );
   }
 
+  const tickerText = (
+    <div className="flex items-center shrink-0" style={{ gap: "10rem", paddingRight: "10rem" }}>
+      <span>SECURITY SUPERVISOR : {securityNames}</span>
+      <span>HOUSEKEEPING SUPERVISOR : {housekeepingNames}</span>
+      <span>Manager On Duty : {nightSupervisorName}</span>
+    </div>
+  );
+
   return (
     <div
       className="display-fullscreen flex flex-col relative"
@@ -412,7 +420,7 @@ export default function DisplayPage() {
     color: isDark ? "#ffffff" : "#059669",
   }}
 >
-  Emergency Medicine HOD: Dr. Siddhartha Mishra
+  EMG Medicine HOD: Dr. Siddhartha Mishra
 </p>
             </div>
           </div>
@@ -687,7 +695,7 @@ export default function DisplayPage() {
 
       {securityNames && (
         <div
-          className="shrink-0 overflow-hidden py-4"
+          className="shrink-0 overflow-hidden py-4 clear-marquee-container"
           style={{
             background: isDark
               ? "linear-gradient(90deg, rgba(16,185,129,0.05) 0%, rgba(16,185,129,0.2) 50%, rgba(16,185,129,0.05) 100%)"
@@ -696,19 +704,22 @@ export default function DisplayPage() {
             boxShadow: isDark ? "0 -4px 20px rgba(16, 185, 129, 0.15)" : "0 -4px 15px rgba(16, 185, 129, 0.1)",
           }}
         >
-          <marquee
-            scrollamount="15"
-            className="font-display font-bold text-5xl tracking-[0.2em] uppercase flex items-center"
+          <div
+            className="clear-marquee-content"
             style={{
               color: isDark ? "#34D399" : "#059669",
               textShadow: isDark ? "0 0 10px rgba(16,185,129,0.6)" : "0 0 2px rgba(16,185,129,0.2)",
-              padding: "16px 0"
+              padding: "16px 0",
+              fontSize: "3.2rem",
+              fontFamily: "Outfit, Inter, sans-serif",
+              fontWeight: "bold",
+              textTransform: "uppercase",
+              letterSpacing: "0.2em",
             }}
           >
-            <span style={{ display: "inline-block", width: "15rem" }}></span>SECURITY SUPERVISOR : {securityNames}<span style={{ display: "inline-block", width: "15rem" }}></span>
-            <span style={{ display: "inline-block", width: "15rem" }}></span>HOUSEKEEPING SUPERVISOR : {housekeepingNames}<span style={{ display: "inline-block", width: "15rem" }}></span>
-            <span style={{ display: "inline-block", width: "15rem" }}></span>Manager On Duty : {nightSupervisorName}<span style={{ display: "inline-block", width: "15rem" }}></span>
-          </marquee>
+            {tickerText}
+            {tickerText}
+          </div>
         </div>
       )}
     </div>
