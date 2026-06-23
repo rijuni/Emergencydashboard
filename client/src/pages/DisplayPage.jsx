@@ -12,8 +12,29 @@ export default function DisplayPage() {
   const [rosterPage, setRosterPage] = useState(0);
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
   const [scale, setScale] = useState(1);
+  const [alertIndex, setAlertIndex] = useState(0);
 
   const isDark = theme === "dark";
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAlertIndex((prev) => prev + 1);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const alertsData = useMemo(() => [
+    { title: "CODE BLUE", count: data?.settings?.code_blue || "33", r: 59, g: 130, b: 246, textLight: "#2563EB", textDark: "#93C5FD", valColor: "#3B82F6" },
+    { title: "CODE RED", count: "44", r: 239, g: 68, b: 68, textLight: "#B91C1C", textDark: "#FCA5A5", valColor: "#EF4444" },
+    { title: "FIRE OFFICER", count: "77", r: 16, g: 185, b: 129, textLight: "#047857", textDark: "#6EE7B7", valColor: "#10B981" },
+    { title: "CODE PINK", count: "44", r: 236, g: 72, b: 153, textLight: "#BE185D", textDark: "#F9A8D4", valColor: "#EC4899" },
+    { title: "CODE YELLOW", count: "44", r: 234, g: 179, b: 8, textLight: "#A16207", textDark: "#FDE047", valColor: "#EAB308" },
+    { title: "CODE VIOLET", count: "44", r: 139, g: 92, b: 246, textLight: "#6D28D9", textDark: "#C4B5FD", valColor: "#8B5CF6" },
+    { title: "CODE BLACK", count: "44", r: 75, g: 85, b: 99, textLight: "#111827", textDark: "#F3F4F6", valColor: isDark ? "#F3F4F6" : "#111827" },
+    { title: "CODE ORANGE", count: "44", r: 249, g: 115, b: 22, textLight: "#C2410C", textDark: "#FDBA74", valColor: "#F97316" },
+    { title: "CODE GREY", count: "44", r: 107, g: 114, b: 128, textLight: "#374151", textDark: "#D1D5DB", valColor: "#6B7280" },
+    { title: "CODE PURPLE", count: "44", r: 168, g: 85, b: 247, textLight: "#7E22CE", textDark: "#D8B4FE", valColor: "#A855F7" },
+  ], [data?.settings?.code_blue, isDark]);
 
   const normalizeName = (value) => (value || "").trim().toLowerCase();
 
@@ -462,31 +483,38 @@ export default function DisplayPage() {
               )}
             </button>
 
-            <div
-              className="px-6 py-3 rounded-2xl text-center"
-              style={{
-                background: isDark ? "rgba(239,68,68,0.15)" : "rgba(239,68,68,0.1)",
-                border: isDark ? "2px solid rgba(239,68,68,0.4)" : "2px solid rgba(239,68,68,0.3)",
-                boxShadow: isDark ? "0 10px 30px rgba(0,0,0,0.3)" : "0 10px 22px rgba(239,68,68,0.15)",
-                minWidth: "220px",
-                minHeight: "110px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-              }}
-            >
-              <div
-                className="text-base font-black uppercase tracking-[0.3em]"
-                style={{ color: isDark ? "#FCA5A5" : "#B91C1C" }}
-              >
-                Code Blue
-              </div>
-              <div
-                className="font-display font-black text-6xl mt-1"
-                style={{ color: "#EF4444" }}
-              >
-                {data?.settings?.code_blue || "—"}
-              </div>
+            <div className="relative min-w-[220px] min-h-[110px]">
+              {alertsData.map((alert, idx) => {
+                const isActive = idx === (alertIndex % alertsData.length);
+                return (
+                  <div
+                    key={alert.title}
+                    className="absolute inset-0 px-6 py-3 rounded-2xl text-center flex flex-col justify-center transition-all duration-700 ease-in-out"
+                    style={{
+                      background: isDark ? `rgba(${alert.r},${alert.g},${alert.b},0.15)` : `rgba(${alert.r},${alert.g},${alert.b},0.1)`,
+                      border: isDark ? `2px solid rgba(${alert.r},${alert.g},${alert.b},0.4)` : `2px solid rgba(${alert.r},${alert.g},${alert.b},0.3)`,
+                      boxShadow: isActive ? (isDark ? `0 10px 30px rgba(0,0,0,0.3)` : `0 10px 22px rgba(${alert.r},${alert.g},${alert.b},0.15)`) : "none",
+                      opacity: isActive ? 1 : 0,
+                      transform: isActive ? "scale(1) translateY(0)" : "scale(0.95) translateY(10px)",
+                      pointerEvents: isActive ? "auto" : "none",
+                      zIndex: isActive ? 10 : 0
+                    }}
+                  >
+                    <div
+                      className="text-base font-black uppercase tracking-[0.3em]"
+                      style={{ color: isDark ? alert.textDark : alert.textLight }}
+                    >
+                      {alert.title}
+                    </div>
+                    <div
+                      className="font-display font-black text-6xl mt-1"
+                      style={{ color: alert.valColor }}
+                    >
+                      {alert.count}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             <div
               className="px-6 py-3 rounded-2xl text-center"
