@@ -7,6 +7,7 @@ import DashboardPage from "./pages/DashboardPage";
 import EmployeeMasterPage from "./pages/EmployeeMasterPage";
 import DoctorMasterPage from "./pages/DoctorMasterPage";
 import DepartmentMasterPage from "./pages/DepartmentMasterPage";
+import CategoryMasterPage from "./pages/CategoryMasterPage";
 import RosterPage from "./pages/RosterPage";
 import CertificatesPage from "./pages/CertificatesPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -100,6 +101,14 @@ function AppRoutes() {
           element={
             <RoleRoute allowedRoles={["super_admin"]}>
               <DepartmentMasterPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="category-master"
+          element={
+            <RoleRoute allowedRoles={["super_admin","admin"]}>
+              <CategoryMasterPage />
             </RoleRoute>
           }
         />

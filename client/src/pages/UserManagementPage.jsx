@@ -16,6 +16,13 @@ export default function UserManagementPage() {
     role: "admin",
   });
 
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editData, setEditData] = useState({
+    username: "",
+    full_name: "",
+    role: "admin"
+  });
+
   const fetchUsers = async () => {
     try {
       const res = await api.get("/auth/users");
@@ -98,6 +105,35 @@ export default function UserManagementPage() {
       toast.success("Password reset successfully");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to reset password");
+    }
+  };
+
+  const handleEditClick = (user) => {
+    setEditingUserId(user.id);
+    setEditData({
+      username: user.username,
+      full_name: user.full_name,
+      role: user.role
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingUserId(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editData.username || !editData.full_name) {
+      toast.error("Username and full name are required");
+      return;
+    }
+
+    try {
+      await api.put(`/auth/users/${editingUserId}`, editData);
+      toast.success("User updated successfully");
+      setEditingUserId(null);
+      fetchUsers();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update user");
     }
   };
 
@@ -278,13 +314,42 @@ export default function UserManagementPage() {
                     className="border-b border-border/30 hover:bg-bg-card/40 transition-all duration-200"
                   >
                     <td className="p-3 text-text-primary text-sm">
-                      {user.full_name}
+                      {editingUserId === user.id ? (
+                        <input
+                          type="text"
+                          value={editData.full_name}
+                          onChange={(e) => setEditData({...editData, full_name: e.target.value})}
+                          className="w-full bg-bg-dark border border-border rounded-lg px-2 py-1.5 text-text-primary text-sm"
+                        />
+                      ) : (
+                        user.full_name
+                      )}
                     </td>
                     <td className="p-3 text-text-secondary text-sm">
-                      {user.username}
+                      {editingUserId === user.id ? (
+                        <input
+                          type="text"
+                          value={editData.username}
+                          onChange={(e) => setEditData({...editData, username: e.target.value})}
+                          className="w-full bg-bg-dark border border-border rounded-lg px-2 py-1.5 text-text-primary text-sm"
+                        />
+                      ) : (
+                        user.username
+                      )}
                     </td>
                     <td className="p-3 text-text-secondary text-sm">
-                      {user.role === "super_admin" ? "Super Admin" : "Admin"}
+                      {editingUserId === user.id ? (
+                        <select
+                          value={editData.role}
+                          onChange={(e) => setEditData({...editData, role: e.target.value})}
+                          className="w-full bg-bg-dark border border-border rounded-lg px-2 py-1.5 text-text-primary text-sm"
+                        >
+                          <option value="admin">Admin</option>
+                          <option value="super_admin">Super Admin</option>
+                        </select>
+                      ) : (
+                        user.role === "super_admin" ? "Super Admin" : "Admin"
+                      )}
                     </td>
                     <td className="p-3">
                       <span
@@ -294,24 +359,49 @@ export default function UserManagementPage() {
                       </span>
                     </td>
                     <td className="p-3 text-right">
-                      <button
-                        onClick={() => handleResetPassword(user)}
-                        className="btn-secondary px-3 py-1.5 rounded-lg text-xs mr-2"
-                      >
-                        Reset Password
-                      </button>
-                      <button
-                        onClick={() => handleToggleUser(user.id)}
-                        className="btn-secondary px-3 py-1.5 rounded-lg text-xs disabled:opacity-50"
-                        disabled={user.role === "super_admin"}
-                        title={
-                          user.role === "super_admin"
-                            ? "Super Admin accounts cannot be deactivated"
-                            : undefined
-                        }
-                      >
-                        {user.is_active ? "Deactivate" : "Activate"}
-                      </button>
+                      {editingUserId === user.id ? (
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={handleSaveEdit}
+                            className="btn-primary px-3 py-1.5 rounded-lg text-xs"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            className="btn-secondary px-3 py-1.5 rounded-lg text-xs"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end gap-2 flex-wrap">
+                          <button
+                            onClick={() => handleEditClick(user)}
+                            className="btn-secondary px-3 py-1.5 rounded-lg text-xs"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleResetPassword(user)}
+                            className="btn-secondary px-3 py-1.5 rounded-lg text-xs"
+                          >
+                            Reset Password
+                          </button>
+                          <button
+                            onClick={() => handleToggleUser(user.id)}
+                            className="btn-secondary px-3 py-1.5 rounded-lg text-xs disabled:opacity-50"
+                            disabled={user.role === "super_admin"}
+                            title={
+                              user.role === "super_admin"
+                                ? "Super Admin accounts cannot be deactivated"
+                                : undefined
+                            }
+                          >
+                            {user.is_active ? "Deactivate" : "Activate"}
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))

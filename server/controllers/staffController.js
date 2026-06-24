@@ -571,3 +571,102 @@ exports.checkRegistration = async (req, res) => {
     res.status(500).json({ message: 'Server error.' });
   }
 };
+
+// Get all categories including inactive ones
+exports.getAllCategories = async (req, res) => {
+  try {
+    const [categories] = await pool.query(
+      'SELECT * FROM staff_categories ORDER BY display_order, name'
+    );
+    res.json({ categories });
+  } catch (error) {
+    console.error('Get all categories error:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// Create a new category
+exports.createCategory = async (req, res) => {
+  try {
+    const { name, display_order } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: 'Category name is required.' });
+    }
+    const [result] = await pool.query(
+      'INSERT INTO staff_categories (name, display_order, is_active) VALUES (?, ?, ?)',
+      [name, display_order || 0, true]
+    );
+    
+    // Audit log
+    await pool.query(
+      'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
+      [req.user.id, 'CREATE', 'staff_categories', result.insertId, `Created category: ${name}`]
+    );
+
+    res.status(201).json({
+      message: 'Category created successfully',
+      category: { id: result.insertId, name, display_order: display_order || 0, is_active: 1 }
+    });
+  } catch (error) {
+    console.error('Create category error:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// Update a category
+exports.updateCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, display_order, is_active } = req.body;
+    
+    const [existing] = await pool.query('SELECT * FROM staff_categories WHERE id = ?', [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({ message: 'Category not found.' });
+    }
+
+    await pool.query(
+      'UPDATE staff_categories SET name = ?, display_order = ?, is_active = ? WHERE id = ?',
+      [
+        name || existing[0].name,
+        display_order !== undefined ? display_order : existing[0].display_order,
+        is_active !== undefined ? is_active : existing[0].is_active,
+        id
+      ]
+    );
+
+    // Audit log
+    await pool.query(
+      'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
+      [req.user.id, 'UPDATE', 'staff_categories', id, `Updated category: ${name || existing[0].name}`]
+    );
+
+    res.json({ message: 'Category updated successfully.' });
+  } catch (error) {
+    console.error('Update category error:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// Delete (soft-delete) a category
+exports.deleteCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [existing] = await pool.query('SELECT * FROM staff_categories WHERE id = ?', [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({ message: 'Category not found.' });
+    }
+
+    await pool.query('UPDATE staff_categories SET is_active = FALSE WHERE id = ?', [id]);
+    
+    // Audit log
+    await pool.query(
+      'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
+      [req.user.id, 'DELETE', 'staff_categories', id, `Deactivated category: ${existing[0].name}`]
+    );
+
+    res.json({ message: 'Category deactivated successfully.' });
+  } catch (error) {
+    console.error('Delete category error:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};

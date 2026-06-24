@@ -223,3 +223,42 @@ exports.resetUserPassword = async (req, res) => {
     res.status(500).json({ message: 'Server error.' });
   }
 };
+
+// Update user details (admin only)
+exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, full_name, role } = req.body;
+
+    const [existing] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    if (username && String(username).trim() !== String(existing[0].username).trim()) {
+      const [conflict] = await pool.query('SELECT id FROM users WHERE username = ? AND id <> ?', [username, id]);
+      if (conflict.length > 0) {
+        return res.status(409).json({ message: 'Username already exists.' });
+      }
+    }
+
+    const newUsername = username || existing[0].username;
+    const newFullName = full_name || existing[0].full_name;
+    const newRole = role || existing[0].role;
+
+    await pool.query(
+      'UPDATE users SET username = ?, full_name = ?, role = ? WHERE id = ?',
+      [newUsername, newFullName, newRole, id]
+    );
+
+    await pool.query(
+      'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
+      [req.user.id, 'UPDATE', 'user', id, `Updated user details for: ${newUsername}`]
+    );
+
+    res.json({ message: 'User updated successfully.' });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
