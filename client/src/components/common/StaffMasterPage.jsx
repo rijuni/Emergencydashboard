@@ -58,7 +58,7 @@ export default function StaffMasterPage({
   });
 
   const { user } = useAuth();
-  const canDelete = user?.role === 'super_admin';
+  const canDelete = user?.role === 'super_admin' || user?.role === 'admin';
   const canEdit = user?.role === 'super_admin' || user?.role === 'admin';
 
   const doctorCategory = useMemo(

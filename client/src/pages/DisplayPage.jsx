@@ -334,10 +334,9 @@ export default function DisplayPage() {
         entry.notes !== "ON_CALL"
     );
   }, [data?.roster, currentShiftId]);
-  const defaultSupervisorName = data?.settings?.security_supervisor_name || "MR. BASANTA KHAMARI";
   const securityNames = securitySupervisors.length > 0
     ? securitySupervisors.map((s) => getShownName(s)).join(" • ")
-    : defaultSupervisorName;
+    : (data?.settings?.security_supervisor_name || "NOT ASSIGNED");
 
   const housekeepingSupervisors = useMemo(() => {
     return (data?.roster || []).filter(
@@ -347,10 +346,9 @@ export default function DisplayPage() {
         entry.notes !== "ON_CALL"
     );
   }, [data?.roster, currentShiftId]);
-  const defaultHkSupervisorName = data?.settings?.housekeeping_supervisor_name || "MR PRASANNA KUMAR SARANGI";
   const housekeepingNames = housekeepingSupervisors.length > 0
     ? housekeepingSupervisors.map((s) => getShownName(s)).join(" • ")
-    : defaultHkSupervisorName;
+    : (data?.settings?.housekeeping_supervisor_name || "NOT ASSIGNED");
 
   const nightSupervisorName = data?.nightSupervisorName || "NOT ASSIGNED";
 
