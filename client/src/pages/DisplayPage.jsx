@@ -66,6 +66,7 @@ export default function DisplayPage() {
   const liveCategories = useMemo(() => [
     { key: "Doctor", label: "Doctors" },
     { key: "Nursing Officer", label: "Nursing Staffs" },
+    { key: "Operation", label: "Operation Staffs" },
     { key: "Pharmacist", label: "Pharmacists" },
   ], []);
 
@@ -271,6 +272,16 @@ export default function DisplayPage() {
       cardBg: isDark
         ? "linear-gradient(135deg, rgba(168,85,247,0.2), rgba(30,41,59,0.8))"
         : "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(255,255,255,0.9))",
+    },
+    Operation: {
+      accent: "#3B82F6",
+      text: isDark ? "#93C5FD" : "#2563EB",
+      badgeBg: "rgba(59,130,246,0.2)",
+      badgeText: isDark ? "#93C5FD" : "#2563EB",
+      border: "#3B82F6",
+      cardBg: isDark
+        ? "linear-gradient(135deg, rgba(59,130,246,0.2), rgba(30,41,59,0.8))"
+        : "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(255,255,255,0.9))",
     },
     Pharmacist: {
       accent: "#F59E0B",
@@ -561,69 +572,85 @@ export default function DisplayPage() {
 
               {currentShiftId ? (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 content-start overflow-y-auto">
-                  {liveCategories.map((category) => {
-                    const staffList = onDutyByCategory[category.key] || [];
-                    const style =
-                      categoryStyles[category.key] || categoryStyles.Doctor;
-                    return (
-                      <div key={category.key} className="flex flex-col">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3
-                            className="text-sm font-semibold uppercase tracking-[0.2em]"
-                            style={{ color: style.text }}
-                          >
-                            {category.label}
-                          </h3>
-                        </div>
-                        {staffList.length > 0 ? (
-                          <div className="flex flex-col gap-2">
-                            {staffList.map((entry) => (
-                              <div
-                                key={entry.id}
-                                className="rounded-lg px-5 py-5 mb-3 flex flex-col justify-center items-start"
-                                style={{
-                                  border: `2px solid ${style.border}`,
-                                  borderLeft: `8px solid ${style.accent}`,
-                                  background: style.cardBg,
-                                  boxShadow: isDark ? "0 6px 24px rgba(0,0,0,0.4)" : "0 6px 16px rgba(15,23,42,0.1)",
-                                  minHeight: "160px"
-                                }}
-                              >
-                                <div>
-                                  <div
-                                    className="text-2xl md:text-3xl font-bold"
-                                    style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
-                                  >
-                                    {getShownName(entry)}
-                                  </div>
-                                  <div
-                                    className="text-sm md:text-base mt-3 font-bold inline-block px-3 py-1 rounded-full uppercase tracking-wider"
-                                    style={{
-                                      background: style.badgeBg,
-                                      color: "#FFFFFF",
-                                      border: `1px solid ${style.border}`,
-                                    }}
-                                  >
-                                    {[entry.designation, entry.specialization]
-                                      .filter(Boolean)
-                                      .join(" • ") || "\u00A0"}
+                  {(() => {
+                    const renderCat = (catKey) => {
+                      const category = liveCategories.find((c) => c.key === catKey);
+                      if (!category) return null;
+                      const staffList = onDutyByCategory[category.key] || [];
+                      const style = categoryStyles[category.key] || categoryStyles.Doctor;
+                      return (
+                        <div key={category.key} className="flex flex-col w-full">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3
+                              className="text-sm font-semibold uppercase tracking-[0.2em]"
+                              style={{ color: style.text }}
+                            >
+                              {category.label}
+                            </h3>
+                          </div>
+                          {staffList.length > 0 ? (
+                            <div className="flex flex-col gap-2">
+                              {staffList.map((entry) => (
+                                <div
+                                  key={entry.id}
+                                  className="rounded-lg px-5 py-5 mb-3 flex flex-col justify-center items-start"
+                                  style={{
+                                    border: `2px solid ${style.border}`,
+                                    borderLeft: `8px solid ${style.accent}`,
+                                    background: style.cardBg,
+                                    boxShadow: isDark
+                                      ? "0 6px 24px rgba(0,0,0,0.4)"
+                                      : "0 6px 16px rgba(15,23,42,0.1)",
+                                    minHeight: "160px",
+                                  }}
+                                >
+                                  <div>
+                                    <div
+                                      className="text-2xl md:text-3xl font-bold"
+                                      style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
+                                    >
+                                      {getShownName(entry)}
+                                    </div>
+                                    <div
+                                      className="text-sm md:text-base mt-3 font-bold inline-block px-3 py-1 rounded-full uppercase tracking-wider"
+                                      style={{
+                                        background: style.badgeBg,
+                                        color: "#FFFFFF",
+                                        border: `1px solid ${style.border}`,
+                                      }}
+                                    >
+                                      {[entry.designation, entry.specialization]
+                                        .filter(Boolean)
+                                        .join(" • ") || "\u00A0"}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div
-                            className="text-center py-4 text-xs"
-                            style={{ color: "#94A3B8" }}
-                          >
-                            No staff assigned for this category in the current
-                            shift.
-                          </div>
-                        )}
-                      </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div
+                              className="text-center py-4 text-xs"
+                              style={{ color: "#94A3B8" }}
+                            >
+                              No staff assigned for this category in the current
+                              shift.
+                            </div>
+                          )}
+                        </div>
+                      );
+                    };
+
+                    return (
+                      <>
+                        <div className="flex flex-col gap-4">{renderCat("Doctor")}</div>
+                        <div className="flex flex-col gap-4">
+                          {renderCat("Nursing Officer")}
+                          {renderCat("Operation")}
+                        </div>
+                        <div className="flex flex-col gap-4">{renderCat("Pharmacist")}</div>
+                      </>
                     );
-                  })}
+                  })()}
                 </div>
               ) : (
                 <div
@@ -709,8 +736,9 @@ export default function DisplayPage() {
             style={{
               color: isDark ? "#34D399" : "#059669",
               textShadow: isDark ? "0 0 10px rgba(16,185,129,0.6)" : "0 0 2px rgba(16,185,129,0.2)",
-              padding: "16px 0",
+              padding: "0px 0 32px 0",
               fontSize: "3.2rem",
+              lineHeight: "1.4",
               fontFamily: "Outfit, Inter, sans-serif",
               fontWeight: "bold",
               textTransform: "uppercase",
