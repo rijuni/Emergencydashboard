@@ -107,7 +107,7 @@ function AppRoutes() {
         <Route
           path="category-master"
           element={
-            <RoleRoute allowedRoles={["super_admin","admin"]}>
+            <RoleRoute allowedRoles={["super_admin"]}>
               <CategoryMasterPage />
             </RoleRoute>
           }

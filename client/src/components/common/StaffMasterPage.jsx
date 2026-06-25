@@ -76,10 +76,13 @@ export default function StaffMasterPage({
     return categories.filter(
       (category) => {
         const n = (category.name || '').toLowerCase();
-        return n !== 'doctor';
+        if (n === 'doctor') return false;
+        // Exclude Operation for admin role
+        if (n === 'operation' && user?.role === 'admin') return false;
+        return true;
       }
     );
-  }, [categories, doctorCategory, isDoctorMode]);
+  }, [categories, doctorCategory, isDoctorMode, user?.role]);
 
   const departmentStatusByName = useMemo(() => {
     const statusMap = new Map();

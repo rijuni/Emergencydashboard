@@ -73,8 +73,10 @@ const ROSTER_CATEGORY_ALLOWLIST = [
   "Doctor",
   "Nursing Officer",
   "Pharmacist",
-  "Operation",
-  "Manager On Duty",
+  // "Ambulance",
+  // "Operation",
+  // "Security Supervisor",
+  // "Housekeeping Supervisor",
 ];
 const NIGHT_SUPERVISOR_NAME = "Manager On Duty";
 const NIGHT_SHIFT_NAME = "Night";
@@ -197,7 +199,7 @@ export default function RosterPage() {
       const cat = categories.find(c => c.id === assignedStaff.category_id);
       const catName = cat ? cat.name.toLowerCase() : "";
       
-      if (catName === "nursing officer" || catName === "operation") {
+      if (catName === "nursing officer" /* || catName === "operation" */) {
         const countInShift = roster.filter(r => {
           if (r.shift_id !== shiftId) return false;
           const rStaff = staff.find(s => s.id === r.staff_id);
@@ -210,10 +212,10 @@ export default function RosterPage() {
           toast.error("Maximum 2 Nursing Officers can be assigned per shift.");
           return;
         }
-        if (catName === "operation" && countInShift >= 1) {
-          toast.error("Maximum 1 Operation staff can be assigned per shift.");
-          return;
-        }
+        // if (catName === "operation" && countInShift >= 1) {
+        //   toast.error("Maximum 1 Operation staff can be assigned per shift.");
+        //   return;
+        // }
       }
     }
 

@@ -38,7 +38,6 @@ const navItemsByRole = {
     { to: "/", icon: HiOutlineViewGrid, label: "Dashboard", end: true },
     { to: "/employee-master", icon: HiOutlineUsers, label: "Employee Master" },
     { to: "/doctor-master", icon: HiOutlineUsers, label: "Doctor Directory" },
-    { to: "/category-master", icon: HiOutlineUsers, label: "Category Master" },
     { to: "/roster", icon: HiOutlineCalendar, label: "Roster Duty" },
     { to: "/on-call-duty", icon: HiOutlineIdentification, label: "On Call Duty" },
     { to: "/certificates", icon: HiOutlineDocumentText, label: "Certificates" },

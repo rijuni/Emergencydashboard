@@ -66,7 +66,7 @@ export default function DisplayPage() {
   const liveCategories = useMemo(() => [
     { key: "Doctor", label: "Doctors" },
     { key: "Nursing Officer", label: "Nursing Staffs" },
-    { key: "Operation", label: "Operation Staffs" },
+    // { key: "Operation", label: "Operation Staffs" },
     { key: "Pharmacist", label: "Pharmacists" },
   ], []);
 
@@ -273,16 +273,16 @@ export default function DisplayPage() {
         ? "linear-gradient(135deg, rgba(168,85,247,0.2), rgba(30,41,59,0.8))"
         : "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(255,255,255,0.9))",
     },
-    Operation: {
-      accent: "#3B82F6",
-      text: isDark ? "#93C5FD" : "#2563EB",
-      badgeBg: "rgba(59,130,246,0.2)",
-      badgeText: isDark ? "#93C5FD" : "#2563EB",
-      border: "#3B82F6",
-      cardBg: isDark
-        ? "linear-gradient(135deg, rgba(59,130,246,0.2), rgba(30,41,59,0.8))"
-        : "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(255,255,255,0.9))",
-    },
+    // Operation: {
+    //   accent: "#3B82F6",
+    //   text: isDark ? "#93C5FD" : "#2563EB",
+    //   badgeBg: "rgba(59,130,246,0.2)",
+    //   badgeText: isDark ? "#93C5FD" : "#2563EB",
+    //   border: "#3B82F6",
+    //   cardBg: isDark
+    //     ? "linear-gradient(135deg, rgba(59,130,246,0.2), rgba(30,41,59,0.8))"
+    //     : "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(255,255,255,0.9))",
+    // },
     Pharmacist: {
       accent: "#F59E0B",
       text: isDark ? "#FBBF24" : "#B45309",
@@ -643,9 +643,9 @@ export default function DisplayPage() {
                     return (
                       <>
                         <div className="flex flex-col gap-4">{renderCat("Doctor")}</div>
-                        <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-8">
                           {renderCat("Nursing Officer")}
-                          {renderCat("Operation")}
+                          {/* {renderCat("Operation")} */}
                         </div>
                         <div className="flex flex-col gap-4">{renderCat("Pharmacist")}</div>
                       </>
