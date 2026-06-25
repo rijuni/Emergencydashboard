@@ -314,16 +314,9 @@ export default function DisplayPage() {
     "#F59E0B", "#A855F7"
   ];
 
-  // Group current page of on-call doctors by department
-  const onCallDoctorsByDept = useMemo(() => {
-    const pagedDoctors = uniqueOnCallDoctors.slice(onCallPage * 8, (onCallPage + 1) * 8);
-    const grouped = {};
-    pagedDoctors.forEach(doc => {
-      const dept = (doc.department || "Unassigned").trim().toUpperCase();
-      if (!grouped[dept]) grouped[dept] = [];
-      grouped[dept].push(doc);
-    });
-    return grouped;
+  // Get current page of on-call doctors
+  const pagedOnCallDoctors = useMemo(() => {
+    return uniqueOnCallDoctors.slice(onCallPage * 8, (onCallPage + 1) * 8);
   }, [uniqueOnCallDoctors, onCallPage]);
 
   const securitySupervisors = useMemo(() => {
@@ -649,12 +642,13 @@ export default function DisplayPage() {
                 </h2>
               </div>
 
-              {Object.keys(onCallDoctorsByDept).length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 flex-1 content-start overflow-y-auto">
-                  {Object.entries(onCallDoctorsByDept).map(([dept, doctors], idx) => {
+              {pagedOnCallDoctors.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 flex-1 overflow-y-auto pb-4 content-start items-start">
+                  {pagedOnCallDoctors.map((doc, idx) => {
                     const color = categoryColors[idx % categoryColors.length];
+                    const dept = (doc.department || "UNASSIGNED").trim().toUpperCase();
                     return (
-                      <div key={dept} className="rounded-xl p-4 flex flex-col h-full shadow-sm"
+                      <div key={`${doc.id}-${doc.shift_id}`} className="rounded-xl p-4 flex flex-col shadow-sm h-full"
                         style={{
                           background: isDark ? "rgba(30, 41, 59, 0.5)" : "rgba(248, 250, 252, 0.8)",
                           border: isDark ? "1px solid rgba(148,163,184,0.15)" : "1px solid rgba(148,163,184,0.3)",
@@ -663,31 +657,27 @@ export default function DisplayPage() {
                         <h3 className="font-display font-bold text-base mb-3 uppercase tracking-wider" style={{ color }}>
                           {dept}
                         </h3>
-                        <div className="space-y-3 flex-1">
-                          {doctors.map(doc => (
-                            <div key={`${doc.id}-${doc.shift_id}`} className="rounded-lg p-5 flex flex-col justify-center items-start"
-                              style={{
-                                background: isDark ? `linear-gradient(135deg, ${color}33, rgba(30,41,59,0.8))` : `linear-gradient(135deg, ${color}22, rgba(255,255,255,0.9))`,
-                                border: `2px solid ${color}`,
-                                borderLeft: `8px solid ${color}`,
-                                minHeight: "160px"
-                              }}>
-                              <div>
-                                <div className="font-bold text-xl md:text-2xl" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
-                                  {getShownName(doc)}
-                                </div>
-                                <div
-                                  className="text-sm md:text-base mt-3 font-bold inline-block px-3 py-1 rounded-full uppercase tracking-wider"
-                                  style={{
-                                    color: "#FFFFFF",
-                                    border: `1px solid ${color}`
-                                  }}
-                                >
-                                  {doc.designation || "DOCTOR"}
-                                </div>
-                              </div>
+                        <div className="rounded-lg p-5 flex flex-col justify-center items-start flex-1"
+                          style={{
+                            background: isDark ? `linear-gradient(135deg, ${color}33, rgba(30,41,59,0.8))` : `linear-gradient(135deg, ${color}22, rgba(255,255,255,0.9))`,
+                            border: `2px solid ${color}`,
+                            borderLeft: `8px solid ${color}`,
+                            minHeight: "160px"
+                          }}>
+                          <div>
+                            <div className="font-bold text-xl md:text-2xl" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
+                              {getShownName(doc)}
                             </div>
-                          ))}
+                            <div
+                              className="text-sm md:text-base mt-3 font-bold inline-block px-3 py-1 rounded-full uppercase tracking-wider"
+                              style={{
+                                color: "#FFFFFF",
+                                border: `1px solid ${color}`
+                              }}
+                            >
+                              {doc.designation || "DOCTOR"}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     );
