@@ -278,9 +278,19 @@ exports.create = async (req, res) => {
       return res.status(400).json({ message: 'Full name and category are required.' });
     }
 
+    // Validate full_name: must not contain numbers
+    if (/[0-9]/.test(full_name)) {
+      return res.status(400).json({ message: 'Full name must not contain numbers.' });
+    }
+
     // Require employee_id for all staff
     if (!employee_id || String(employee_id).trim() === '') {
       return res.status(400).json({ message: 'Employee ID is required.' });
+    }
+
+    // Validate employee_id: must be numeric only
+    if (!/^\d+$/.test(String(employee_id).trim())) {
+      return res.status(400).json({ message: 'Employee ID must contain only numbers.' });
     }
 
     // Check duplicate employee_id
@@ -463,10 +473,19 @@ exports.update = async (req, res) => {
       return res.status(404).json({ message: 'Staff not found.' });
     }
 
+    // Validate full_name if provided: must not contain numbers
+    if (full_name && /[0-9]/.test(full_name)) {
+      return res.status(400).json({ message: 'Full name must not contain numbers.' });
+    }
+
     // If employee_id provided and different, check for duplicates
     if (employee_id !== undefined && String(employee_id).trim() !== String(existing[0].employee_id || '').trim()) {
       if (!employee_id || String(employee_id).trim() === '') {
         return res.status(400).json({ message: 'Employee ID is required.' });
+      }
+      // Validate employee_id: must be numeric only
+      if (!/^\d+$/.test(String(employee_id).trim())) {
+        return res.status(400).json({ message: 'Employee ID must contain only numbers.' });
       }
       const [conflict] = await pool.query('SELECT id FROM staff WHERE employee_id = ? AND id <> ? LIMIT 1', [String(employee_id).trim(), id]);
       if (conflict.length > 0) {

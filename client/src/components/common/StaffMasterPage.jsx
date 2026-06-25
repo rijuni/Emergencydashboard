@@ -22,7 +22,7 @@ export default function StaffMasterPage({
   showStatusFilter = false,
 }) {
   const isDoctorMode = mode === "doctor";
-  const tableColumnCount = isDoctorMode ? 9 : 7;
+  const tableColumnCount = isDoctorMode ? 10 : 7;
 
   const [staff, setStaff] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -41,6 +41,7 @@ export default function StaffMasterPage({
   const [bulkDesignation, setBulkDesignation] = useState("");
   const [bulkSaving, setBulkSaving] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
+  const [formErrors, setFormErrors] = useState({ full_name: "", employee_id: "" });
   const [form, setForm] = useState({
     prefix: "",
     full_name: "",
@@ -233,11 +234,39 @@ export default function StaffMasterPage({
     setShowModal(true);
   };
 
+  const handleFullNameChange = (value) => {
+    // Allow only letters, spaces, dots, and hyphens (no numbers)
+    const filtered = value.replace(/[0-9]/g, "");
+    if (value !== filtered) {
+      setFormErrors((prev) => ({ ...prev, full_name: "Full Name must not contain numbers" }));
+    } else {
+      setFormErrors((prev) => ({ ...prev, full_name: "" }));
+    }
+    setForm((prev) => ({ ...prev, full_name: filtered }));
+  };
+
+  const handleEmployeeIdChange = (value) => {
+    // Allow only numeric characters
+    const filtered = value.replace(/[^0-9]/g, "");
+    if (value !== filtered) {
+      setFormErrors((prev) => ({ ...prev, employee_id: "Employee ID must contain only numbers" }));
+    } else {
+      setFormErrors((prev) => ({ ...prev, employee_id: "" }));
+    }
+    setForm((prev) => ({ ...prev, employee_id: filtered }));
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!form.full_name) {
       toast.error("Name is required");
+      return;
+    }
+
+    // Validate full_name contains only letters, spaces, dots, hyphens
+    if (/[0-9]/.test(form.full_name)) {
+      toast.error("Full Name must not contain numbers");
       return;
     }
 
@@ -248,6 +277,12 @@ export default function StaffMasterPage({
 
     if (!form.employee_id || String(form.employee_id).trim() === '') {
       toast.error("Employee ID is required");
+      return;
+    }
+
+    // Validate employee_id is numeric only
+    if (!/^\d+$/.test(String(form.employee_id).trim())) {
+      toast.error("Employee ID must contain only numbers");
       return;
     }
 
@@ -498,6 +533,11 @@ export default function StaffMasterPage({
                 <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">
                   {isDoctorMode ? 'License No' : 'Employee ID'}
                 </th>
+                {isDoctorMode && (
+                  <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">
+                    Employee ID
+                  </th>
+                )}
                 <th className="text-left p-4 text-text-muted text-xs font-semibold uppercase tracking-wider hidden lg:table-cell">
                   Phone
                 </th>
@@ -598,6 +638,11 @@ export default function StaffMasterPage({
                     <td className="p-4 text-text-muted text-sm font-mono hidden lg:table-cell">
                       {isDoctorMode ? (item.registration_number || "—") : (item.employee_id || "—")}
                     </td>
+                    {isDoctorMode && (
+                      <td className="p-4 text-text-muted text-sm font-mono hidden lg:table-cell">
+                        {item.employee_id || "—"}
+                      </td>
+                    )}
                     <td className="p-4 text-text-secondary text-sm hidden lg:table-cell">
                       {item.phone || "—"}
                     </td>
@@ -740,12 +785,13 @@ export default function StaffMasterPage({
                   <input
                     type="text"
                     value={form.full_name}
-                    onChange={(event) =>
-                      setForm({ ...form, full_name: event.target.value })
-                    }
-                    className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm"
+                    onChange={(event) => handleFullNameChange(event.target.value)}
+                    className={`w-full bg-bg-dark border rounded-xl px-4 py-2.5 text-text-primary text-sm ${formErrors.full_name ? 'border-red-500' : 'border-border'}`}
                     required
                   />
+                  {formErrors.full_name && (
+                    <p className="text-red-400 text-xs mt-1">{formErrors.full_name}</p>
+                  )}
                 </div>
 
                   <div className="col-span-2">
@@ -755,13 +801,14 @@ export default function StaffMasterPage({
                     <input
                       type="text"
                       value={form.employee_id}
-                      onChange={(event) =>
-                        setForm({ ...form, employee_id: event.target.value })
-                      }
-                      placeholder="Unique employee identifier"
-                      className="w-full bg-bg-dark border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm placeholder-text-muted/50"
+                      onChange={(event) => handleEmployeeIdChange(event.target.value)}
+                      placeholder="Unique employee identifier (numbers only)"
+                      className={`w-full bg-bg-dark border rounded-xl px-4 py-2.5 text-text-primary text-sm placeholder-text-muted/50 ${formErrors.employee_id ? 'border-red-500' : 'border-border'}`}
                       required
                     />
+                    {formErrors.employee_id && (
+                      <p className="text-red-400 text-xs mt-1">{formErrors.employee_id}</p>
+                    )}
                   </div>
 
                 <div>
