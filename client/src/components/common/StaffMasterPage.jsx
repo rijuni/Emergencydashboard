@@ -331,35 +331,35 @@ export default function StaffMasterPage({
     }
   };
 
-    const handleDeactivate = async (id, name) => {
-      const confirmAction = window.confirm(`Do you really want to mark ${name} inactive? This will remove them from future roster assignments.`);
-      if (!confirmAction) return;
-      try {
-        await api.delete(`/staff/${id}`);
-        // Keep the record visible and mark as inactive in the current list
-        setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, is_active: false } : s)));
-        // Switch UI filter to show inactive records so the item remains visible on refetch
-        if (showStatusFilter) setStatusFilter("inactive");
-        toast.success("Record deactivated and removed from roster");
-      } catch (error) {
-        toast.error(error.response?.data?.message || "Error deactivating record");
-      }
-    };
+  const handleDeactivate = async (id, name) => {
+    const confirmAction = window.confirm(`Do you really want to mark ${name} inactive? This will remove them from future roster assignments.`);
+    if (!confirmAction) return;
+    try {
+      await api.delete(`/staff/${id}`);
+      // Keep the record visible and mark as inactive in the current list
+      setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, is_active: false } : s)));
+      // Switch UI filter to show inactive records so the item remains visible on refetch
+      if (showStatusFilter) setStatusFilter("inactive");
+      toast.success("Record deactivated and removed from roster");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error deactivating record");
+    }
+  };
 
-    const handleReactivate = async (id, name) => {
-      const confirmAction = window.confirm(`Do you want to reactivate ${name}?`);
-      if (!confirmAction) return;
-      try {
-        await api.put(`/staff/${id}`, { is_active: true });
-        // Update local list to keep the item visible and show active status
-        setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, is_active: true } : s)));
-        // Switch UI filter back to active so item is visible in active list
-        if (showStatusFilter) setStatusFilter("active");
-        toast.success("Record reactivated");
-      } catch (error) {
-        toast.error(error.response?.data?.message || "Error reactivating record");
-      }
-    };
+  const handleReactivate = async (id, name) => {
+    const confirmAction = window.confirm(`Do you want to reactivate ${name}?`);
+    if (!confirmAction) return;
+    try {
+      await api.put(`/staff/${id}`, { is_active: true });
+      // Update local list to keep the item visible and show active status
+      setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, is_active: true } : s)));
+      // Switch UI filter back to active so item is visible in active list
+      if (showStatusFilter) setStatusFilter("active");
+      toast.success("Record reactivated");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error reactivating record");
+    }
+  };
 
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Do you want to inactive ${name}? It will remove from roster data.`)) return;
@@ -616,11 +616,10 @@ export default function StaffMasterPage({
                     </td>
                     {isDoctorMode && (
                       <td
-                        className={`p-4 text-sm hidden md:table-cell ${
-                          isInactiveDepartment(item.department)
+                        className={`p-4 text-sm hidden md:table-cell ${isInactiveDepartment(item.department)
                             ? "text-danger font-semibold"
                             : "text-text-secondary"
-                        }`}
+                          }`}
                         title={
                           isInactiveDepartment(item.department)
                             ? "This department is inactive"
@@ -734,7 +733,7 @@ export default function StaffMasterPage({
       {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4"
-          // onClick={() => setShowModal(false)}
+        // onClick={() => setShowModal(false)}
         >
           <div
             className="glass-strong rounded-2xl w-full max-w-lg p-6 animate-scale-in"
@@ -797,22 +796,22 @@ export default function StaffMasterPage({
                   )}
                 </div>
 
-                  <div className="col-span-2">
-                    <label className="block text-sm text-text-secondary mb-1.5 font-medium">
-                      Employee ID *
-                    </label>
-                    <input
-                      type="text"
-                      value={form.employee_id}
-                      onChange={(event) => handleEmployeeIdChange(event.target.value)}
-                      placeholder="Unique employee identifier (numbers only)"
-                      className={`w-full bg-bg-dark border rounded-xl px-4 py-2.5 text-text-primary text-sm placeholder-text-muted/50 ${formErrors.employee_id ? 'border-red-500' : 'border-border'}`}
-                      required
-                    />
-                    {formErrors.employee_id && (
-                      <p className="text-red-400 text-xs mt-1">{formErrors.employee_id}</p>
-                    )}
-                  </div>
+                <div className="col-span-2">
+                  <label className="block text-sm text-text-secondary mb-1.5 font-medium">
+                    Employee ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={form.employee_id}
+                    onChange={(event) => handleEmployeeIdChange(event.target.value)}
+                    placeholder="Unique employee identifier (numbers only)"
+                    className={`w-full bg-bg-dark border rounded-xl px-4 py-2.5 text-text-primary text-sm placeholder-text-muted/50 ${formErrors.employee_id ? 'border-red-500' : 'border-border'}`}
+                    required
+                  />
+                  {formErrors.employee_id && (
+                    <p className="text-red-400 text-xs mt-1">{formErrors.employee_id}</p>
+                  )}
+                </div>
 
                 <div>
                   <label className="block text-sm text-text-secondary mb-1.5 font-medium">
@@ -1012,7 +1011,7 @@ export default function StaffMasterPage({
       {showBulkModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4"
-          // onClick={() => setShowBulkModal(false)}
+        // onClick={() => setShowBulkModal(false)}
         >
           <div
             className="glass-strong rounded-2xl w-full max-w-xl p-6 animate-scale-in"
