@@ -128,18 +128,27 @@ exports.updateSettings = async (req, res) => {
       return res.status(400).json({ message: 'Settings object is required.' });
     }
 
+    const restrictedKeys = ['hospital_name', 'display_title', 'code_blue', 'auto_refresh_seconds'];
+    const updatedKeys = [];
+
     for (const [key, value] of Object.entries(settings)) {
+      if (req.user.role === 'admin' && restrictedKeys.includes(key)) {
+        continue; // Skip restricted settings for admin
+      }
       await pool.query(
         'INSERT INTO display_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
         [key, value, value]
       );
+      updatedKeys.push(key);
     }
 
     // Audit log
-    await pool.query(
-      'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
-      [req.user.id, 'UPDATE', 'settings', null, `Updated display settings: ${Object.keys(settings).join(', ')}`]
-    );
+    if (updatedKeys.length > 0) {
+      await pool.query(
+        'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
+        [req.user.id, 'UPDATE', 'settings', null, `Updated display settings: ${updatedKeys.join(', ')}`]
+      );
+    }
 
     res.json({ message: 'Settings updated successfully.' });
   } catch (error) {

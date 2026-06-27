@@ -7,8 +7,12 @@ import {
   HiOutlineCheck
 } from "react-icons/hi";
 import SearchableSelect from "../components/common/SearchableSelect";
+import { useAuth } from "../context/AuthContext";
 
 export default function SettingsPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
   const [settings, setSettings] = useState({
     hospital_name: "",
     code_blue: "",
@@ -171,8 +175,9 @@ export default function SettingsPage() {
               onChange={(e) =>
                 setSettings({ ...settings, hospital_name: e.target.value })
               }
-              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
+              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm disabled:opacity-60 disabled:cursor-not-allowed"
               placeholder="KIMS Hospital"
+              disabled={isAdmin}
             />
           </div>
           <div>
@@ -185,8 +190,9 @@ export default function SettingsPage() {
               onChange={(e) =>
                 setSettings({ ...settings, display_title: e.target.value })
               }
-              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
+              className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm disabled:opacity-60 disabled:cursor-not-allowed"
               placeholder="CASUALTY DEPARTMENT"
+              disabled={isAdmin}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -200,9 +206,10 @@ export default function SettingsPage() {
                 onChange={(e) =>
                   setSettings({ ...settings, code_blue: e.target.value })
                 }
-                className="w-full bg-bg-dark border rounded-xl px-4 py-3 text-text-primary text-lg font-mono font-bold text-center"
+                className="w-full bg-bg-dark border rounded-xl px-4 py-3 text-text-primary text-lg font-mono font-bold text-center disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{ borderColor: "rgba(239,68,68,0.2)" }}
                 placeholder="33"
+                disabled={isAdmin}
               />
             </div>
             <div>
@@ -218,9 +225,10 @@ export default function SettingsPage() {
                     auto_refresh_seconds: e.target.value,
                   })
                 }
-                className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm"
+                className="w-full bg-bg-dark border border-border rounded-xl px-4 py-3 text-text-primary text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                 min="10"
                 max="300"
+                disabled={isAdmin}
               />
             </div>
           </div>
