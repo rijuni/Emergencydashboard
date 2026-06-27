@@ -205,7 +205,7 @@ export default function RosterPage() {
       const cat = categories.find(c => c.id === assignedStaff.category_id);
       const catName = cat ? cat.name.toLowerCase() : "";
 
-      if (catName === "nursing officer" || catName === "operation") {
+      if (catName === "nursing officer" || catName === "operation staff") {
         const countInShift = roster.filter(r => {
           if (r.shift_id !== shiftId) return false;
           const rStaff = staff.find(s => s.id === r.staff_id);

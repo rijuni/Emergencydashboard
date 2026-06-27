@@ -66,7 +66,7 @@ export default function DisplayPage() {
   const liveCategories = useMemo(() => [
     { key: "Doctor", label: "Doctors" },
     { key: "Nursing Officer", label: "Nursing Staffs" },
-    { key: "Operation", label: "Operation Staff" },
+    { key: "Operation staff", label: "Operation Staff" },
     { key: "Pharmacist", label: "Pharmacists" },
   ], []);
 
@@ -273,7 +273,7 @@ export default function DisplayPage() {
         ? "linear-gradient(135deg, rgba(168,85,247,0.2), rgba(30,41,59,0.8))"
         : "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(255,255,255,0.9))",
     },
-    Operation: {
+    "Operation staff": {
       accent: "#3B82F6",
       text: isDark ? "#93C5FD" : "#2563EB",
       badgeBg: "rgba(59,130,246,0.2)",
@@ -571,86 +571,88 @@ export default function DisplayPage() {
               </div>
 
               {currentShiftId ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 items-stretch overflow-y-auto">
-                  {(() => {
-                    const renderCat = (catKey, isFullHeight = false) => {
-                      const category = liveCategories.find((c) => c.key === catKey);
-                      if (!category) return null;
-                      const staffList = onDutyByCategory[category.key] || [];
-                      const style = categoryStyles[category.key] || categoryStyles.Doctor;
-                      return (
-                        <div key={category.key} className={`flex flex-col w-full ${isFullHeight ? "flex-1" : ""}`}>
-                          <div className="flex items-center justify-between mb-2">
-                            <h3
-                              className="text-sm font-semibold uppercase tracking-[0.2em]"
-                              style={{ color: style.text }}
-                            >
-                              {category.label}
-                            </h3>
-                          </div>
-                          {staffList.length > 0 ? (
-                            <div className={`flex flex-col gap-2 ${isFullHeight ? "flex-1 justify-between" : ""}`}>
-                              {staffList.map((entry) => (
-                                <div
-                                  key={entry.id}
-                                  className="rounded-lg px-5 py-5 mb-3 flex flex-col justify-center items-start"
-                                  style={{
-                                    border: `2px solid ${style.border}`,
-                                    borderLeft: `8px solid ${style.accent}`,
-                                    background: style.cardBg,
-                                    boxShadow: isDark
-                                      ? "0 6px 24px rgba(0,0,0,0.4)"
-                                      : "0 6px 16px rgba(15,23,42,0.1)",
-                                    minHeight: "160px",
-                                  }}
-                                >
-                                  <div>
-                                    <div
-                                      className="text-2xl md:text-3xl font-bold"
-                                      style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
-                                    >
-                                      {getShownName(entry)}
-                                    </div>
-                                    <div
-                                      className="text-sm md:text-base mt-3 font-bold inline-block px-3 py-1 rounded-full uppercase tracking-wider"
-                                      style={{
-                                        background: style.badgeBg,
-                                        color: "#FFFFFF",
-                                        border: `1px solid ${style.border}`,
-                                      }}
-                                    >
-                                      {[entry.designation, entry.specialization]
-                                        .filter(Boolean)
-                                        .join(" • ") || "\u00A0"}
+                <div className="flex-1 overflow-y-auto min-h-0">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch h-full">
+                    {(() => {
+                      const renderCat = (catKey, isFullHeight = false) => {
+                        const category = liveCategories.find((c) => c.key === catKey);
+                        if (!category) return null;
+                        const staffList = onDutyByCategory[category.key] || [];
+                        const style = categoryStyles[category.key] || categoryStyles.Doctor;
+                        return (
+                          <div key={category.key} className={`flex flex-col w-full ${isFullHeight ? "flex-1" : ""}`}>
+                            <div className="flex items-center justify-between mb-2">
+                              <h3
+                                className="text-sm font-semibold uppercase tracking-[0.2em]"
+                                style={{ color: style.text }}
+                              >
+                                {category.label}
+                              </h3>
+                            </div>
+                            {staffList.length > 0 ? (
+                              <div className={`flex flex-col gap-8 ${isFullHeight ? "flex-1" : ""}`}>
+                                {staffList.map((entry) => (
+                                  <div
+                                    key={entry.id}
+                                    className="rounded-lg px-5 py-5 flex flex-col justify-center items-start w-full"
+                                    style={{
+                                      border: `2px solid ${style.border}`,
+                                      borderLeft: `8px solid ${style.accent}`,
+                                      background: style.cardBg,
+                                      boxShadow: isDark
+                                        ? "0 6px 24px rgba(0,0,0,0.4)"
+                                        : "0 6px 16px rgba(15,23,42,0.1)",
+                                      minHeight: "160px",
+                                    }}
+                                  >
+                                    <div>
+                                      <div
+                                        className="text-2xl md:text-3xl font-bold"
+                                        style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
+                                      >
+                                        {getShownName(entry)}
+                                      </div>
+                                      <div
+                                        className="text-sm md:text-base mt-3 font-bold inline-block px-3 py-1 rounded-full uppercase tracking-wider"
+                                        style={{
+                                          background: style.badgeBg,
+                                          color: "#FFFFFF",
+                                          border: `1px solid ${style.border}`,
+                                        }}
+                                      >
+                                        {[entry.designation, entry.specialization]
+                                          .filter(Boolean)
+                                          .join(" • ") || "\u00A0"}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div
-                              className="text-center py-4 text-xs"
-                              style={{ color: "#94A3B8" }}
-                            >
-                              No staff assigned for this category in the current
-                              shift.
-                            </div>
-                          )}
-                        </div>
-                      );
-                    };
+                                ))}
+                              </div>
+                            ) : (
+                              <div
+                                className="text-center py-4 text-xs"
+                                style={{ color: "#94A3B8" }}
+                              >
+                                No staff assigned for this category in the current
+                                shift.
+                              </div>
+                            )}
+                          </div>
+                        );
+                      };
 
-                    return (
-                      <>
-                        <div className="flex flex-col h-full">{renderCat("Doctor", true)}</div>
-                        <div className="flex flex-col justify-between h-full">
-                          {renderCat("Nursing Officer", false)}
-                          {renderCat("Operation", false)}
-                        </div>
-                        <div className="flex flex-col h-full">{renderCat("Pharmacist", true)}</div>
-                      </>
-                    );
-                  })()}
+                      return (
+                        <>
+                          <div className="flex flex-col h-full">{renderCat("Doctor", false)}</div>
+                          <div className="flex flex-col h-full gap-1">
+                            {renderCat("Nursing Officer", false)}
+                            {renderCat("Operation staff", false)}
+                          </div>
+                          <div className="flex flex-col h-full">{renderCat("Pharmacist", false)}</div>
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
               ) : (
                 <div
