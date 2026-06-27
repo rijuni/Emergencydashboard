@@ -72,7 +72,7 @@ const getShiftStyles = (shift, index) =>
 const ROSTER_CATEGORY_ALLOWLIST = [
   "Doctor",
   "Nursing Officer",
-  "Operation",
+  "Operation staff",
   "Pharmacist",
   // "Ambulance",
   // "Security Supervisor",
@@ -82,7 +82,7 @@ const ROSTER_CATEGORY_ALLOWLIST = [
 // Maximum staff allowed per shift for specific categories
 const CATEGORY_LIMITS = {
   "nursing officer": 2,
-  "operation": 1,
+  "operation staff": 1,
 };
 const NIGHT_SUPERVISOR_NAME = "Manager On Duty";
 const NIGHT_SHIFT_NAME = "Night";
@@ -180,7 +180,7 @@ export default function RosterPage() {
     const map = {};
     rosterCategories.forEach((c) => {
       let catStaff = staff.filter((s) => s.category_id === c.id);
-      
+
       // Strictly filter out non-emergency doctors for the normal roster
       if (normalizeName(c.name) === "doctor") {
         catStaff = catStaff.filter((s) => {
@@ -189,7 +189,7 @@ export default function RosterPage() {
           return dept.includes("emerg") || dept.includes("emrg");
         });
       }
-      
+
       map[c.id] = catStaff;
     });
     return map;
@@ -204,7 +204,7 @@ export default function RosterPage() {
     if (assignedStaff) {
       const cat = categories.find(c => c.id === assignedStaff.category_id);
       const catName = cat ? cat.name.toLowerCase() : "";
-      
+
       if (catName === "nursing officer" || catName === "operation") {
         const countInShift = roster.filter(r => {
           if (r.shift_id !== shiftId) return false;
@@ -218,7 +218,7 @@ export default function RosterPage() {
           toast.error("Maximum 2 Nursing Officers can be assigned per shift.");
           return;
         }
-        if (catName === "operation" && countInShift >= 1) {
+        if (catName === "operation staff" && countInShift >= 1) {
           toast.error("Maximum 1 Operation staff can be assigned per shift.");
           return;
         }
@@ -302,7 +302,7 @@ export default function RosterPage() {
     }
 
     const cleanFileNameLower = cleanFileName.toLowerCase();
-    
+
     // Strict Template Validation
     if (uploadCategory === "doctors" && !cleanFileNameLower.includes("doctor")) {
       toast.error("Invalid file: Please upload a Doctors Roster Template.");
@@ -372,14 +372,14 @@ export default function RosterPage() {
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      
+
       const typeNames = {
         'mod': 'Manager_On_Duty_Template.xlsx',
         'doctors': 'Doctors_Roster_Template.xlsx',
         'pharmacy': 'Pharmacy_Roster_Template.xlsx',
         'nursing': 'Nursing_Roster_Template.xlsx'
       };
-      
+
       link.setAttribute('download', typeNames[type]);
       document.body.appendChild(link);
       link.click();
@@ -563,162 +563,162 @@ export default function RosterPage() {
           </h2>
         </div>
         <div className="p-6">
-        <div className="flex flex-col md:flex-row gap-4 items-start">
-          <div className="flex-1 w-full flex flex-col gap-2">
-            <select 
-              value={uploadCategory}
-              onChange={e => setUploadCategory(e.target.value)}
-              className="w-full bg-bg-dark border border-border rounded-lg px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 mb-1"
-            >
-              <option value="mod">Manager On Duty Schedule</option>
-              <option value="doctors">Doctors Roster</option>
-              <option value="nursing">Nursing Officer Roster</option>
-              <option value="pharmacy">Pharmacist Roster</option>
-            </select>
-            <label className="relative flex items-center justify-center w-full p-4 border-2 border-dashed border-border rounded-xl hover:border-primary-light/50 transition-colors cursor-pointer bg-bg-surface/50">
-              <input 
-                type="file" 
-                accept=".xlsx" 
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                onChange={handleFileUpload}
-                disabled={uploadingExcel}
-              />
-              <div className="flex items-center gap-2 text-sm text-text-secondary">
-                {uploadingExcel ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-                    Uploading & Parsing...
-                  </>
-                ) : (
-                  <>
-                    <HiOutlineUpload className="w-5 h-5 text-primary-light" />
-                    <span className="font-medium text-text-primary">Click to upload</span> or drag and drop Excel file (.xlsx)
-                  </>
-                )}
-              </div>
-            </label>
-            
-            {/* Template Download Section */}
-            <div className="flex items-center gap-2 mt-1 w-full">
-              <select 
-                id="template-select"
-                defaultValue=""
-                className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary-light/50"
+          <div className="flex flex-col md:flex-row gap-4 items-start">
+            <div className="flex-1 w-full flex flex-col gap-2">
+              <select
+                value={uploadCategory}
+                onChange={e => setUploadCategory(e.target.value)}
+                className="w-full bg-bg-dark border border-border rounded-lg px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 mb-1"
               >
-                <option value="" disabled>Select a template...</option>
-                <option value="mod">MOD Template</option>
-                <option value="doctors">Doctors Template</option>
-                <option value="pharmacy">Pharmacy Template</option>
-                <option value="nursing">Nursing Template</option>
+                <option value="mod">Manager On Duty Schedule</option>
+                <option value="doctors">Doctors Roster</option>
+                <option value="nursing">Nursing Officer Roster</option>
+                <option value="pharmacy">Pharmacist Roster</option>
               </select>
-              <button
-                onClick={handleDownloadTemplate}
-                className="px-4 py-2.5 bg-primary/10 text-primary-light rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium flex items-center gap-2 whitespace-nowrap"
-              >
-                <HiOutlineDocumentDownload className="w-4 h-4" />
-                Download
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 w-full flex flex-col justify-center h-full">
-            <div className="p-4 rounded-xl border border-border bg-bg-surface/30">
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Manual Override for {formatDate(date)}
-              </label>
-              
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <select
-                    value={overrideCategory}
-                    onChange={e => {
-                      setOverrideCategory(e.target.value);
-                      setOverrideShiftId("");
-                      setOverrideStaffId("");
-                    }}
-                    className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 disabled:opacity-50"
-                    disabled={savingManualMod || isPastDate}
-                  >
-                    <option value="MOD">Manager On Duty</option>
-                  </select>
-
-                  {overrideCategory !== "MOD" && (
-                    <select
-                      value={overrideShiftId}
-                      onChange={e => setOverrideShiftId(e.target.value)}
-                      className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 disabled:opacity-50"
-                      disabled={isPastDate}
-                    >
-                      <option value="" disabled>Select Shift...</option>
-                      {shifts.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {overrideCategory === "MOD" ? (
-                    <input
-                      type="text"
-                      placeholder="Enter Manager On Duty Name"
-                      value={manualModName}
-                      onChange={(e) => setManualModName(e.target.value)}
-                      className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={savingManualMod || isPastDate}
-                    />
+              <label className="relative flex items-center justify-center w-full p-4 border-2 border-dashed border-border rounded-xl hover:border-primary-light/50 transition-colors cursor-pointer bg-bg-surface/50">
+                <input
+                  type="file"
+                  accept=".xlsx"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={handleFileUpload}
+                  disabled={uploadingExcel}
+                />
+                <div className="flex items-center gap-2 text-sm text-text-secondary">
+                  {uploadingExcel ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                      Uploading & Parsing...
+                    </>
                   ) : (
-                    <select
-                      value={overrideStaffId}
-                      onChange={e => setOverrideStaffId(e.target.value)}
-                      className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 disabled:opacity-50"
-                      disabled={isPastDate || !overrideShiftId}
-                    >
-                      <option value="" disabled>Select Staff...</option>
-                      {staff.filter(s => {
-                        const cat = categories.find(c => c.id === s.category_id);
-                        return cat && normalizeName(cat.name) === normalizeName(overrideCategory);
-                      }).map(s => (
-                        <option key={s.id} value={s.id}>{s.full_name}</option>
-                      ))}
-                    </select>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      if (overrideCategory === "MOD") {
-                        handleManualModSave();
-                      } else {
-                        if (!overrideShiftId || !overrideStaffId) {
-                          toast.error("Please select both a shift and a staff member");
-                          return;
-                        }
-                        handleAssign(parseInt(overrideShiftId), parseInt(overrideStaffId), { is_override: true });
-                        setOverrideStaffId(""); // reset staff after assignment
-                      }
-                    }}
-                    disabled={savingManualMod || restoringMod || isPastDate}
-                    className="btn-primary px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                    title={isPastDate ? "Cannot edit past dates" : "Save Override"}
-                  >
-                    {savingManualMod ? "Saving..." : "Save Override"}
-                  </button>
-                  {overrideCategory === "MOD" && activeFileName && (
-                    <button
-                      onClick={handleRestoreDefault}
-                      disabled={savingManualMod || restoringMod || isPastDate}
-                      className="btn-outline border-border px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-primary-light hover:border-primary-light disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                      title={isPastDate ? "Cannot edit past dates" : "Restore original name from Excel"}
-                    >
-                      {restoringMod ? "Restoring..." : "Restore Default"}
-                    </button>
+                    <>
+                      <HiOutlineUpload className="w-5 h-5 text-primary-light" />
+                      <span className="font-medium text-text-primary">Click to upload</span> or drag and drop Excel file (.xlsx)
+                    </>
                   )}
                 </div>
+              </label>
+
+              {/* Template Download Section */}
+              <div className="flex items-center gap-2 mt-1 w-full">
+                <select
+                  id="template-select"
+                  defaultValue=""
+                  className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-primary-light/50"
+                >
+                  <option value="" disabled>Select a template...</option>
+                  <option value="mod">MOD Template</option>
+                  <option value="doctors">Doctors Template</option>
+                  <option value="pharmacy">Pharmacy Template</option>
+                  <option value="nursing">Nursing Template</option>
+                </select>
+                <button
+                  onClick={handleDownloadTemplate}
+                  className="px-4 py-2.5 bg-primary/10 text-primary-light rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium flex items-center gap-2 whitespace-nowrap"
+                >
+                  <HiOutlineDocumentDownload className="w-4 h-4" />
+                  Download
+                </button>
               </div>
-              <p className="text-xs text-text-muted mt-3">
-                Select a category to manually assign a staff member outside of the standard schedule.
-              </p>
+            </div>
+            <div className="flex-1 w-full flex flex-col justify-center h-full">
+              <div className="p-4 rounded-xl border border-border bg-bg-surface/30">
+                <label className="block text-sm font-medium text-text-secondary mb-2">
+                  Manual Override for {formatDate(date)}
+                </label>
+
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={overrideCategory}
+                      onChange={e => {
+                        setOverrideCategory(e.target.value);
+                        setOverrideShiftId("");
+                        setOverrideStaffId("");
+                      }}
+                      className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 disabled:opacity-50"
+                      disabled={savingManualMod || isPastDate}
+                    >
+                      <option value="MOD">Manager On Duty</option>
+                    </select>
+
+                    {overrideCategory !== "MOD" && (
+                      <select
+                        value={overrideShiftId}
+                        onChange={e => setOverrideShiftId(e.target.value)}
+                        className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 disabled:opacity-50"
+                        disabled={isPastDate}
+                      >
+                        <option value="" disabled>Select Shift...</option>
+                        {shifts.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {overrideCategory === "MOD" ? (
+                      <input
+                        type="text"
+                        placeholder="Enter Manager On Duty Name"
+                        value={manualModName}
+                        onChange={(e) => setManualModName(e.target.value)}
+                        className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={savingManualMod || isPastDate}
+                      />
+                    ) : (
+                      <select
+                        value={overrideStaffId}
+                        onChange={e => setOverrideStaffId(e.target.value)}
+                        className="flex-1 bg-bg-dark border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary-light/50 disabled:opacity-50"
+                        disabled={isPastDate || !overrideShiftId}
+                      >
+                        <option value="" disabled>Select Staff...</option>
+                        {staff.filter(s => {
+                          const cat = categories.find(c => c.id === s.category_id);
+                          return cat && normalizeName(cat.name) === normalizeName(overrideCategory);
+                        }).map(s => (
+                          <option key={s.id} value={s.id}>{s.full_name}</option>
+                        ))}
+                      </select>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        if (overrideCategory === "MOD") {
+                          handleManualModSave();
+                        } else {
+                          if (!overrideShiftId || !overrideStaffId) {
+                            toast.error("Please select both a shift and a staff member");
+                            return;
+                          }
+                          handleAssign(parseInt(overrideShiftId), parseInt(overrideStaffId), { is_override: true });
+                          setOverrideStaffId(""); // reset staff after assignment
+                        }
+                      }}
+                      disabled={savingManualMod || restoringMod || isPastDate}
+                      className="btn-primary px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      title={isPastDate ? "Cannot edit past dates" : "Save Override"}
+                    >
+                      {savingManualMod ? "Saving..." : "Save Override"}
+                    </button>
+                    {overrideCategory === "MOD" && activeFileName && (
+                      <button
+                        onClick={handleRestoreDefault}
+                        disabled={savingManualMod || restoringMod || isPastDate}
+                        className="btn-outline border-border px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-primary-light hover:border-primary-light disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        title={isPastDate ? "Cannot edit past dates" : "Restore original name from Excel"}
+                      >
+                        {restoringMod ? "Restoring..." : "Restore Default"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-text-muted mt-3">
+                  Select a category to manually assign a staff member outside of the standard schedule.
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
       </div>
 
       {/* Roster Grid */}

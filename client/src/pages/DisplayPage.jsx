@@ -66,7 +66,7 @@ export default function DisplayPage() {
   const liveCategories = useMemo(() => [
     { key: "Doctor", label: "Doctors" },
     { key: "Nursing Officer", label: "Nursing Staffs" },
-    { key: "Operation", label: "Operation Staffs" },
+    { key: "Operation", label: "Operation Staff" },
     { key: "Pharmacist", label: "Pharmacists" },
   ], []);
 
