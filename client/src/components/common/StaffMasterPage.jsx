@@ -77,8 +77,6 @@ export default function StaffMasterPage({
       (category) => {
         const n = (category.name || '').toLowerCase();
         if (n === 'doctor') return false;
-        // Exclude Operation for admin role
-        if (n === 'operation' && user?.role === 'admin') return false;
         return true;
       }
     );
@@ -773,6 +771,7 @@ export default function StaffMasterPage({
                       </>
                     ) : (
                       <>
+                        <option value="Dr.">Dr.</option>
                         <option value="Mr">Mr</option>
                         <option value="Ms">Ms</option>
                         <option value="Mrs">Mrs</option>

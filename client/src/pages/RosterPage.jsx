@@ -72,12 +72,18 @@ const getShiftStyles = (shift, index) =>
 const ROSTER_CATEGORY_ALLOWLIST = [
   "Doctor",
   "Nursing Officer",
+  "Operation",
   "Pharmacist",
   // "Ambulance",
-  // "Operation",
   // "Security Supervisor",
   // "Housekeeping Supervisor",
 ];
+
+// Maximum staff allowed per shift for specific categories
+const CATEGORY_LIMITS = {
+  "nursing officer": 2,
+  "operation": 1,
+};
 const NIGHT_SUPERVISOR_NAME = "Manager On Duty";
 const NIGHT_SHIFT_NAME = "Night";
 const normalizeName = (value) => (value || "").trim().toLowerCase();
@@ -199,7 +205,7 @@ export default function RosterPage() {
       const cat = categories.find(c => c.id === assignedStaff.category_id);
       const catName = cat ? cat.name.toLowerCase() : "";
       
-      if (catName === "nursing officer" /* || catName === "operation" */) {
+      if (catName === "nursing officer" || catName === "operation") {
         const countInShift = roster.filter(r => {
           if (r.shift_id !== shiftId) return false;
           const rStaff = staff.find(s => s.id === r.staff_id);
@@ -212,10 +218,10 @@ export default function RosterPage() {
           toast.error("Maximum 2 Nursing Officers can be assigned per shift.");
           return;
         }
-        // if (catName === "operation" && countInShift >= 1) {
-        //   toast.error("Maximum 1 Operation staff can be assigned per shift.");
-        //   return;
-        // }
+        if (catName === "operation" && countInShift >= 1) {
+          toast.error("Maximum 1 Operation staff can be assigned per shift.");
+          return;
+        }
       }
     }
 
@@ -841,29 +847,34 @@ export default function RosterPage() {
                                 )}
                               </div>
                             ))}
-                            {!isPastDate && available.length > 0 && (
-                              <select
-                                onChange={(e) => {
-                                  if (e.target.value) {
-                                    handleAssign(
-                                      shift.id,
-                                      parseInt(e.target.value),
-                                    );
-                                    e.target.value = "";
-                                  }
-                                }}
-                                className="w-full border border-dashed rounded-lg px-2 py-1.5 text-text-muted text-xs cursor-pointer transition-all duration-200 hover:border-primary-light/40"
-                                style={addSelectStyle}
-                                defaultValue=""
-                              >
-                                <option value="">+ Add {cat.name}</option>
-                                {available.map((s) => (
-                                  <option key={s.id} value={s.id}>
-                                    {s.full_name}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
+                            {(() => {
+                              const catLimit = CATEGORY_LIMITS[normalizeName(cat.name)];
+                              const limitReached = catLimit != null && assigned.length >= catLimit;
+                              if (isPastDate || available.length === 0 || limitReached) return null;
+                              return (
+                                <select
+                                  onChange={(e) => {
+                                    if (e.target.value) {
+                                      handleAssign(
+                                        shift.id,
+                                        parseInt(e.target.value),
+                                      );
+                                      e.target.value = "";
+                                    }
+                                  }}
+                                  className="w-full border border-dashed rounded-lg px-2 py-1.5 text-text-muted text-xs cursor-pointer transition-all duration-200 hover:border-primary-light/40"
+                                  style={addSelectStyle}
+                                  defaultValue=""
+                                >
+                                  <option value="">+ Add {cat.name}</option>
+                                  {available.map((s) => (
+                                    <option key={s.id} value={s.id}>
+                                      {s.full_name}
+                                    </option>
+                                  ))}
+                                </select>
+                              );
+                            })()}
                           </div>
                         </td>
                       );

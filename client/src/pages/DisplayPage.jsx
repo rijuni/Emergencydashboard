@@ -66,7 +66,7 @@ export default function DisplayPage() {
   const liveCategories = useMemo(() => [
     { key: "Doctor", label: "Doctors" },
     { key: "Nursing Officer", label: "Nursing Staffs" },
-    // { key: "Operation", label: "Operation Staffs" },
+    { key: "Operation", label: "Operation Staffs" },
     { key: "Pharmacist", label: "Pharmacists" },
   ], []);
 
@@ -273,16 +273,16 @@ export default function DisplayPage() {
         ? "linear-gradient(135deg, rgba(168,85,247,0.2), rgba(30,41,59,0.8))"
         : "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(255,255,255,0.9))",
     },
-    // Operation: {
-    //   accent: "#3B82F6",
-    //   text: isDark ? "#93C5FD" : "#2563EB",
-    //   badgeBg: "rgba(59,130,246,0.2)",
-    //   badgeText: isDark ? "#93C5FD" : "#2563EB",
-    //   border: "#3B82F6",
-    //   cardBg: isDark
-    //     ? "linear-gradient(135deg, rgba(59,130,246,0.2), rgba(30,41,59,0.8))"
-    //     : "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(255,255,255,0.9))",
-    // },
+    Operation: {
+      accent: "#3B82F6",
+      text: isDark ? "#93C5FD" : "#2563EB",
+      badgeBg: "rgba(59,130,246,0.2)",
+      badgeText: isDark ? "#93C5FD" : "#2563EB",
+      border: "#3B82F6",
+      cardBg: isDark
+        ? "linear-gradient(135deg, rgba(59,130,246,0.2), rgba(30,41,59,0.8))"
+        : "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(255,255,255,0.9))",
+    },
     Pharmacist: {
       accent: "#F59E0B",
       text: isDark ? "#FBBF24" : "#B45309",
@@ -571,15 +571,15 @@ export default function DisplayPage() {
               </div>
 
               {currentShiftId ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 content-start overflow-y-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 items-stretch overflow-y-auto">
                   {(() => {
-                    const renderCat = (catKey) => {
+                    const renderCat = (catKey, isFullHeight = false) => {
                       const category = liveCategories.find((c) => c.key === catKey);
                       if (!category) return null;
                       const staffList = onDutyByCategory[category.key] || [];
                       const style = categoryStyles[category.key] || categoryStyles.Doctor;
                       return (
-                        <div key={category.key} className="flex flex-col w-full">
+                        <div key={category.key} className={`flex flex-col w-full ${isFullHeight ? "flex-1" : ""}`}>
                           <div className="flex items-center justify-between mb-2">
                             <h3
                               className="text-sm font-semibold uppercase tracking-[0.2em]"
@@ -589,7 +589,7 @@ export default function DisplayPage() {
                             </h3>
                           </div>
                           {staffList.length > 0 ? (
-                            <div className="flex flex-col gap-2">
+                            <div className={`flex flex-col gap-2 ${isFullHeight ? "flex-1 justify-between" : ""}`}>
                               {staffList.map((entry) => (
                                 <div
                                   key={entry.id}
@@ -642,12 +642,12 @@ export default function DisplayPage() {
 
                     return (
                       <>
-                        <div className="flex flex-col gap-4">{renderCat("Doctor")}</div>
-                        <div className="flex flex-col gap-8">
-                          {renderCat("Nursing Officer")}
-                          {/* {renderCat("Operation")} */}
+                        <div className="flex flex-col h-full">{renderCat("Doctor", true)}</div>
+                        <div className="flex flex-col justify-between h-full">
+                          {renderCat("Nursing Officer", false)}
+                          {renderCat("Operation", false)}
                         </div>
-                        <div className="flex flex-col gap-4">{renderCat("Pharmacist")}</div>
+                        <div className="flex flex-col h-full">{renderCat("Pharmacist", true)}</div>
                       </>
                     );
                   })()}
