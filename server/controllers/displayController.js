@@ -332,8 +332,9 @@ async function handleMatrixUpload(req, res, categoryStr) {
     let categoryId;
     let headerPrefix;
     let uploadTypeStr = '';
+    let shiftCapacityLimit = Infinity;
     if (categoryStr === 'doctors') { categoryId = 1; headerPrefix = 'DOCTOR'; uploadTypeStr = 'Doctors Roster'; }
-    else if (categoryStr === 'nursing') { categoryId = 2; headerPrefix = 'STAFF'; uploadTypeStr = 'Nursing Roster'; }
+    else if (categoryStr === 'nursing') { categoryId = 2; headerPrefix = 'STAFF'; uploadTypeStr = 'Nursing Roster'; shiftCapacityLimit = 2; }
     else if (categoryStr === 'pharmacy') { categoryId = 3; headerPrefix = 'NAME'; uploadTypeStr = 'Pharmacy Roster'; }
     else {
       if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
@@ -396,8 +397,24 @@ async function handleMatrixUpload(req, res, categoryStr) {
       'E': 2, 'EVENING': 2,
       'N': 3, 'NIGHT': 3
     };
+    const shiftMapReverse = { 1: 'Morning', 2: 'Evening', 3: 'Night' };
     let insertedRows = 0;
     const skippedNames = [];
+    const capacitySkipped = [];
+    
+    // Pre-fetch current shift counts for this category to enforce limits
+    const shiftCounts = {};
+    if (shiftCapacityLimit !== Infinity) {
+      const [existingCounts] = await pool.query(
+        'SELECT r.roster_date, r.shift_id, COUNT(*) as count FROM roster r JOIN staff s ON r.staff_id = s.id WHERE s.category_id = ? AND MONTH(r.roster_date) = ? AND YEAR(r.roster_date) = ? GROUP BY r.roster_date, r.shift_id',
+        [categoryId, month, year]
+      );
+      existingCounts.forEach(r => {
+        // Date may come back as a string or Date object depending on mysql2 configuration
+        const dStr = typeof r.roster_date === 'string' ? r.roster_date.split('T')[0] : r.roster_date.toISOString().split('T')[0];
+        shiftCounts[`${dStr}_${r.shift_id}`] = r.count;
+      });
+    }
     
     for (let i = headerRowIndex + 1; i < data.length; i++) {
        const row = data[i];
@@ -450,9 +467,24 @@ async function handleMatrixUpload(req, res, categoryStr) {
 
              const [existing] = await pool.query('SELECT id FROM roster WHERE roster_date = ? AND shift_id = ? AND staff_id = ?', [dateStr, shiftId, staffId]);
              if (existing.length === 0) {
+                // Check capacity limit
+                const capacityKey = `${dateStr}_${shiftId}`;
+                const currentCount = shiftCounts[capacityKey] || 0;
+                
+                if (currentCount >= shiftCapacityLimit) {
+                  console.log(`[MatrixUpload] Shift capacity limit reached for ${shiftMapReverse[shiftId]} on ${dateStr}. Skipping ${staffNameForLog}.`);
+                  capacitySkipped.push(`${staffNameForLog} on ${dateStr} (${shiftMapReverse[shiftId]})`);
+                  continue; // Skip this insertion
+                }
+
                 await pool.query('INSERT INTO roster (roster_date, shift_id, staff_id, assigned_by, uploaded_file_id) VALUES (?, ?, ?, ?, ?)', [dateStr, shiftId, staffId, req.user.id, uploadedFileId]);
                 console.log(`[MatrixUpload] Inserted shift ${shiftId} on ${dateStr} for ${staffNameForLog}`);
                 insertedRows++;
+                
+                // Increment counter
+                if (shiftCapacityLimit !== Infinity) {
+                  shiftCounts[capacityKey] = currentCount + 1;
+                }
              } else {
                 console.log(`[MatrixUpload] Shift ${shiftId} on ${dateStr} for ${staffNameForLog} already exists. Skipping.`);
              }
@@ -469,7 +501,10 @@ async function handleMatrixUpload(req, res, categoryStr) {
 
     let responseMessage = `Successfully imported ${insertedRows} shift assignments for ${uploadTypeStr}.`;
     if (skippedNames.length > 0) {
-      responseMessage += ` Note: The following staff names were not found in your master directory and were skipped: ${skippedNames.join(', ')}`;
+      responseMessage += ` Note: The following staff names were not found in your master directory and were skipped: ${skippedNames.join(', ')}.`;
+    }
+    if (capacitySkipped.length > 0) {
+      responseMessage += ` Note: The following assignments were skipped due to the maximum capacity limit of ${shiftCapacityLimit} staff per shift: ${capacitySkipped.join(', ')}.`;
     }
 
     return res.json({ message: responseMessage, rows: insertedRows });

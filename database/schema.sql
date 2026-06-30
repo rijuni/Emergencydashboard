@@ -143,7 +143,7 @@ INSERT INTO staff_categories (name, display_order) VALUES
 ('Pharmacist', 3),
 ('MOD', 4),
 ('Ambulance', 5),
-('Operation', 6),
+('Operation staff', 6),
 ('Security Supervisor', 7),
 ('Housekeeping Supervisor', 8);
 
