@@ -241,236 +241,236 @@ exports.importMonthlyDuty = async (req, res) => {
       return await handleMatrixUpload(req, res, categoryStr);
     }
     // Helper function to update physical Excel file
-async function updateExcelFile(dateStr, newName, userId) {
-  try {
-    const schedulePath = 'uploads/latest_mod_schedule.xlsx';
-    if (!fs.existsSync(schedulePath)) return;
+    async function updateExcelFile(dateStr, newName, userId) {
+      try {
+        const schedulePath = 'uploads/latest_mod_schedule.xlsx';
+        if (!fs.existsSync(schedulePath)) return;
 
-    const workbook = xlsx.readFile(schedulePath);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+        const workbook = xlsx.readFile(schedulePath);
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
 
-    // Same scanning logic
-    let dateIndex = -1, nameIndex = -1, headerRowIndex = -1;
-    for (let i = 0; i < Math.min(data.length, 20); i++) {
-      const row = data[i];
-      if (!Array.isArray(row)) continue;
-      const cDate = row.findIndex(val => typeof val === 'string' && (val.toLowerCase() === 'date' || val.toLowerCase().includes('duty date')));
-      const cName = row.findIndex(val => typeof val === 'string' && (val.toLowerCase() === 'name' || val.toLowerCase() === 'names' || val.toLowerCase().includes('supervisor')));
-      if (cDate !== -1 && cName !== -1) {
-        dateIndex = cDate; nameIndex = cName; headerRowIndex = i; break;
-      }
-    }
-
-    if (headerRowIndex === -1) return;
-
-    for (let i = headerRowIndex + 1; i < data.length; i++) {
-      const row = data[i];
-      if (!Array.isArray(row) || row.length <= Math.max(dateIndex, nameIndex)) continue;
-
-      let dateRaw = row[dateIndex];
-      let formattedDate;
-
-      if (typeof dateRaw === 'number') {
-        const parsed = xlsx.SSF.parse_date_code(dateRaw);
-        if (parsed) {
-          const y = parsed.y;
-          const m = String(parsed.m).padStart(2, '0');
-          const d = String(parsed.d).padStart(2, '0');
-          formattedDate = `${y}-${m}-${d}`;
-        }
-      } else {
-        let strDate = String(dateRaw).trim();
-        const dmyMatch = strDate.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
-        if (dmyMatch) {
-          const d = dmyMatch[1].padStart(2, '0');
-          const m = dmyMatch[2].padStart(2, '0');
-          const y = dmyMatch[3];
-          formattedDate = `${y}-${m}-${d}`;
-        } else {
-          let dutyDate = new Date(strDate);
-          if (!isNaN(dutyDate.getTime())) {
-            formattedDate = dutyDate.toISOString().split('T')[0];
+        // Same scanning logic
+        let dateIndex = -1, nameIndex = -1, headerRowIndex = -1;
+        for (let i = 0; i < Math.min(data.length, 20); i++) {
+          const row = data[i];
+          if (!Array.isArray(row)) continue;
+          const cDate = row.findIndex(val => typeof val === 'string' && (val.toLowerCase() === 'date' || val.toLowerCase().includes('duty date')));
+          const cName = row.findIndex(val => typeof val === 'string' && (val.toLowerCase() === 'name' || val.toLowerCase() === 'names' || val.toLowerCase().includes('supervisor')));
+          if (cDate !== -1 && cName !== -1) {
+            dateIndex = cDate; nameIndex = cName; headerRowIndex = i; break;
           }
         }
-      }
 
-      if (formattedDate === dateStr) {
-        data[i][nameIndex] = newName || '';
-        break;
-      }
-    }
+        if (headerRowIndex === -1) return;
 
-    const newSheet = xlsx.utils.aoa_to_sheet(data);
-    workbook.Sheets[sheetName] = newSheet;
-    xlsx.writeFile(workbook, schedulePath);
+        for (let i = headerRowIndex + 1; i < data.length; i++) {
+          const row = data[i];
+          if (!Array.isArray(row) || row.length <= Math.max(dateIndex, nameIndex)) continue;
 
-    // Save modified version to archives
-    const archivesDir = path.join(__dirname, '..', 'uploads', 'archives');
-    if (fs.existsSync(archivesDir)) {
-      const timestamp = Date.now();
-      const storedName = `${timestamp}_MOD_Schedule_Modified.xlsx`;
-      const archivePath = path.join(archivesDir, storedName);
-      fs.copyFileSync(schedulePath, archivePath);
-      
-      await pool.query(
-        'INSERT INTO uploaded_files (original_name, stored_name, upload_type, uploaded_by) VALUES (?, ?, ?, ?)',
-        ['MOD_Schedule_Modified.xlsx', storedName, 'Manager On Duty Schedule Modified', userId]
-      );
-    }
-  } catch (error) {
-    console.error('Update Excel file error:', error);
-  }
-}
+          let dateRaw = row[dateIndex];
+          let formattedDate;
 
-async function handleMatrixUpload(req, res, categoryStr) {
-  try {
-    const year = parseInt(req.body.year) || new Date().getFullYear();
-    const month = parseInt(req.body.month) || (new Date().getMonth() + 1);
-
-    let categoryId;
-    let headerPrefix;
-    let uploadTypeStr = '';
-    let shiftCapacityLimit = Infinity;
-    if (categoryStr === 'doctors') { categoryId = 1; headerPrefix = 'DOCTOR'; uploadTypeStr = 'Doctors Roster'; }
-    else if (categoryStr === 'nursing') { categoryId = 2; headerPrefix = 'STAFF'; uploadTypeStr = 'Nursing Roster'; shiftCapacityLimit = 2; }
-    else if (categoryStr === 'pharmacy') { categoryId = 3; headerPrefix = 'NAME'; uploadTypeStr = 'Pharmacy Roster'; }
-    else {
-      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-      return res.status(400).json({ message: 'Invalid category for matrix upload.' });
-    }
-
-    const workbook = xlsx.readFile(req.file.path);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = xlsx.utils.sheet_to_json(sheet, { header: 1, raw: true });
-
-    let headerRowIndex = -1;
-    let datesStartIndex = -1;
-    let nameIndex = -1;
-
-    for (let i = 0; i < Math.min(data.length, 20); i++) {
-      const row = data[i];
-      if (!Array.isArray(row)) continue;
-      const oneIndex = row.findIndex(v => String(v).trim() === '1');
-      if (oneIndex !== -1) {
-         headerRowIndex = i;
-         datesStartIndex = oneIndex;
-         for (let j = 0; j < oneIndex; j++) {
-            if (typeof row[j] === 'string' && (row[j].toUpperCase().includes('NAME') || row[j].toUpperCase().includes(headerPrefix))) {
-               nameIndex = j;
+          if (typeof dateRaw === 'number') {
+            const parsed = xlsx.SSF.parse_date_code(dateRaw);
+            if (parsed) {
+              const y = parsed.y;
+              const m = String(parsed.m).padStart(2, '0');
+              const d = String(parsed.d).padStart(2, '0');
+              formattedDate = `${y}-${m}-${d}`;
             }
-         }
-         if (nameIndex === -1) nameIndex = oneIndex - 1;
-         break;
+          } else {
+            let strDate = String(dateRaw).trim();
+            const dmyMatch = strDate.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+            if (dmyMatch) {
+              const d = dmyMatch[1].padStart(2, '0');
+              const m = dmyMatch[2].padStart(2, '0');
+              const y = dmyMatch[3];
+              formattedDate = `${y}-${m}-${d}`;
+            } else {
+              let dutyDate = new Date(strDate);
+              if (!isNaN(dutyDate.getTime())) {
+                formattedDate = dutyDate.toISOString().split('T')[0];
+              }
+            }
+          }
+
+          if (formattedDate === dateStr) {
+            data[i][nameIndex] = newName || '';
+            break;
+          }
+        }
+
+        const newSheet = xlsx.utils.aoa_to_sheet(data);
+        workbook.Sheets[sheetName] = newSheet;
+        xlsx.writeFile(workbook, schedulePath);
+
+        // Save modified version to archives
+        const archivesDir = path.join(__dirname, '..', 'uploads', 'archives');
+        if (fs.existsSync(archivesDir)) {
+          const timestamp = Date.now();
+          const storedName = `${timestamp}_MOD_Schedule_Modified.xlsx`;
+          const archivePath = path.join(archivesDir, storedName);
+          fs.copyFileSync(schedulePath, archivePath);
+
+          await pool.query(
+            'INSERT INTO uploaded_files (original_name, stored_name, upload_type, uploaded_by) VALUES (?, ?, ?, ?)',
+            ['MOD_Schedule_Modified.xlsx', storedName, 'Manager On Duty Schedule Modified', userId]
+          );
+        }
+      } catch (error) {
+        console.error('Update Excel file error:', error);
       }
     }
 
-    if (headerRowIndex === -1) {
-       if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-       return res.status(400).json({ message: 'Could not find days 1-31 in the Excel file. Please use the official template.' });
-    }
+    async function handleMatrixUpload(req, res, categoryStr) {
+      try {
+        const year = parseInt(req.body.year) || new Date().getFullYear();
+        const month = parseInt(req.body.month) || (new Date().getMonth() + 1);
 
-    // Archive file and register it in uploaded_files BEFORE inserting the roster entries
-    const archivesDir = path.join(__dirname, '..', 'uploads', 'archives');
-    if (!fs.existsSync(archivesDir)) fs.mkdirSync(archivesDir, { recursive: true });
-    
-    let originalName = req.file.originalname || `${uploadTypeStr}.xlsx`;
-    originalName = Buffer.from(originalName, 'latin1').toString('utf8').replace(/Â/g, '').replace(/\s+/g, ' ').trim();
-    
-    const timestamp = Date.now();
-    const storedName = `${timestamp}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const archivePath = path.join(archivesDir, storedName);
-    fs.copyFileSync(req.file.path, archivePath);
+        let categoryId;
+        let headerPrefix;
+        let uploadTypeStr = '';
+        let shiftCapacityLimit = Infinity;
+        if (categoryStr === 'doctors') { categoryId = 1; headerPrefix = 'DOCTOR'; uploadTypeStr = 'Doctors Roster'; }
+        else if (categoryStr === 'nursing') { categoryId = 2; headerPrefix = 'STAFF'; uploadTypeStr = 'Nursing Roster'; shiftCapacityLimit = 2; }
+        else if (categoryStr === 'pharmacy') { categoryId = 3; headerPrefix = 'NAME'; uploadTypeStr = 'Pharmacy Roster'; }
+        else {
+          if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+          return res.status(400).json({ message: 'Invalid category for matrix upload.' });
+        }
 
-    const [fileResult] = await pool.query(
-      'INSERT INTO uploaded_files (original_name, stored_name, upload_type, uploaded_by) VALUES (?, ?, ?, ?)',
-      [originalName, storedName, uploadTypeStr, req.user.id]
-    );
-    const uploadedFileId = fileResult.insertId;
+        const workbook = xlsx.readFile(req.file.path);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = xlsx.utils.sheet_to_json(sheet, { header: 1, raw: true });
 
-    const [staffRows] = await pool.query('SELECT id, full_name FROM staff WHERE category_id = ? AND is_active = TRUE', [categoryId]);
-    console.log(`[MatrixUpload] Found ${staffRows.length} active staff for category ${categoryStr}`);
-    
-    const shiftMap = { 
-      'M': 1, 'MORNING': 1,
-      'E': 2, 'EVENING': 2,
-      'N': 3, 'NIGHT': 3
-    };
-    const shiftMapReverse = { 1: 'Morning', 2: 'Evening', 3: 'Night' };
-    let insertedRows = 0;
-    const skippedNames = [];
-    const capacitySkipped = [];
-    
-    // Pre-fetch current shift counts for this category to enforce limits
-    const shiftCounts = {};
-    if (shiftCapacityLimit !== Infinity) {
-      const [existingCounts] = await pool.query(
-        'SELECT r.roster_date, r.shift_id, COUNT(*) as count FROM roster r JOIN staff s ON r.staff_id = s.id WHERE s.category_id = ? AND MONTH(r.roster_date) = ? AND YEAR(r.roster_date) = ? GROUP BY r.roster_date, r.shift_id',
-        [categoryId, month, year]
-      );
-      existingCounts.forEach(r => {
-        // Date may come back as a string or Date object depending on mysql2 configuration
-        const dStr = typeof r.roster_date === 'string' ? r.roster_date.split('T')[0] : r.roster_date.toISOString().split('T')[0];
-        shiftCounts[`${dStr}_${r.shift_id}`] = r.count;
-      });
-    }
-    
-    for (let i = headerRowIndex + 1; i < data.length; i++) {
-       const row = data[i];
-       if (!Array.isArray(row)) continue;
+        let headerRowIndex = -1;
+        let datesStartIndex = -1;
+        let nameIndex = -1;
 
-       const nameRaw = String(row[nameIndex] || '').trim();
-       if (!nameRaw || nameRaw.toUpperCase().includes('SL NO')) continue;
+        for (let i = 0; i < Math.min(data.length, 20); i++) {
+          const row = data[i];
+          if (!Array.isArray(row)) continue;
+          const oneIndex = row.findIndex(v => String(v).trim() === '1');
+          if (oneIndex !== -1) {
+            headerRowIndex = i;
+            datesStartIndex = oneIndex;
+            for (let j = 0; j < oneIndex; j++) {
+              if (typeof row[j] === 'string' && (row[j].toUpperCase().includes('NAME') || row[j].toUpperCase().includes(headerPrefix))) {
+                nameIndex = j;
+              }
+            }
+            if (nameIndex === -1) nameIndex = oneIndex - 1;
+            break;
+          }
+        }
 
-       // Robust name cleaning and matching
-       const cleanWords = name => {
-         return name.toLowerCase()
-           .replace(/dr\.|dr\b|mr\.|mr\b|mrs\.|mrs\b|ms\.|ms\b/g, '') // strip titles
-           .replace(/[^a-z0-9\s]/g, '') // strip special characters
-           .split(/\s+/)
-           .filter(w => w.length > 1);
-       };
+        if (headerRowIndex === -1) {
+          if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+          return res.status(400).json({ message: 'Could not find days 1-31 in the Excel file. Please use the official template.' });
+        }
 
-       const excelWords = cleanWords(nameRaw);
-       
-       const staffMatch = staffRows.find(s => {
-         const dbWords = cleanWords(s.full_name);
-         if (dbWords.length === 0 || excelWords.length === 0) return false;
-         const intersection = dbWords.filter(w => excelWords.includes(w));
-         const minMatch = Math.min(dbWords.length, excelWords.length, 2);
-         return intersection.length >= minMatch;
-       });
-       
-       if (!staffMatch) {
-         if (!skippedNames.includes(nameRaw)) {
-           skippedNames.push(nameRaw);
-         }
-         console.log(`[MatrixUpload] Skipped row: Excel name "${nameRaw}" not found in DB master.`);
-         continue;
-       }
+        // Archive file and register it in uploaded_files BEFORE inserting the roster entries
+        const archivesDir = path.join(__dirname, '..', 'uploads', 'archives');
+        if (!fs.existsSync(archivesDir)) fs.mkdirSync(archivesDir, { recursive: true });
 
-       const staffId = staffMatch.id;
-       const staffNameForLog = staffMatch.full_name;
-       console.log(`[MatrixUpload] Matched Excel name "${nameRaw}" to DB staff "${staffMatch.full_name}" (ID: ${staffId})`);
+        let originalName = req.file.originalname || `${uploadTypeStr}.xlsx`;
+        originalName = Buffer.from(originalName, 'latin1').toString('utf8').replace(/Â/g, '').replace(/\s+/g, ' ').trim();
 
-       for (let day = 1; day <= 31; day++) {
-          const colIndex = datesStartIndex + (day - 1);
-          const cellVal = String(row[colIndex] || '').trim().toUpperCase();
+        const timestamp = Date.now();
+        const storedName = `${timestamp}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const archivePath = path.join(archivesDir, storedName);
+        fs.copyFileSync(req.file.path, archivePath);
 
-          const shiftId = shiftMap[cellVal];
-          if (shiftId) {
-             const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-             
-             const d = new Date(dateStr);
-             if (isNaN(d.getTime()) || d.getMonth() + 1 !== month) continue;
+        const [fileResult] = await pool.query(
+          'INSERT INTO uploaded_files (original_name, stored_name, upload_type, uploaded_by) VALUES (?, ?, ?, ?)',
+          [originalName, storedName, uploadTypeStr, req.user.id]
+        );
+        const uploadedFileId = fileResult.insertId;
 
-             const [existing] = await pool.query('SELECT id FROM roster WHERE roster_date = ? AND shift_id = ? AND staff_id = ?', [dateStr, shiftId, staffId]);
-             if (existing.length === 0) {
+        const [staffRows] = await pool.query('SELECT id, full_name FROM staff WHERE category_id = ? AND is_active = TRUE', [categoryId]);
+        console.log(`[MatrixUpload] Found ${staffRows.length} active staff for category ${categoryStr}`);
+
+        const shiftMap = {
+          'M': 1, 'MORNING': 1,
+          'E': 2, 'EVENING': 2,
+          'N': 3, 'NIGHT': 3
+        };
+        const shiftMapReverse = { 1: 'Morning', 2: 'Evening', 3: 'Night' };
+        let insertedRows = 0;
+        const skippedNames = [];
+        const capacitySkipped = [];
+
+        // Pre-fetch current shift counts for this category to enforce limits
+        const shiftCounts = {};
+        if (shiftCapacityLimit !== Infinity) {
+          const [existingCounts] = await pool.query(
+            'SELECT r.roster_date, r.shift_id, COUNT(*) as count FROM roster r JOIN staff s ON r.staff_id = s.id WHERE s.category_id = ? AND MONTH(r.roster_date) = ? AND YEAR(r.roster_date) = ? GROUP BY r.roster_date, r.shift_id',
+            [categoryId, month, year]
+          );
+          existingCounts.forEach(r => {
+            // Date may come back as a string or Date object depending on mysql2 configuration
+            const dStr = typeof r.roster_date === 'string' ? r.roster_date.split('T')[0] : r.roster_date.toISOString().split('T')[0];
+            shiftCounts[`${dStr}_${r.shift_id}`] = r.count;
+          });
+        }
+
+        for (let i = headerRowIndex + 1; i < data.length; i++) {
+          const row = data[i];
+          if (!Array.isArray(row)) continue;
+
+          const nameRaw = String(row[nameIndex] || '').trim();
+          if (!nameRaw || nameRaw.toUpperCase().includes('SL NO')) continue;
+
+          // Robust name cleaning and matching
+          const cleanWords = name => {
+            return name.toLowerCase()
+              .replace(/dr\.|dr\b|mr\.|mr\b|mrs\.|mrs\b|ms\.|ms\b/g, '') // strip titles
+              .replace(/[^a-z0-9\s]/g, '') // strip special characters
+              .split(/\s+/)
+              .filter(w => w.length > 1);
+          };
+
+          const excelWords = cleanWords(nameRaw);
+
+          const staffMatch = staffRows.find(s => {
+            const dbWords = cleanWords(s.full_name);
+            if (dbWords.length === 0 || excelWords.length === 0) return false;
+            const intersection = dbWords.filter(w => excelWords.includes(w));
+            const minMatch = Math.min(dbWords.length, excelWords.length, 2);
+            return intersection.length >= minMatch;
+          });
+
+          if (!staffMatch) {
+            if (!skippedNames.includes(nameRaw)) {
+              skippedNames.push(nameRaw);
+            }
+            console.log(`[MatrixUpload] Skipped row: Excel name "${nameRaw}" not found in DB master.`);
+            continue;
+          }
+
+          const staffId = staffMatch.id;
+          const staffNameForLog = staffMatch.full_name;
+          console.log(`[MatrixUpload] Matched Excel name "${nameRaw}" to DB staff "${staffMatch.full_name}" (ID: ${staffId})`);
+
+          for (let day = 1; day <= 31; day++) {
+            const colIndex = datesStartIndex + (day - 1);
+            const cellVal = String(row[colIndex] || '').trim().toUpperCase();
+
+            const shiftId = shiftMap[cellVal];
+            if (shiftId) {
+              const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+              const d = new Date(dateStr);
+              if (isNaN(d.getTime()) || d.getMonth() + 1 !== month) continue;
+
+              const [existing] = await pool.query('SELECT id FROM roster WHERE roster_date = ? AND shift_id = ? AND staff_id = ?', [dateStr, shiftId, staffId]);
+              if (existing.length === 0) {
                 // Check capacity limit
                 const capacityKey = `${dateStr}_${shiftId}`;
                 const currentCount = shiftCounts[capacityKey] || 0;
-                
+
                 if (currentCount >= shiftCapacityLimit) {
                   console.log(`[MatrixUpload] Shift capacity limit reached for ${shiftMapReverse[shiftId]} on ${dateStr}. Skipping ${staffNameForLog}.`);
                   capacitySkipped.push(`${staffNameForLog} on ${dateStr} (${shiftMapReverse[shiftId]})`);
@@ -480,41 +480,41 @@ async function handleMatrixUpload(req, res, categoryStr) {
                 await pool.query('INSERT INTO roster (roster_date, shift_id, staff_id, assigned_by, uploaded_file_id) VALUES (?, ?, ?, ?, ?)', [dateStr, shiftId, staffId, req.user.id, uploadedFileId]);
                 console.log(`[MatrixUpload] Inserted shift ${shiftId} on ${dateStr} for ${staffNameForLog}`);
                 insertedRows++;
-                
+
                 // Increment counter
                 if (shiftCapacityLimit !== Infinity) {
                   shiftCounts[capacityKey] = currentCount + 1;
                 }
-             } else {
+              } else {
                 console.log(`[MatrixUpload] Shift ${shiftId} on ${dateStr} for ${staffNameForLog} already exists. Skipping.`);
-             }
+              }
+            }
           }
-       }
+        }
+
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
+        await pool.query(
+          'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
+          [req.user.id, 'IMPORT', 'roster', null, `Imported ${uploadTypeStr} schedule (${insertedRows} shifts assigned)`]
+        );
+
+        let responseMessage = `Successfully imported ${insertedRows} shift assignments for ${uploadTypeStr}.`;
+        if (skippedNames.length > 0) {
+          responseMessage += ` Note: The following staff names were not found in your master directory and were skipped: ${skippedNames.join(', ')}.`;
+        }
+        if (capacitySkipped.length > 0) {
+          responseMessage += ` Note: The following assignments were skipped due to the maximum capacity limit of ${shiftCapacityLimit} staff per shift: ${capacitySkipped.join(', ')}.`;
+        }
+
+        return res.json({ message: responseMessage, rows: insertedRows });
+
+      } catch (error) {
+        console.error('Matrix upload error:', error);
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        return res.status(500).json({ message: 'Server error while parsing Excel matrix file.' });
+      }
     }
-
-    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-
-    await pool.query(
-      'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
-      [req.user.id, 'IMPORT', 'roster', null, `Imported ${uploadTypeStr} schedule (${insertedRows} shifts assigned)`]
-    );
-
-    let responseMessage = `Successfully imported ${insertedRows} shift assignments for ${uploadTypeStr}.`;
-    if (skippedNames.length > 0) {
-      responseMessage += ` Note: The following staff names were not found in your master directory and were skipped: ${skippedNames.join(', ')}.`;
-    }
-    if (capacitySkipped.length > 0) {
-      responseMessage += ` Note: The following assignments were skipped due to the maximum capacity limit of ${shiftCapacityLimit} staff per shift: ${capacitySkipped.join(', ')}.`;
-    }
-
-    return res.json({ message: responseMessage, rows: insertedRows });
-
-  } catch (error) {
-    console.error('Matrix upload error:', error);
-    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    return res.status(500).json({ message: 'Server error while parsing Excel matrix file.' });
-  }
-}
 
     const workbook = xlsx.readFile(req.file.path);
     const sheetName = workbook.SheetNames[0];
@@ -535,10 +535,10 @@ async function handleMatrixUpload(req, res, categoryStr) {
     for (let i = 0; i < Math.min(data.length, 20); i++) {
       const row = data[i];
       if (!Array.isArray(row)) continue;
-      
+
       const cDate = row.findIndex(val => typeof val === 'string' && (val.toLowerCase() === 'date' || val.toLowerCase().includes('duty date')));
       const cName = row.findIndex(val => typeof val === 'string' && (val.toLowerCase() === 'name' || val.toLowerCase() === 'names' || val.toLowerCase().includes('supervisor')));
-      
+
       if (cDate !== -1 && cName !== -1) {
         dateIndex = cDate;
         nameIndex = cName;
@@ -567,7 +567,7 @@ async function handleMatrixUpload(req, res, categoryStr) {
 
       if (!dateRaw || !nameRaw) continue; // Skip incomplete rows
       if (typeof nameRaw !== 'string') nameRaw = String(nameRaw);
-      
+
       let formattedDate;
 
       // Handle Excel Date Serial Number vs String
@@ -605,8 +605,8 @@ async function handleMatrixUpload(req, res, categoryStr) {
       const parsedDateObj = new Date(formattedDate);
       if (parsedDateObj < currentMonthStart) {
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        return res.status(400).json({ 
-          message: 'Invalid file: This Excel sheet contains dates from a previous month. You can only upload schedules for the current and future months.' 
+        return res.status(400).json({
+          message: 'Invalid file: This Excel sheet contains dates from a previous month. You can only upload schedules for the current and future months.'
         });
       }
 
@@ -652,7 +652,7 @@ async function handleMatrixUpload(req, res, categoryStr) {
     const schedulePath = 'uploads/latest_mod_schedule.xlsx';
     if (fs.existsSync(schedulePath)) fs.unlinkSync(schedulePath);
     fs.copyFileSync(req.file.path, schedulePath);
-    
+
     await pool.query(
       'INSERT INTO display_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
       ['active_mod_schedule_filename', originalName, originalName]
@@ -697,16 +697,16 @@ exports.updateManualMod = async (req, res) => {
         'DELETE FROM monthly_duty_schedule WHERE duty_date = ? AND role_name = "Night Supervisor"',
         [date]
       );
-      
+
       // Audit log
       await pool.query(
         'INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)',
         [req.user.id, 'DELETE', 'schedule', null, `Removed MOD for ${date}`]
       );
-      
+
       // Update Excel file to clear the name
       await updateExcelFile(date, '', req.user.id);
-      
+
       return res.json({ message: 'Manager On Duty entry removed successfully for the selected date.' });
     }
 
@@ -884,7 +884,7 @@ exports.exportAuditLogs = async (req, res) => {
     }));
 
     const worksheet = xlsx.utils.json_to_sheet(excelData);
-    
+
     const colWidths = [
       { wch: 10 },
       { wch: 25 },

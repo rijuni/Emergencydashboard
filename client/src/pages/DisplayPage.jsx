@@ -578,6 +578,12 @@ export default function DisplayPage() {
                         const category = liveCategories.find((c) => c.key === catKey);
                         if (!category) return null;
                         const staffList = onDutyByCategory[category.key] || [];
+                        
+                        // Do not render empty headings on subsequent pages
+                        if (rosterPage > 0 && staffList.length === 0) {
+                          return null;
+                        }
+
                         const style = categoryStyles[category.key] || categoryStyles.Doctor;
                         return (
                           <div key={category.key} className={`flex flex-col w-full ${isFullHeight ? "flex-1" : ""}`}>

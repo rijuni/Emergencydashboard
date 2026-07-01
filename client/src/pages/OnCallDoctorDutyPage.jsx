@@ -145,8 +145,8 @@ export default function OnCallDoctorDutyPage() {
 
   // Get unique assigned doctors for the day
   const assignedDoctors = useMemo(() => {
-    const docs = roster.filter(r => 
-      r.category_name?.toLowerCase() === "doctor" && 
+    const docs = roster.filter(r =>
+      r.category_name?.toLowerCase() === "doctor" &&
       r.notes === "ON_CALL"
     );
     const uniqueDocsMap = new Map();
