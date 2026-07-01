@@ -577,6 +577,12 @@ export default function DisplayPage() {
                       const renderCat = (catKey, isFullHeight = false) => {
                         const category = liveCategories.find((c) => c.key === catKey);
                         if (!category) return null;
+                        
+                        const totalStaffList = rawOnDutyByCategory[category.key] || [];
+                        if (totalStaffList.length === 0) {
+                          return null;
+                        }
+
                         const staffList = onDutyByCategory[category.key] || [];
                         
                         // Do not render empty headings on subsequent pages
