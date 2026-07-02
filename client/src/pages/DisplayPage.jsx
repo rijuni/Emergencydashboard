@@ -385,11 +385,18 @@ export default function DisplayPage() {
 
   const tickerText = (
     <div className="flex items-center shrink-0" style={{ gap: "10rem", paddingRight: "10rem" }}>
-      <span>SECURITY SUPERVISOR : {securityNames}</span>
-      <span>HOUSEKEEPING SUPERVISOR : {housekeepingNames}</span>
-      <span>Manager On Duty : {nightSupervisorName}</span>
+      {securityNames !== "NOT ASSIGNED" && (
+        <span>SECURITY SUPERVISOR : {securityNames}</span>
+      )}
+      {housekeepingNames !== "NOT ASSIGNED" && (
+        <span>HOUSEKEEPING SUPERVISOR : {housekeepingNames}</span>
+      )}
+      {nightSupervisorName !== "NOT ASSIGNED" && (
+        <span>Manager On Duty : {nightSupervisorName}</span>
+      )}
     </div>
   );
+
 
   return (
     <div
@@ -577,14 +584,14 @@ export default function DisplayPage() {
                       const renderCat = (catKey, isFullHeight = false) => {
                         const category = liveCategories.find((c) => c.key === catKey);
                         if (!category) return null;
-                        
+
                         const totalStaffList = rawOnDutyByCategory[category.key] || [];
                         if (totalStaffList.length === 0) {
                           return null;
                         }
 
                         const staffList = onDutyByCategory[category.key] || [];
-                        
+
                         // Do not render empty headings on subsequent pages
                         if (rosterPage > 0 && staffList.length === 0) {
                           return null;
