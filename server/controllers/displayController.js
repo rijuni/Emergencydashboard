@@ -22,7 +22,18 @@ const getHasSlotIndex = async () => {
 // Get today's display data (PUBLIC - no auth required)
 exports.getToday = async (req, res) => {
   try {
-    const date = req.query.date || new Date().toISOString().split('T')[0];
+    let queryDate = req.query.date;
+    if (!queryDate) {
+      const now = new Date();
+      if (now.getHours() < 8) {
+        now.setDate(now.getDate() - 1);
+      }
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      queryDate = `${year}-${month}-${day}`;
+    }
+    const date = queryDate;
 
     const hasSlotIndex = await getHasSlotIndex();
     const rosterQuery = hasSlotIndex
