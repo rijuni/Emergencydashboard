@@ -241,13 +241,22 @@ export default function DisplayPage() {
     return d.toLocaleDateString("en-IN", { weekday: "long" });
   };
 
+  // const formatTime = (date) => {
+  //   return date.toLocaleTimeString("en-IN", {
+  //     hour: "2-digit",
+  //     minute: "2-digit",
+  //     second: "2-digit",
+  //     hour12: true,
+  //   });
+  // };
+
   const formatTime = (date) => {
     return date.toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
       hour12: true,
-    });
+    }).toUpperCase();
   };
 
 
