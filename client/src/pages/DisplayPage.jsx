@@ -24,7 +24,7 @@ export default function DisplayPage() {
   }, []);
 
   const alertsData = useMemo(() => [
-    { title: "CODE BLUE", count: data?.settings?.code_blue || "33", r: 239, g: 68, b: 68, textLight: "#B91C1C", textDark: "#FCA5A5", valColor: "#EF4444" },
+    { title: "CODE BLUE", count: data?.settings?.code_blue || "33", r: 59, g: 130, b: 246, textLight: "#1D4ED8", textDark: "#93C5FD", valColor: "#3B82F6" },
     // { title: "CODE RED", count: "44", r: 239, g: 68, b: 68, textLight: "#B91C1C", textDark: "#FCA5A5", valColor: "#EF4444" },
     // { title: "FIRE OFFICER", count: "77", r: 16, g: 185, b: 129, textLight: "#047857", textDark: "#6EE7B7", valColor: "#10B981" },
     // { title: "CODE PINK", count: "44", r: 236, g: 72, b: 153, textLight: "#BE185D", textDark: "#F9A8D4", valColor: "#EC4899" },
@@ -474,7 +474,7 @@ export default function DisplayPage() {
                 : "—"}
             </div>
             <div
-              className="font-mono text-xl font-bold tabular-nums mt-1"
+              className="font-mono text-3xl md:text-4xl font-black tabular-nums mt-2"
               style={{ color: "#14B8A6" }}
             >
               {formatTime(currentTime)}
